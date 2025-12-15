@@ -7,9 +7,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "mutex.hpp"
-#include "../components/machine/include/unit.hpp"
-#include "../components/machine/include/property.hpp"
 #include <sstream>
 #include <iomanip>
 #include <format>
@@ -19,22 +16,22 @@ static const char* TAG = "app_main";
 // main processing method that runs inside the task's infinite loop
 static void processing_loop()
 {
-    std::size_t counter = sizeof(machine::Property);
-    std::size_t counter = sizeof(unsigned long);
+    // std::size_t counter = sizeof(machine::Property);
+    // std::size_t counter = sizeof(unsigned long);
 
     // Minimal work: log a message once per loop iteration.
     ESP_LOGI(TAG, "processing_loop iteration");
 
-    machine::Unit iu = machine::Unit(machine::Unit::Kind::Internal, 0);
-    machine::Unit eu = machine::Unit(machine::Unit::Kind::External, 0);
+    // machine::Unit iu = machine::Unit(machine::Unit::Kind::Internal, 0);
+    // machine::Unit eu = machine::Unit(machine::Unit::Kind::External, 0);
     
-    std::ostringstream os;
-    os << "<<operator: iu=" << iu << " eu=" << eu;
-    std::string s1 = os.str();
-    ESP_LOGI(TAG, "%s", s1.c_str());
+    // std::ostringstream os;
+    // os << "<<operator: iu=" << iu << " eu=" << eu;
+    // std::string s1 = os.str();
+    // ESP_LOGI(TAG, "%s", s1.c_str());
 
-    std::string s2 = std::format("std::format: iu={} eu={}", iu, eu);
-    ESP_LOGI(TAG, "%s", s2.c_str());
+    // std::string s2 = std::format("std::format: iu={} eu={}", iu, eu);
+    // ESP_LOGI(TAG, "%s", s2.c_str());
 }
 
 // C++ class that owns the task and runs the processing loop
@@ -85,7 +82,7 @@ private:
 
 extern "C" void app_main()
 {
-    Mutex::create(); // Example usage of Mutex class
+    // Mutex::create(); // Example usage of Mutex class
 
     auto task = new MainTask();
     if (!task) {

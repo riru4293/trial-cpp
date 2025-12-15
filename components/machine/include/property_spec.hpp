@@ -5,6 +5,7 @@
 #include <format>
 #include <optional>
 #include <hash_util.hpp>
+#include <integer_util.hpp>
 
 namespace machine {
 
@@ -108,6 +109,27 @@ namespace machine {
             String,  //!< 1-192 bytes
         };
 
+        /** @brief Helper to get name of @ref machine::PropertySpec::ValueKind. */
+        struct ValueKindName
+        {
+            /**
+             * @brief Convert `machine::PropertySpec::ValueKind` enum value to name.
+             * @param v value to convert
+             * @return name string view
+             */
+            static constexpr std::string_view of(ValueKind v) noexcept {
+                using T = ValueKind;
+                switch (v) {
+                    case T::Illegal:    return "Illegal";
+                    case T::Numeric:    return "Numeric";
+                    case T::Boolean:    return "Boolean";
+                    case T::BitSet:     return "BitSet";
+                    case T::String:     return "String";
+                    default:            return "Unknown";
+                }
+            }
+        };
+
         /** @brief A mask to extract read permission value ​​from uint8_t value. */
         static constexpr std::uint8_t READ_PERMISSION_MASK = 0b00000010;
 
@@ -123,6 +145,26 @@ namespace machine {
             WriteOnly = 0b01,   //!< Write-only access permission
             ReadOnly  = 0b10,   //!< Read-only access permission
             ReadWrite = 0b11,   //!< Read-write access permission
+        };
+
+        /** @brief Helper to get name of @ref machine::PropertySpec::Permission. */
+        struct PermissionName
+        {
+            /**
+             * @brief Convert `machine::PropertySpec::Permission` enum value to name.
+             * @param v value to convert
+             * @return name string view
+             */
+            static constexpr std::string_view of(Permission v) noexcept {
+                using T = Permission;
+                switch (v) {
+                    case T::None:       return "None";
+                    case T::WriteOnly:  return "WriteOnly";
+                    case T::ReadOnly:   return "ReadOnly";
+                    case T::ReadWrite:  return "ReadWrite";
+                    default:            return "Unknown";
+                }
+            }
         };
 
         /** @brief A mask to extract resolution value ​​from uint8_t value. */
@@ -153,7 +195,60 @@ namespace machine {
             ShiftL1x5 = 0b0111, //!< 10^-1 x5 = x0.5
         };
 
+        /** @brief Helper to get name of @ref machine::PropertySpec::Resolution. */
+        struct ResolutionName
+        {
+            /**
+             * @brief Convert `machine::PropertySpec::Resolution` enum value to name.
+             * @param v value to convert
+             * @return name string view
+             */
+            static constexpr std::string_view of(Resolution v) noexcept {
+                using T = Resolution;
+                switch (v) {
+                    case T::ShiftR0x1:  return "ShiftR0x1";
+                    case T::ShiftR0x5:  return "ShiftR0x5";
+                    case T::ShiftR1x1:  return "ShiftR1x1";
+                    case T::ShiftR1x5:  return "ShiftR1x5";
+                    case T::ShiftL2x1:  return "ShiftL2x1";
+                    case T::ShiftL2x5:  return "ShiftL2x5";
+                    case T::ShiftL1x1:  return "ShiftL1x1";
+                    case T::ShiftL1x5:  return "ShiftL1x5";
+                    default:            return "Unknown";
+                }
+            }
+        };
+
         static constexpr std::uint8_t MAX_VALUE_SIZE = 3;    // in bytes
+
+        /** @brief Helper to get string representation of the property value. */
+        struct PropertyValueString
+        {
+            /**
+             * @brief Convert property value to string representation.
+             * @param v value to convert
+             * @return name string
+             */
+            static constexpr std::string of(const ValueKind &kind,
+                const std::array<std::byte, MAX_VALUE_SIZE> &val,
+                const std::uint8_t &size) noexcept
+            {
+                if (size == 0) return "N/A";
+
+                switch (kind) {
+                    case ValueKind::Numeric:
+                        return std::to_string(util::toInt32LE(val));
+                    case ValueKind::Boolean:
+                        return (std::to_integer<uint8_t>(val.at(0)) > 0) ? "true" : "false";
+                    case ValueKind::BitSet:
+                        return std::to_string(util::toUInt32LE(val));
+                    case ValueKind::Illegal:
+                    case ValueKind::String:
+                    default:
+                        return "N/A";
+                }
+            }
+        };
 
         /** @brief Create a PropertySpec instance with given parameters. */
         /**
@@ -228,24 +323,6 @@ namespace machine {
     /* Instance members.                            */
     public:
         #pragma region : getter methods
-        int32_t toSignedInt32LE(const std::array<std::byte, 3>& arr) const {
-            uint32_t value =
-                (static_cast<uint32_t>(arr[0])      ) |
-                (static_cast<uint32_t>(arr[1]) <<  8) |
-                (static_cast<uint32_t>(arr[2]) << 16);
-
-            // 24bit の符号拡張
-            if (value & 0x00800000) { // 24bit目が1なら負数
-                value |= 0xFF000000;  // 上位8bitを1で埋める
-            }
-            return static_cast<int32_t>(value);
-        }
-        uint32_t toUnsignedInt32LE(const std::array<std::byte, 3>& arr) const {
-            return
-                (static_cast<uint32_t>(arr[0])      ) |
-                (static_cast<uint32_t>(arr[1]) <<  8) |
-                (static_cast<uint32_t>(arr[2]) << 16);
-        }
 
         [[nodiscard]] ValueKind valueKind() const noexcept {
             bool hasMin = valSizes_.minVal > 0;
@@ -259,10 +336,10 @@ namespace machine {
                         (std::to_integer<uint8_t>(maxVal_.at(0)) == 1) ) {
                 return ValueKind::Boolean;
             }
-            else if ( !hasMin && hasMax && (toUnsignedInt32LE(maxVal_) > 0) ) {
+            else if ( !hasMin && hasMax && (util::toUInt32LE(maxVal_) > 0) ) {
                 return ValueKind::BitSet;
             }
-            else if ( hasMin && hasMax && (toSignedInt32LE(maxVal_) >= toSignedInt32LE(minVal_)) ) {
+            else if ( hasMin && hasMax && (util::toInt32LE(maxVal_) >= util::toInt32LE(minVal_)) ) {
                 return ValueKind::Numeric;
             }
             else {
@@ -272,6 +349,9 @@ namespace machine {
         [[nodiscard]] const std::array<std::byte,3> initVal() const noexcept { return initVal_; }
         [[nodiscard]] const std::array<std::byte,3> minVal() const noexcept { return minVal_; }
         [[nodiscard]] const std::array<std::byte,3> maxVal() const noexcept { return maxVal_; }
+        [[nodiscard]] const std::uint8_t initValSize() const noexcept { return valSizes_.initVal; }
+        [[nodiscard]] const std::uint8_t minValSize() const noexcept { return valSizes_.minVal; }
+        [[nodiscard]] const std::uint8_t maxValSize() const noexcept { return valSizes_.maxVal; }
         [[nodiscard]] Permission permission() const noexcept { return static_cast<Permission>(flags_.permission); }
         [[nodiscard]] Resolution resolution() const noexcept { return static_cast<Resolution>(flags_.resolution); }
         #pragma endregion
@@ -289,117 +369,74 @@ namespace machine {
     static_assert( sizeof(machine::PropertySpec) == 11, "Unexpected PropertySpec size" );
     static_assert( alignof(machine::PropertySpec) == 1, "Unexpected PropertySpec alignment" );
 
-    /*
-        どうやって作るか？あり、なしがmin, max, にある。
-        if min is なし
-            if max is なし
-                string
-            else
-                bits
-            endif
-        else
-            if min is 0 max is 1
-                boolean
-            else min is あり and max is あり
-                number
-            else
-                unknown
-            endif
-        endif
-        // なし なし string
-        // 0 1 boolean
-        // なし あり bits
-        // number
-    */
+    inline namespace ostream_support {
+        std::ostream &operator<<(std::ostream &os, const PropertySpec::ValueKind &v)
+        {
+            os << machine::PropertySpec::ValueKindName::of(v) << "(" << static_cast<int>(v) << ")";
+            return os;
+        }
 
-    int a = sizeof(PropertySpec);
-    int b = alignof(PropertySpec);
-    static_assert( sizeof(machine::PropertySpec) == 16, "Unexpected PropertySpec size" );
-    static_assert( alignof(machine::PropertySpec) == 8, "Unexpected PropertySpec size" );
+        std::ostream &operator<<(std::ostream &os, const PropertySpec::Permission &v)
+        {
+            os << machine::PropertySpec::PermissionName::of(v) << "(" << static_cast<int>(v) << ")";
+            return os;
+        }
 
-    // inline namespace ostream_support {
-    //     std::ostream &operator<<(std::ostream &os, const Property &v)
-    //     {
-    //         os  << "Property{"
-    //                         << "code="  << static_cast<int>(v.code())
-    //                 // << ", " << "index=" << static_cast<int>(v.index())
-    //                 // << ", " << "level=" << static_cast<int>(v.level())
-    //             << "}";
-    //         return os;
-    //     }
-    // }
+        std::ostream &operator<<(std::ostream &os, const PropertySpec::Resolution &v)
+        {
+            os << machine::PropertySpec::ResolutionName::of(v) << "(" << static_cast<int>(v) << ")";
+            return os;
+        }
 
+        std::ostream &operator<<(std::ostream &os, const PropertySpec &v)
+        {
+            os  << "PropertySpec{"
+                            << "valueKind="  << v.valueKind()   // reuse `operator<<` for machine::PropertySpec::ValueKind
+                    << ", " << "permission=" << v.permission()  // reuse `operator<<` for machine::PropertySpec::Permission
+                    << ", " << "resolution=" << v.resolution()  // reuse `operator<<` for machine::PropertySpec::Resolution
+                    << ", " << "initVal=" << machine::PropertySpec::PropertyValueString::of(
+                                        v.valueKind(), v.initVal(), v.initValSize())
+                    << ", " << "minVal=" << machine::PropertySpec::PropertyValueString::of(
+                                        v.valueKind(), v.minVal(), v.minValSize())
+                    << ", " << "maxVal=" << machine::PropertySpec::PropertyValueString::of(
+                                        v.valueKind(), v.maxVal(), v.maxValSize())
+                << "}";
+            return os;
+        }
+    }
 } // namespace machine
 
-// namespace std {
+namespace std {
 
-// #pragma region : hash specialization
+#pragma region : formatter specialization
+    /** @brief Formatter specialization for `machine::PropertySpec`. */
+    /**
+     * @details
+     * Formats a `PropertySpec` instance. Examples are follows:
+     * - Numeric: `PropertySpec{valueKind=Numeric, permission=ReadOnly, resolution=ShiftL1x5, initVal=0, minVal=-3, maxVal=3}`
+     * - Boolean: `PropertySpec{valueKind=Boolean, permission=ReadWrite, resolution=ShiftR0x1, initVal=false, minVal=0, maxVal=1}`
+     * @note This specialization is necessary because user-defined
+     * types do not have a default formatter in the standard library.
+     */
+    template <>
+    struct formatter<machine::PropertySpec> {
+        /** @brief Parse format specifiers (none supported). */
+        constexpr auto parse(std::format_parse_context &ctx) {
+            return ctx.begin();
+        }
 
-//     /** @brief Hash specialization for `machine::Component`. */
-//     /**
-//      * @details
-//      * This specialization enables hashing of the `Component` class by
-//      * combining the hashes of its `code` and `index` members.
-//      * It utilizes the `util::makeHash` function to combine the
-//      * individual hashes into a single hash value.
-//      * @note This specialization is necessary because user-defined
-//      * types do not have a default hash function in the standard library.
-//      * @see util::makeHash
-//      */
-//     template <>
-//     struct hash<machine::Property> {
-//         std::size_t operator()(const machine::Property &v) const noexcept {
-//             std::size_t h1 = std::hash<int>{}(v.code());
-//             // std::size_t h2 = std::hash<int>{}(v.index());
-//             return util::makeHash(h1 /*, h2 */);
-//         }
-//     };
+        /** @brief Format `machine::Component` value. */
+        /**
+         * @details
+         * Formats a `Component` instance to `Component{code=Number, index=Number}`.
+         */
+        template <typename FormatContext>
+        auto format(const machine::Property &v, FormatContext &ctx) const {
+            return std::format_to(ctx.out(), "Property{{code={}, index={}, level={}}}",
+                v.code(), static_cast<int>(v.index()), static_cast<int>(v.level()));
+        }
+    };
 
-// #pragma endregion
-
-// #pragma region : formatter specialization
-//     /** @brief Formatter specialization for `machine::Component`. */
-//     /**
-//      * @details
-//      * Formats a `Component` instance to `Component{code=Number, index=Number, level=Number}`.
-//      * @note This specialization is necessary because user-defined
-//      * types do not have a default formatter in the standard library.
-//      */
-//     template <>
-//     struct formatter<machine::Property> {
-//         /** @brief Parse format specifiers (none supported). */
-//         constexpr auto parse(std::format_parse_context &ctx) {
-//             return ctx.begin();
-//         }
-
-//         /** @brief Format `machine::Component` value. */
-//         /**
-//          * @details
-//          * Formats a `Component` instance to `Component{code=Number, index=Number}`.
-//          */
-//         template <typename FormatContext>
-//         auto format(const machine::Property &v, FormatContext &ctx) const {
-//             return std::format_to(ctx.out(), "Property{{code={}, index={}, level={}}}",
-//                 v.code(), static_cast<int>(v.index()), static_cast<int>(v.level()));
-//         }
-//     };
-
-// #pragma endregion
-
-// } // namespace std
 #pragma endregion
 
-        // static std::array<std::byte, MAX_VALUE_SIZE> toArray(std::span<const std::byte> src) {
-        //     std::array<std::byte,MAX_VALUE_SIZE> ret{};
-
-        //     if (src.size() <= MAX_VALUE_SIZE)
-        //     {
-        //         std::copy_n(src.begin(), src.size(), ret.begin());
-        //     }
-        //     else
-        //     {
-        //         // TODO : Logging
-        //     }
-
-        //     return ret;
-        // }
+} // namespace std
