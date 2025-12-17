@@ -2,10 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <algorithm>
-#include <esp_heap_caps.h>
-#include <compare>   // std::strong_ordering
-#include <algorithm> // std::lexicographical_compare_three_way
+#include <optional>
 
 namespace machine
 {

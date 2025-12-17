@@ -1,10 +1,11 @@
-#include <property_value.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <algorithm>
-#include <esp_heap_caps.h>
-#include <compare>   // std::strong_ordering
-#include <algorithm> // std::lexicographical_compare_three_way
+#include <algorithm>            // For std::copy_n and std::equal
+#include <esp_heap_caps.h>      // For heap_caps_malloc and heap_caps_free
+#include <compare>              // For std::strong_ordering
+#include <algorithm>            // For std::lexicographical_compare_three_way
+
+#include <property_value.hpp>
 
 
 /* ___________________________________/ _/ _/ .*/
@@ -13,7 +14,7 @@ using namespace machine;
 
 
 /* ___________________________________/ _/ _/ .*/
-/* == [ Static members. ] */
+/* == [ Factory methods. ] */
 std::optional<PropertyValue> PropertyValue::create(
     std::byte const *data, std::uint8_t size ) noexcept
 {
@@ -74,16 +75,17 @@ constexpr auto PropertyValue::operator <=> ( PropertyValue const &other ) const 
 /* == [ Protected methods. ] */
 bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
 {
-    if ( size <= INLINE_SIZE )
+    if ( size <= INLINE_SIZE )  // Note: Use inline storage.
     {
         cleanup();
         // [===> Follows: Heap memory has already been freed]
         
         std::copy_n( data, size, storage_.inline_buffer_ );
+        // [===> Follows: Data copied to inline buffer]
     }
-    else
+    else // Caution: Return false if allocation fails.
     {
-        if ( size > size_ ) // Allocate or reallocate.
+        if ( size > size_ ) // Note: Allocate or reallocate.
         {
             cleanup();
 
@@ -96,12 +98,18 @@ bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
                 return false;
             }
         }
+        else // Do nothing
+        {
+            // Note: Existing heap memory is sufficient; no action needed.
+        }
         // [===> Follows: Heap memory allocation completed]
 
         std::copy_n( data, size, storage_.heap_ptr_ );
+        // [===> Follows: Data copied to heap memory]
     }
 
     size_ = size;
+    // [===> Follows: Size updated]
 
     return true;
 }
@@ -132,8 +140,8 @@ void PropertyValue::moveFrom( PropertyValue &&other ) noexcept
     {
         std::copy_n( other.storage_.inline_buffer_, size_, storage_.inline_buffer_ );
     }
-    // [===> Follows: Other instance has no heap memory]
     // [===> Follows: This instance has data copied]
+    // [===> Follows: Other instance has no heap memory]
 
     other.size_ = 0;
     // [===> Follows: Other instances has no size]
