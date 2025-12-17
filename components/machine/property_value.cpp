@@ -34,6 +34,9 @@ std::optional<PropertyValue> PropertyValue::create(
 /* == [ Operators. ] */
 PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
 {
+    TwinSpinGuard guard( *this, other );
+    // [===> Follows: Locked]
+
     if ( this != &other ) {
         cleanup();
         moveFrom( std::move( other ) );
@@ -42,8 +45,11 @@ PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
     return *this;
 }
 
-constexpr bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
+bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
 {
+    TwinSpinGuard guard( *this, other );
+    // [===> Follows: Locked]
+
     if ( size_ != other.size_ ) { return false; }
     // [===> Follows: Sizes matched]
 
@@ -58,8 +64,11 @@ constexpr bool PropertyValue::operator == ( PropertyValue const &other ) const n
     return std::equal( lhs, lhs + size_, rhs );
 }
 
-constexpr auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
+auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
 {
+    TwinSpinGuard guard( *this, other );
+    // [===> Follows: Locked]
+
     if ( size_ < other.size_ ) { return std::strong_ordering::less; }
     if ( size_ > other.size_ ) { return std::strong_ordering::greater; }
     // [===> Follows: Sizes matched]
