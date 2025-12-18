@@ -6,6 +6,11 @@
 #include <compare>
 #include <optional>
 #include <atomic>
+#include <ostream>
+#include <format>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 namespace machine
 {
@@ -213,6 +218,25 @@ namespace machine
 
             return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
+
+        [[nodiscard]] std::string str() const
+        {
+            SpinGuard guard(*this);
+            // [===> Follows: Locked]
+
+            std::ostringstream oss;
+            oss << "[ ";
+            for ( std::uint8_t i = 0; i < size_; i++ )
+            {
+                oss << "0x"
+                    << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+                    << static_cast<unsigned>(data()[i]);
+                if ( i + 1 < size_ ) oss << ' ';
+            }
+            oss << " ]";
+
+            return oss.str();
+        }
     protected:
         [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept;
     private:
@@ -247,6 +271,12 @@ namespace machine
         #pragma endregion
     }; // class PropertyValue
 
+    std::ostream &operator << ( std::ostream &os, PropertyValue const &v )
+    {
+        os << v.str();
+        return os;
+    }
+
 
     class MutablePropertyValue : public PropertyValue
     {
@@ -264,3 +294,40 @@ namespace machine
     static_assert( sizeof(machine::PropertyValue) == 6, "Unexpected PropertyValue size" );
     static_assert( alignof(machine::PropertyValue) == 1, "Unexpected PropertyValue alignment" );
 } // namespace machine
+
+
+
+namespace std {
+
+#pragma region : formatter specialization
+    /** @brief Formatter specialization for `machine::PropertyValue`. */
+    /**
+     * @details
+     * Formats a `PropertyValue` instance. Examples are follows:
+     * - `[ 0xA5 0xE7, 0x00 0xFF ]`
+     * @note This specialization is necessary because user-defined
+     * types do not have a default formatter in the standard library.
+     */
+    template <>
+    struct formatter<machine::PropertyValue> {
+        /** @brief Parse format specifiers (none supported). */
+        constexpr auto parse(std::format_parse_context &ctx) {
+            return ctx.begin();
+        }
+
+        /** @brief Format the `machine::PropertyValue`. */
+        /**
+         * @details
+         * Formats a `PropertyValue` instance to `[ 0xA5 0xE7, 0x00 0xFF ]`.
+         */
+        template <typename FormatContext>
+            auto format( machine::PropertyValue const &v, FormatContext &ctx ) const
+            {
+                auto s = v.str();
+                return std::ranges::copy( s, ctx.out() ).out;
+            }
+        };
+
+#pragma endregion
+
+} // namespace std
