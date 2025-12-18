@@ -2,9 +2,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <compare>
 #include <optional>
 #include <atomic>
-#include <compare>
 
 namespace machine
 {
@@ -14,13 +15,13 @@ namespace machine
      * This class manages a property value that can be stored either
      * inline (for small sizes) or on the heap (for larger sizes).
      * It provides methods for creating, moving, and comparing property values.
-     * @note 
+     * @note
      * Internal methods such as `set()` and `cleanup()` assume that the caller
      * has already acquired the lock. Public API methods always acquire
      * `SpinGuard`/`TwinSpinGuard` to ensure thread safety.
      * @note
      * Instances of this class are movable but not copyable.
-     * @note 
+     * @note
      * This class is effectively immutable for external users; mutation is only
      * allowed via the derived `MutablePropertyValue`.
      * @note Critical sections are expected to be short; spinlock is chosen for minimal footprint.
@@ -68,34 +69,39 @@ namespace machine
     private:
         static constexpr std::uint8_t INLINE_SIZE = 4;
 
-        struct SpinGuard {
-            PropertyValue const &v_;
-            explicit SpinGuard( PropertyValue const &v ) : v_( v ) { v_.lock(); }
-            ~SpinGuard() { v_.unlock(); }
+        struct SpinGuard
+        {
+            PropertyValue const &a_;
+            PropertyValue const &b_;
+
+            explicit SpinGuard( PropertyValue const &v ) : SpinGuard( v, v ) {}
+            explicit SpinGuard( PropertyValue const &a, PropertyValue const &b ) : a_( a ), b_( b )
+            {
+                if ( &a_ == &b_ )
+                {
+                    a_.lock();
+                }
+                else
+                {
+                    a_.lock();
+                    b_.lock();
+                }
+            }
+            ~SpinGuard()
+            {
+                if ( &a_ == &b_ )
+                {
+                    a_.unlock();
+                }
+                else
+                {
+                    b_.unlock();
+                    a_.unlock();
+                }
+            }
             SpinGuard( SpinGuard const & ) = delete;
             SpinGuard &operator = ( SpinGuard const & ) = delete;
         };
-
-        struct TwinSpinGuard {
-            PropertyValue const &v1_;
-            PropertyValue const &v2_;
-
-            TwinSpinGuard(PropertyValue const& v1, PropertyValue const& v2)
-                : v1_(v1), v2_(v2)
-            {
-                if ( &v1_ < &v2_ )  { v1_.lock(); v2_.lock(); }
-                else                { v2_.lock(); v1_.lock(); }
-            }
-
-            ~TwinSpinGuard() {
-                if ( &v1_ < &v2_ )  { v2_.unlock(); v1_.unlock(); }
-                else                { v1_.unlock(); v2_.unlock(); }
-            }
-
-            TwinSpinGuard( TwinSpinGuard const & ) = delete;
-            TwinSpinGuard &operator = ( TwinSpinGuard const & ) = delete;
-        };
-
     /* ^\__________________________________________ */
     /* Constructors.                                */
     public:
@@ -127,7 +133,7 @@ namespace machine
          */
         PropertyValue( PropertyValue &&other ) noexcept
         {
-            TwinSpinGuard guard( *this, other );
+            SpinGuard guard( *this, other );
             // [===> Follows: Locked]
 
             moveFrom( std::move( other ) );
@@ -205,7 +211,7 @@ namespace machine
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            return isHeapAllocated() ? storage_.heap_ptr_ : storage_.inline_buffer_;
+            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
     protected:
         [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept;
@@ -213,22 +219,30 @@ namespace machine
         bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
         void cleanup() noexcept;
         void moveFrom( PropertyValue &&other ) noexcept;
-        void lock() const noexcept { while( lock_.exchange( 1, std::memory_order_acquire ) ) { /* spin */ } }
-        void unlock() const noexcept { lock_.store( 0, std::memory_order_release ); }
+        void lock() const noexcept { while( lock_.exchange( true, std::memory_order_acquire ) ) { /* Busy loop */ } }
+        void unlock() const noexcept { lock_.store( false, std::memory_order_release ); }
+        uintptr_t heapPointer() const noexcept
+        {
+            uintptr_t ptr = 0;
 
+            std::memcpy( &ptr, raw_data_, INLINE_SIZE );
+
+            return ptr;
+        }
+        std::byte *heapPointerAsByte() const noexcept
+        {
+            return reinterpret_cast<std::byte *>( heapPointer() );
+        }
+        void *heapPointerAsVoid() const noexcept
+        {
+            return reinterpret_cast<void *>( heapPointer() );
+        }
 
         #pragma region : member variables
 
-        std::atomic<uint8_t> mutable lock_{0};  //!< Spinlock for thread safety. 0=unlocked, 1=locked.
-        std::uint8_t size_ = 0;
-
-        union Storage
-        {
-            std::byte inline_buffer_[INLINE_SIZE];
-            std::byte* heap_ptr_;
-
-            Storage() noexcept : inline_buffer_{} {}
-        } storage_;
+        std::atomic<bool> mutable lock_ = false; //!< Spinlock for thread safety. false=unlocked, true=locked.
+        std::uint8_t size_ = 0; //<! Size of the property value in bytes.
+        std::byte raw_data_[4] = {};  //!< Inline storage or heap pointer.
 
         #pragma endregion
     }; // class PropertyValue
@@ -247,6 +261,6 @@ namespace machine
 
     /* ^\__________________________________________ */
     /* Static assertions.                           */
-    static_assert( sizeof(machine::PropertyValue) == 16, "Unexpected PropertyValue size" );
-    static_assert( alignof(machine::PropertyValue) == 8, "Unexpected PropertyValue alignment" );
+    static_assert( sizeof(machine::PropertyValue) == 6, "Unexpected PropertyValue size" );
+    static_assert( alignof(machine::PropertyValue) == 1, "Unexpected PropertyValue alignment" );
 } // namespace machine

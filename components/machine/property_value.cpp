@@ -1,9 +1,5 @@
-#include <cstddef>
-#include <cstdint>
-#include <algorithm>            // For std::copy_n and std::equal
-#include <esp_heap_caps.h>      // For heap_caps_malloc and heap_caps_free
-#include <compare>              // For std::strong_ordering
-#include <algorithm>            // For std::lexicographical_compare_three_way
+#include <algorithm>
+#include <esp_heap_caps.h>
 
 #include <property_value.hpp>
 
@@ -34,12 +30,16 @@ std::optional<PropertyValue> PropertyValue::create(
 /* == [ Operators. ] */
 PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
 {
-    TwinSpinGuard guard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
 
-    if ( this != &other ) {
+    if ( this != &other )
+    {
         cleanup();
+        // [===> Follows: All resources were released and cleared]
+
         moveFrom( std::move( other ) );
+        // [===> Follows: All Resources were moved from other]
     }
 
     return *this;
@@ -47,8 +47,11 @@ PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
 
 bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
 {
-    TwinSpinGuard guard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
+
+    if ( this == &other ) { return true; }
+    // [===> Follows: Not the same instance]
 
     if ( size_ != other.size_ ) { return false; }
     // [===> Follows: Sizes matched]
@@ -56,22 +59,23 @@ bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
     if ( size_ == 0 ) { return true; }
     // [===> Follows: Sizes present]
 
-    bool is_heap = isHeapAllocated();
-
-    std::byte const *lhs = is_heap ? storage_.heap_ptr_ : storage_.inline_buffer_;
-    std::byte const *rhs = is_heap ? other.storage_.heap_ptr_ : other.storage_.inline_buffer_;
-
-    return std::equal( lhs, lhs + size_, rhs );
+    return std::equal( data(), data() + size_, other.data() );
 }
 
 auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
 {
-    TwinSpinGuard guard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
+
+    if ( this == &other ) { return std::strong_ordering::equal; }
+    // [===> Follows: Not the same instance]
 
     if ( size_ < other.size_ ) { return std::strong_ordering::less; }
     if ( size_ > other.size_ ) { return std::strong_ordering::greater; }
     // [===> Follows: Sizes matched]
+
+    if (size_ == 0) { return std::strong_ordering::equal; }
+    // [===> Follows: Sizes present]
 
     return std::lexicographical_compare_three_way(
         data(), data() + size_,
@@ -84,36 +88,35 @@ auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
 /* == [ Protected methods. ] */
 bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
 {
+    // [===> Prerequisite: This instance is locked]
+
     if ( size <= INLINE_SIZE )  // Note: Use inline storage.
     {
         cleanup();
-        // [===> Follows: Heap memory has already been freed]
+        // [===> Follows: All resources were released and cleared]
         
-        std::copy_n( data, size, storage_.inline_buffer_ );
+        std::memcpy( raw_data_, data, size );
         // [===> Follows: Data copied to inline buffer]
     }
-    else // Caution: Return false if allocation fails.
+    else // [!! Caution !!]__  Contains early returns.  __[!! Caution !!]
     {
         if ( size > size_ ) // Note: Allocate or reallocate.
         {
             cleanup();
+            // [===> Follows: All resources were released and cleared]
 
-            storage_.heap_ptr_ = static_cast<std::byte *>(
-                heap_caps_malloc( size, MALLOC_CAP_DEFAULT ) );
+            void* p = heap_caps_malloc( size, MALLOC_CAP_DEFAULT );
+            if ( !p ) { return false; }
+            // ~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on allocation failure!! ]
+            // [===> Follows: Heap memory reallocated]
 
-            if ( storage_.heap_ptr_ == nullptr )
-            {
-                size_ = 0;
-                return false;
-            }
-        }
-        else // Do nothing
-        {
-            // Note: Existing heap memory is sufficient; no action needed.
+            std::uintptr_t addr = reinterpret_cast<std::uintptr_t>( p );
+            static_assert( sizeof( std::uintptr_t ) == 4, "The `uintptr_t` must be 4 bytes." );
+            std::memcpy( raw_data_, &addr, INLINE_SIZE );
         }
         // [===> Follows: Heap memory allocation completed]
 
-        std::copy_n( data, size, storage_.heap_ptr_ );
+        std::memcpy( heapPointerAsVoid(), data, size );
         // [===> Follows: Data copied to heap memory]
     }
 
@@ -128,30 +131,35 @@ bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
 /* == [ Private methods. ] */
 void PropertyValue::cleanup() noexcept
 {
+    // [===> Prerequisite: This instance is locked]
+
     if ( isHeapAllocated() )
     {
-        heap_caps_free( storage_.heap_ptr_ );
-        storage_.heap_ptr_ = nullptr;
+        heap_caps_free( heapPointerAsVoid() );
     }
+    // [===> Follows: This instance has no heap memory]
+
+    std::memset( raw_data_, 0, INLINE_SIZE );
+    // [===> Follows: This instance has no data]
+
+    size_ = 0;
+    // [===> Follows: This instance has no size]
 }
 
 void PropertyValue::moveFrom( PropertyValue &&other ) noexcept
 {
-    size_ = other.size_;
-    // [===> Follows: This instance has size]
+    // [===> Prerequisite: This and other instance are locked]
+    // [===> Prerequisite: This instance has no heap memory]
 
-    if ( other.isHeapAllocated() )
-    {
-        storage_.heap_ptr_ = other.storage_.heap_ptr_;
-        other.storage_.heap_ptr_ = nullptr;
-    }
-    else
-    {
-        std::copy_n( other.storage_.inline_buffer_, size_, storage_.inline_buffer_ );
-    }
+    size_ = other.size_;
+    // [===> Follows: This instance has size copied]
+
+    std::memcpy( raw_data_, other.raw_data_, INLINE_SIZE );
     // [===> Follows: This instance has data copied]
-    // [===> Follows: Other instance has no heap memory]
+
+    std::memset( other.raw_data_, 0, INLINE_SIZE );
+    // [===> Follows: Other instance has no data]
 
     other.size_ = 0;
-    // [===> Follows: Other instances has no size]
+    // [===> Follows: Other instance has no size]
 }
