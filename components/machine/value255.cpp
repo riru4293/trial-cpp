@@ -1,20 +1,20 @@
 #include <algorithm>
 #include <esp_heap_caps.h>
 
-#include <property_value.hpp>
+#include <value255.hpp>
 
 
 /* ___________________________________/ _/ _/ .*/
 /* == [ Namespaces. ] */
-using namespace machine;
+using namespace value;
 
 
 /* ___________________________________/ _/ _/ .*/
 /* == [ Factory methods. ] */
-std::optional<PropertyValue> PropertyValue::create(
+std::optional<Value255> Value255::create(
     std::byte const *data, std::uint8_t size ) noexcept
 {
-    PropertyValue pv;
+    Value255 pv;
     bool ans = pv.set( data, size );
 
     if ( ans )
@@ -28,7 +28,7 @@ std::optional<PropertyValue> PropertyValue::create(
 
 /* ___________________________________/ _/ _/ .*/
 /* == [ Operators. ] */
-PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
+Value255 &Value255::operator = ( Value255 &&other ) noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -45,7 +45,7 @@ PropertyValue &PropertyValue::operator = ( PropertyValue &&other ) noexcept
     return *this;
 }
 
-bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
+bool Value255::operator == ( Value255 const &other ) const noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -65,7 +65,7 @@ bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
     return std::equal( a, a + size_, b );
 }
 
-auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
+auto Value255::operator <=> ( Value255 const &other ) const noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -93,7 +93,7 @@ auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
 
 /* ___________________________________/ _/ _/ .*/
 /* == [ Protected methods. ] */
-bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
+bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
@@ -136,7 +136,7 @@ bool PropertyValue::set( std::byte const *data, std::uint8_t size ) noexcept
 
 /* ___________________________________/ _/ _/ .*/
 /* == [ Private methods. ] */
-void PropertyValue::cleanup() noexcept
+void Value255::cleanup() noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
@@ -153,7 +153,7 @@ void PropertyValue::cleanup() noexcept
     // [===> Follows: This instance has no size]
 }
 
-void PropertyValue::moveFrom( PropertyValue &&other ) noexcept
+void Value255::moveFrom( Value255 &&other ) noexcept
 {
     // [===> Prerequisite: This and other instance are locked]
     // [===> Prerequisite: This instance has no heap memory]
@@ -171,7 +171,7 @@ void PropertyValue::moveFrom( PropertyValue &&other ) noexcept
     // [===> Follows: Other instance has no size]
 }
 
-std::ostream &operator << ( std::ostream &os, PropertyValue const &v )
+std::ostream &operator << ( std::ostream &os, Value255 const &v )
 {
     os << v.str();
     return os;

@@ -12,18 +12,18 @@
 #include <string>
 #include <vector>
 
-namespace machine
+namespace value
 {
-    /** @brief Represents a property value with dynamic storage. */
+    /** @brief Represents an opaque value with dynamic storage up to 255 bytes. */
     /**
      * @details
-     * This class manages a property value that may be stored either inline
+     * This class manages an opaque value that may be stored either inline
      * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
-     * constructing, moving, comparing, and streaming property values.
+     * constructing, moving, comparing, and streaming member values.
      * Instances are movable but not copyable.
      *
      * For external users, this class behaves as an immutable value type.
-     * Mutation is only permitted through the derived `MutablePropertyValue`.
+     * Mutation is only permitted through the derived `MutableValue255`.
      *
      * Critical sections are intentionally kept short; a spinlock is chosen
      * to minimize memory footprint and locking overhead.
@@ -50,54 +50,52 @@ namespace machine
      * - Locking granularity is coarse (per instance), limiting concurrency
      *   to a single thread at a time.
      */
-    class PropertyValue
+    class Value255
     {
     /* ^\__________________________________________ */
     /* Static members, Inner types.                 */
     public:
         #pragma region : factory methods
 
-        /** @brief Creates a `PropertyValue` instance from raw data. */
+        /** @brief Creates a `Value255` instance from raw data. */
         /**
          * @details
          * Allocates memory as needed and copies the provided data into the new instance.
          * @param data Pointer to the raw data.
          * @param size Size of the data in bytes.
-         * @return An optional containing the created `PropertyValue` if successful; `std::nullopt` otherwise
+         * @return An optional containing the created `Value255` if successful; `std::nullopt` otherwise
          */
-        static std::optional<PropertyValue> create(
+        static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
-        /** @brief Clones an existing `PropertyValue` instance. */
+        /** @brief Clones an existing `Value255` instance. */
         /**
          * @details
-         * Creates a new `PropertyValue` instance by copying the contents of the provided instance.
+         * Creates a new `Value255` instance by copying the contents of the provided instance.
          * Allocates memory as needed and copies the provided data into the new instance.
-         * @param other The `PropertyValue` instance to clone.
-         * @return An optional containing the cloned `PropertyValue` if successful; `std::nullopt` otherwise
+         * @param other The `Value255` instance to clone.
+         * @return An optional containing the cloned `Value255` if successful; `std::nullopt` otherwise
          */
-        static std::optional<PropertyValue> clone( PropertyValue const &other ) noexcept
+        static std::optional<Value255> clone( Value255 const &other ) noexcept
         {
             SpinGuard guard( other );
             // [===> Follows: Locked]
 
-            auto const size = other.size_unlocked();
-            auto const *ptr = other.data_unlocked();
+            std::uint8_t const size = other.size_unlocked();
+            std::byte const *data = other.data_unlocked();
 
-            return create( ptr, size );
+            return create( data, size );
         }
 
         #pragma endregion
-    private:
-        static constexpr std::uint8_t INLINE_SIZE = 4;
-
+    protected:
         struct SpinGuard
         {
-            PropertyValue const &a_;
-            PropertyValue const &b_;
+            Value255 const &a_;
+            Value255 const &b_;
 
-            explicit SpinGuard( PropertyValue const &v ) : SpinGuard( v, v ) {}
-            explicit SpinGuard( PropertyValue const &a, PropertyValue const &b ) : a_( a ), b_( b )
+            explicit SpinGuard( Value255 const &v ) : SpinGuard( v, v ) {}
+            explicit SpinGuard( Value255 const &a, Value255 const &b ) : a_( a ), b_( b )
             {
                 if ( &a_ == &b_ )
                 {
@@ -124,6 +122,8 @@ namespace machine
             SpinGuard( SpinGuard const & ) = delete;
             SpinGuard &operator = ( SpinGuard const & ) = delete;
         };
+    private:
+        static constexpr std::uint8_t INLINE_SIZE = 4;
     /* ^\__________________________________________ */
     /* Constructors.                                */
     public:
@@ -132,28 +132,28 @@ namespace machine
         /**
          * @brief Default constructor.
          * @details
-         * Initializes an empty `PropertyValue` with size 0 and no allocated memory.
+         * Initializes an empty `Value255` with size 0 and no allocated memory.
          */
-        explicit PropertyValue() noexcept = default;
+        explicit Value255() noexcept = default;
 
         /**
          * @brief Destructor.
          * @details
-         * Cleans up any heap-allocated memory when the `PropertyValue` instance is destroyed.
+         * Cleans up any heap-allocated memory when the `Value255` instance is destroyed.
          */
-        ~PropertyValue() { cleanup(); }
+        ~Value255() { cleanup(); }
 
         /** @brief Copy constructor (deleted). */
-        PropertyValue( PropertyValue const & ) = delete;
+        Value255( Value255 const & ) = delete;
 
         /** @brief Move constructor. */
         /**
          * @details
-         * Transfers ownership of the data from the other `PropertyValue` to this instance.
-         * After the move, the other `PropertyValue` is left in a valid but unspecified state.
-         * @param other The other `PropertyValue` to move from.
+         * Transfers ownership of the data from the other `Value255` to this instance.
+         * After the move, the other `Value255` is left in a valid but unspecified state.
+         * @param other The other `Value255` to move from.
          */
-        PropertyValue( PropertyValue &&other ) noexcept
+        Value255( Value255 &&other ) noexcept
         {
             SpinGuard guard( *this, other );
             // [===> Follows: Locked]
@@ -168,7 +168,7 @@ namespace machine
         #pragma region : operators
 
         /** @brief Copy assignment operator (deleted). */
-        PropertyValue &operator = ( PropertyValue const & ) = delete;
+        Value255 &operator = ( Value255 const & ) = delete;
 
         /** @brief Move assignment operator. */
         /**
@@ -176,14 +176,14 @@ namespace machine
          * Performs the following steps:
          * 1. If this and other instance are same, do nothing and return *this.
          * 2. Releases any heap memory currently owned by this instance.
-         * 3. Transfers or copies the contents from the other `PropertyValue`
+         * 3. Transfers or copies the contents from the other `Value255`
          *    (heap pointer is moved, inline buffer is copied).
-         * 4. Resets the other `PropertyValue` by setting its size to 0 and
+         * 4. Resets the other `Value255` by setting its size to 0 and
          *    its pointer to nullptr.
-         * @param other The other `PropertyValue` to move from.
-         * @return Reference to this `PropertyValue` after the move.
+         * @param other The other `Value255` to move from.
+         * @return Reference to this `Value255` after the move.
          */
-        PropertyValue &operator = ( PropertyValue &&other ) noexcept;
+        Value255 &operator = ( Value255 &&other ) noexcept;
 
         /** @brief Equality operator. */
         /**
@@ -196,7 +196,7 @@ namespace machine
          * @param other other instance to compare with.
          * @return `true` if both instances are equal, `false` otherwise.
          */
-        bool operator == ( PropertyValue const &other ) const noexcept;
+        bool operator == ( Value255 const &other ) const noexcept;
 
         /** @brief Three-way comparison operator. */
         /**
@@ -206,18 +206,18 @@ namespace machine
          * 2. If this instance's size is smaller, return `std::strong_ordering::less`.
          * 3. If this instance's size is larger, return `std::strong_ordering::greater`.
          * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
-         * @param other The other `PropertyValue` to compare with.
+         * @param other The other `Value255` to compare with.
          * @return `std::strong_ordering` indicating the comparison result.
          */
-        auto operator <=> ( PropertyValue const &other ) const noexcept;
+        auto operator <=> ( Value255 const &other ) const noexcept;
 
         #pragma endregion
     /* ^\__________________________________________ */
     /* Instance members.                            */
     public:
         /**
-         * @brief Returns the property value as a vector of bytes.
-         * @return Vector of bytes representing the property value.
+         * @brief Returns the value as a vector of bytes.
+         * @return Vector of bytes representing the value.
          */
         [[nodiscard]] std::vector<std::byte> bytes() const
         {
@@ -239,6 +239,10 @@ namespace machine
             return out;
         }
 
+        /**
+         * @brief Returns a string representation of the value.
+         * @return String representation of the value.
+         */
         [[nodiscard]] std::string str() const
         {
             SpinGuard guard( *this );
@@ -266,9 +270,11 @@ namespace machine
     private:
         bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
         void cleanup() noexcept;
-        void moveFrom( PropertyValue &&other ) noexcept;
-        void lock() const noexcept { while( lock_.exchange( true, std::memory_order_acquire ) ) { /* Busy loop */ } }
+        void moveFrom( Value255 &&other ) noexcept;
+        void lock() const noexcept { while(
+            lock_.exchange( true, std::memory_order_acquire ) ) { /* Busy loop */ } }
         void unlock() const noexcept { lock_.store( false, std::memory_order_release ); }
+
         uintptr_t heapPointer() const noexcept
         {
             uintptr_t ptr = 0;
@@ -305,58 +311,87 @@ namespace machine
         std::byte raw_data_[INLINE_SIZE] = {};  //!< Inline storage or heap pointer.
 
         #pragma endregion
-    }; // class PropertyValue
+    }; // class Value255
 
-    std::ostream &operator << ( std::ostream &os, PropertyValue const &v );
+    std::ostream &operator << ( std::ostream &os, Value255 const &v );
 
-
-    class MutablePropertyValue : public PropertyValue
+    /**
+     * @brief Mutable counterpart of `Value255`.
+     *
+     * @details
+     * This class provides the only mechanism to modify the contents of a
+     * `Value255` instance. While `Value255` behaves as an immutable value type
+     * for external users, `MutableValue255` exposes a controlled mutation API
+     * through the `set()` method.
+     *
+     * Internally, this class does not introduce additional state; it simply
+     * inherits the storage and locking behavior of `Value255`. All thread-safety
+     * guarantees, locking rules, and non-reentrancy constraints of `Value255`
+     * apply equally to `MutableValue255`.
+     *
+     * @note
+     * - Mutation is performed in-place and is protected by the same per-instance
+     *   spinlock used by `Value255`.
+     * - After mutation, the instance remains a valid `Value255` and can be used
+     *   wherever an immutable value is expected.
+     *
+     * @attention
+     * - As with `Value255`, this class is **not reentrant**. Calling a public
+     *   method from within another public method will result in deadlock.
+     * - Avoid long-running operations inside `set()`, as the lock is held for
+     *   the entire duration of the mutation.
+     */
+    class MutableValue255 : public Value255
     {
     public:
-        using PropertyValue::PropertyValue;
+        using Value255::Value255;
 
         [[nodiscard]] bool set(const std::byte* data, std::uint8_t size) {
-            return PropertyValue::set(data, size);
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
+            return Value255::set(data, size);
         }
-    }; // class MutablePropertyValue
+    }; // class MutableValue255
 
 
     /* ^\__________________________________________ */
     /* Static assertions.                           */
-    static_assert( sizeof(machine::PropertyValue) == 6, "Unexpected PropertyValue size" );
-    static_assert( alignof(machine::PropertyValue) == 1, "Unexpected PropertyValue alignment" );
-} // namespace machine
+    static_assert( sizeof(value::Value255) == 6, "Unexpected Value255 size" );
+    static_assert( alignof(value::Value255) == 1, "Unexpected Value255 alignment" );
+} // namespace value
 
 
 
 namespace std {
 
-#pragma region : formatter specialization
-    /** @brief Formatter specialization for `machine::PropertyValue`. */
+    #pragma region : formatter specialization
+
+    /** @brief Formatter specialization for `value::Value255`. */
     /**
      * @details
-     * Formats a `PropertyValue` instance.
+     * Formats a `Value255` instance.
      * For example, a value of 0xA5 0xE7 0x00 0xFF would be formatted as follows:
      * ```
      * [ 0xA5 0xE7, 0x00 0xFF ]
      * ```
      */
     template <>
-    struct formatter<machine::PropertyValue>
+    struct formatter<value::Value255>
     {
         /** @brief Parse format specifiers (no supported). */
         constexpr auto parse( std::format_parse_context &ctx ) {
             return ctx.begin();
         }
 
-        /** @brief Format the `machine::PropertyValue`. */
+        /** @brief Format the `value::Value255`. */
         template <typename FormatContext>
-            auto format( machine::PropertyValue const &v, FormatContext &ctx ) const
+            auto format( value::Value255 const &v, FormatContext &ctx ) const
             {
                 return std::ranges::copy( v.str(), ctx.out() ).out;
             }
     };
 
-#pragma endregion
+    #pragma endregion
 
 } // namespace std
