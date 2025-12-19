@@ -59,7 +59,10 @@ bool PropertyValue::operator == ( PropertyValue const &other ) const noexcept
     if ( size_ == 0 ) { return true; }
     // [===> Follows: Sizes present]
 
-    return std::equal( data(), data() + size_, other.data() );
+    auto *a = data_unlocked();
+    auto *b = other.data_unlocked();
+
+    return std::equal( a, a + size_, b );
 }
 
 auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
@@ -77,10 +80,14 @@ auto PropertyValue::operator <=> ( PropertyValue const &other ) const noexcept
     if (size_ == 0) { return std::strong_ordering::equal; }
     // [===> Follows: Sizes present]
 
+    auto *a = data_unlocked();
+    auto *b = other.data_unlocked();
+
     return std::lexicographical_compare_three_way(
-        data(), data() + size_,
-        other.data(), other.data() + other.size_,
-        std::compare_three_way() );
+        a, a + size_,
+        b, b + other.size_,
+        std::compare_three_way()
+    );
 }
 
 
@@ -162,4 +169,10 @@ void PropertyValue::moveFrom( PropertyValue &&other ) noexcept
 
     other.size_ = 0;
     // [===> Follows: Other instance has no size]
+}
+
+std::ostream &operator << ( std::ostream &os, PropertyValue const &v )
+{
+    os << v.str();
+    return os;
 }

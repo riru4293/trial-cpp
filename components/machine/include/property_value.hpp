@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <compare>
 #include <optional>
 #include <atomic>
 #include <ostream>
@@ -11,30 +10,45 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace machine
 {
     /** @brief Represents a property value with dynamic storage. */
     /**
      * @details
-     * This class manages a property value that can be stored either
-     * inline (for small sizes) or on the heap (for larger sizes).
-     * It provides methods for creating, moving, and comparing property values.
+     * This class manages a property value that may be stored either inline
+     * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
+     * constructing, moving, comparing, and streaming property values.
+     * Instances are movable but not copyable.
+     *
+     * For external users, this class behaves as an immutable value type.
+     * Mutation is only permitted through the derived `MutablePropertyValue`.
+     *
+     * Critical sections are intentionally kept short; a spinlock is chosen
+     * to minimize memory footprint and locking overhead.
+     *
+     * The class supports equality comparison, ordering comparison,
+     * and stream output via `operator<<`.
+     *
+     * @thread_safety
+     * All **public methods** of this class acquire an `atomic<bool>`-based
+     * spinlock to ensure thread safety.
+     * Locking is performed per instance and held for the entire duration
+     * of each public method.
+     *
      * @note
-     * Internal methods such as `set()` and `cleanup()` assume that the caller
-     * has already acquired the lock. Public API methods always acquire
-     * `SpinGuard`/`TwinSpinGuard` to ensure thread safety.
-     * @note
-     * Instances of this class are movable but not copyable.
-     * @note
-     * This class is effectively immutable for external users; mutation is only
-     * allowed via the derived `MutablePropertyValue`.
-     * @note Critical sections are expected to be short; spinlock is chosen for minimal footprint.
-     * @note This class is immutable; its state cannot be modified after construction.
-     * @note This class is hashable; std::hash specialization is provided.
-     * @note This class is comparable; supports equality and ordering operators.
-     * @note This class is streamable; supports `operator<<`.
-     * @note This class is thread-safe.
+     * Private/internal methods such as `set()` and `cleanup()` assume that
+     * the caller has already acquired the lock. They must not be invoked
+     * directly from outside the class.
+     *
+     * @attention
+     * - This class is **not reentrant**. Calling a public method from within
+     *   another public method will result in deadlock.
+     * - Avoid long-running operations inside public methods, as they hold
+     *   the lock for their entire execution.
+     * - Locking granularity is coarse (per instance), limiting concurrency
+     *   to a single thread at a time.
      */
     class PropertyValue
     {
@@ -67,7 +81,10 @@ namespace machine
             SpinGuard guard( other );
             // [===> Follows: Locked]
 
-            return create( other.data(), other.size() );
+            auto const size = other.size_unlocked();
+            auto const *ptr = other.data_unlocked();
+
+            return create( ptr, size );
         }
 
         #pragma endregion
@@ -157,10 +174,11 @@ namespace machine
         /**
          * @details
          * Performs the following steps:
-         * 1. Releases any heap memory currently owned by this instance.
-         * 2. Transfers or copies the contents from the other `PropertyValue`
+         * 1. If this and other instance are same, do nothing and return *this.
+         * 2. Releases any heap memory currently owned by this instance.
+         * 3. Transfers or copies the contents from the other `PropertyValue`
          *    (heap pointer is moved, inline buffer is copied).
-         * 3. Resets the other `PropertyValue` by setting its size to 0 and
+         * 4. Resets the other `PropertyValue` by setting its size to 0 and
          *    its pointer to nullptr.
          * @param other The other `PropertyValue` to move from.
          * @return Reference to this `PropertyValue` after the move.
@@ -171,9 +189,10 @@ namespace machine
         /**
          * @details
          * Perform the following steps:
-         * 1. If the sizes do not match, return `false`.
-         * 2. If the size is `0`, return `true`.
-         * 3. If the payload is an exact match, return `true`; otherwise, return `false`.
+         * 1. If this and other instance are same, return `true`.
+         * 2. If the sizes do not match, return `false`.
+         * 3. If the size is `0`, return `true`.
+         * 4. If the payload is an exact match, return `true`; otherwise, return `false`.
          * @param other other instance to compare with.
          * @return `true` if both instances are equal, `false` otherwise.
          */
@@ -183,9 +202,10 @@ namespace machine
         /**
          * @details
          * Performs the following steps:
-         * 1. If this instance's size is smaller, return `std::strong_ordering::less`.
-         * 2. If this instance's size is larger, return `std::strong_ordering::greater`.
-         * 3. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
+         * 1. If this and other instance are same, return `std::strong_ordering::equal`.
+         * 2. If this instance's size is smaller, return `std::strong_ordering::less`.
+         * 3. If this instance's size is larger, return `std::strong_ordering::greater`.
+         * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
          * @param other The other `PropertyValue` to compare with.
          * @return `std::strong_ordering` indicating the comparison result.
          */
@@ -196,45 +216,49 @@ namespace machine
     /* Instance members.                            */
     public:
         /**
-         * @brief Returns the size of the property value in bytes.
-         * @return Size of the property value in bytes.
+         * @brief Returns the property value as a vector of bytes.
+         * @return Vector of bytes representing the property value.
          */
-        [[nodiscard]] std::uint8_t size() const noexcept
+        [[nodiscard]] std::vector<std::byte> bytes() const
         {
             SpinGuard guard( *this );
-            // [===> Follows: Locked]
 
-            return size_;
-        }
+            std::vector<std::byte> out;
+            out.reserve( size_ );
 
-        /**
-         * @brief Returns a pointer to the data of the property value.
-         * @return Pointer to the data of the property value.
-         */
-        [[nodiscard]] std::byte const *data() const noexcept
-        {
-            SpinGuard guard( *this );
-            // [===> Follows: Locked]
+            if ( isHeapAllocated() )
+            {
+                std::byte *ptr = heapPointerAsByte();
+                out.insert( out.end(), ptr, ptr + size_ );
+            }
+            else
+            {
+                out.insert( out.end(), raw_data_, raw_data_ + size_ );
+            }
 
-            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
+            return out;
         }
 
         [[nodiscard]] std::string str() const
         {
-            SpinGuard guard(*this);
+            SpinGuard guard( *this );
             // [===> Follows: Locked]
+
+            auto v = bytes();
 
             std::ostringstream oss;
             oss << "[ ";
-            for ( std::uint8_t i = 0; i < size_; i++ )
+
+            for ( size_t i = 0; i < v.size(); i++ )
             {
                 oss << "0x"
                     << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
-                    << static_cast<unsigned>(data()[i]);
-                if ( i + 1 < size_ ) oss << ' ';
-            }
-            oss << " ]";
+                    << static_cast<unsigned>( v[i] );
 
+                if ( i + 1 < v.size() ) oss << ' ';
+            }
+
+            oss << " ]";
             return oss.str();
         }
     protected:
@@ -253,29 +277,37 @@ namespace machine
 
             return ptr;
         }
+
         std::byte *heapPointerAsByte() const noexcept
         {
             return reinterpret_cast<std::byte *>( heapPointer() );
         }
+
         void *heapPointerAsVoid() const noexcept
         {
             return reinterpret_cast<void *>( heapPointer() );
+        }
+
+        [[nodiscard]] std::uint8_t size_unlocked() const noexcept
+        {
+            return size_;
+        }
+
+        [[nodiscard]] std::byte const *data_unlocked() const noexcept
+        {
+            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
 
         #pragma region : member variables
 
         std::atomic<bool> mutable lock_ = false; //!< Spinlock for thread safety. false=unlocked, true=locked.
         std::uint8_t size_ = 0; //<! Size of the property value in bytes.
-        std::byte raw_data_[4] = {};  //!< Inline storage or heap pointer.
+        std::byte raw_data_[INLINE_SIZE] = {};  //!< Inline storage or heap pointer.
 
         #pragma endregion
     }; // class PropertyValue
 
-    std::ostream &operator << ( std::ostream &os, PropertyValue const &v )
-    {
-        os << v.str();
-        return os;
-    }
+    std::ostream &operator << ( std::ostream &os, PropertyValue const &v );
 
 
     class MutablePropertyValue : public PropertyValue
@@ -303,30 +335,27 @@ namespace std {
     /** @brief Formatter specialization for `machine::PropertyValue`. */
     /**
      * @details
-     * Formats a `PropertyValue` instance. Examples are follows:
-     * - `[ 0xA5 0xE7, 0x00 0xFF ]`
-     * @note This specialization is necessary because user-defined
-     * types do not have a default formatter in the standard library.
+     * Formats a `PropertyValue` instance.
+     * For example, a value of 0xA5 0xE7 0x00 0xFF would be formatted as follows:
+     * ```
+     * [ 0xA5 0xE7, 0x00 0xFF ]
+     * ```
      */
     template <>
-    struct formatter<machine::PropertyValue> {
-        /** @brief Parse format specifiers (none supported). */
-        constexpr auto parse(std::format_parse_context &ctx) {
+    struct formatter<machine::PropertyValue>
+    {
+        /** @brief Parse format specifiers (no supported). */
+        constexpr auto parse( std::format_parse_context &ctx ) {
             return ctx.begin();
         }
 
         /** @brief Format the `machine::PropertyValue`. */
-        /**
-         * @details
-         * Formats a `PropertyValue` instance to `[ 0xA5 0xE7, 0x00 0xFF ]`.
-         */
         template <typename FormatContext>
             auto format( machine::PropertyValue const &v, FormatContext &ctx ) const
             {
-                auto s = v.str();
-                return std::ranges::copy( s, ctx.out() ).out;
+                return std::ranges::copy( v.str(), ctx.out() ).out;
             }
-        };
+    };
 
 #pragma endregion
 
