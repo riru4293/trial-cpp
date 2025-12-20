@@ -104,8 +104,12 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
-    if ( size > 0 && data == nullptr ) { return false; }
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on invalid parameters!! ]
+    if ( size > 0 && data == nullptr )
+    {
+        cleanup();
+        return false;
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on invalid parameters!! ]
     // [===> Follows: All parameters are valid]
 
     if ( size <= INLINE_SIZE )  // Note: Use inline storage.
