@@ -62,10 +62,15 @@ namespace value
         * Allocates memory as needed and copies the provided data into the new
         * instance.
         *
-        * @param data Pointer to the raw data.
+        * @param data Pointer to the raw data. A null pointer is only valid if size is 0.
         * @param size Size of the data in bytes.
+        *
         * @return An optional containing the created `Value255` if successful;
-        * `std::nullopt` otherwise
+        * `std::nullopt` otherwise.
+        * @note
+        * The failure cases are:
+        * - `data` is null while `size` is greater than 0.
+        * - A situation where memory cannot be allocated to store a copy of `data`.
         */
         static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
@@ -78,8 +83,14 @@ namespace value
         * new instance.
         *
         * @param other The `Value255` instance to clone.
+        *
         * @return An optional containing the cloned `Value255` if successful;
-        * `std::nullopt` otherwise
+        * `std::nullopt` otherwise.
+        *
+        * @note
+        * The failure cases are:
+        * - `data` is null while `size` is greater than 0.
+        * - A situation where memory cannot be allocated to store a copy of `data`.
         */
         static std::optional<Value255> clone( Value255 const &other ) noexcept
         {
@@ -182,6 +193,7 @@ namespace value
          *    its pointer to nullptr.
          *
          * @param other The other `Value255` to move from.
+         *
          * @return Reference to this `Value255` after the move.
          */
         Value255 &operator = ( Value255 &&other ) noexcept;
@@ -196,6 +208,7 @@ namespace value
          * 4. If the payload is an exact match, return `true`; otherwise, return `false`.
          *
          * @param other other instance to compare with.
+         *
          * @return `true` if both instances are equal, `false` otherwise.
          */
         bool operator == ( Value255 const &other ) const noexcept;
@@ -210,6 +223,7 @@ namespace value
          * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
          *
          * @param other The other `Value255` to compare with.
+         *
          * @return `std::strong_ordering` indicating the comparison result.
          */
         auto operator <=> ( Value255 const &other ) const noexcept;
@@ -220,6 +234,7 @@ namespace value
     public:
         /**
          * @brief Returns the value as a vector of bytes.
+         *
          * @return Vector of bytes representing the value.
          */
         [[nodiscard]] std::vector<std::byte> bytes() const
@@ -242,8 +257,14 @@ namespace value
             return out;
         }
 
+        /** @brief Returns a string representation of the value. */
         /**
-         * @brief Returns a string representation of the value.
+         * @details
+         * The string representation is formatted as a list of hexadecimal byte values.
+         * For example, a value containing the bytes 0xA5, 0xE7, 0x00, 0xFF would be represented as:
+         * ```
+         * [ 0xA5 0xE7 0x00 0xFF ]
+         * ```
          * @return String representation of the value.
          */
         [[nodiscard]] std::string str() const
@@ -251,22 +272,21 @@ namespace value
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            auto v = bytes();
-
+            auto *ptr = data_unlocked();
+            auto   sz = size_unlocked();
             std::ostringstream oss;
+
             oss << "[ ";
 
-        std::byte const *ptr = data_unlocked();
-        std::uint8_t sz = size_unlocked();
-
-            for (uint8_t i = 0; i < sz; i++)
+            for ( uint8_t i = 0; i < sz; i++ )
             {
-                oss << std::format("0x{:02X}", static_cast<unsigned>(ptr[i]));
+                oss << std::format( "0x{:02X}", static_cast<unsigned>( ptr[i] ) );
 
-                if ( i + 1 < v.size() ) oss << ' ';
+                if ( i + 1 < sz ) oss << ' ';
             }
 
             oss << " ]";
+
             return oss.str();
         }
     protected:
