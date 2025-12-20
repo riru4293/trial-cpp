@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"name": "trial-cpp (main)",
+			"path": "."
+		},
+		{
+			"name": "test_Value255",
+			"path": "test_value255"
+		}
+	],
+	"settings": {
+		"idf.espIdfPath": "${userHome}/esp/esp-idf-v6.1-dev",
+		"idf.pythonInstallPath": "/usr/bin/python3",
+		"idf.openOcdConfigs": [
+			"board/esp32c6-builtin.cfg"
+		],
+		"idf.port": "/dev/ttyACM0",
+		"idf.toolsPath": "${userHome}/.espressif",
+		"idf.customExtraVars": {
+			"IDF_TARGET": "esp32c6"
+		},
+		"clangd.path": "${userHome}/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+		"clangd.arguments": [
+			"--folding-ranges",
+			"--background-index",
+			"--clang-tidy",
+			"--completion-style=detailed",
+			"--header-insertion=iwyu",
+			"--query-driver=${userHome}/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20250929/riscv32-esp-elf/bin/riscv32-esp-elf-g++",
+			"--compile-commands-dir=${workspaceFolder}/build"
+		],
+		"remote.extensionKind": {
+			"llvm-vs-code-extensions.vscode-clangd": ["workspace"],
+			"espressif.esp-idf-extension": ["workspace"]
+		}
+	}
+}
