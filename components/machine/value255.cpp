@@ -4,16 +4,19 @@
 #include <value255.hpp>
 
 
-/* ___________________________________/ _/ _/ .*/
-/* == [ Namespaces. ] */
+/* ^\__________________________________________ */
+/* Namespaces.                                  */
+
 using namespace value;
 
+/* ^\__________________________________________ */
+/* #region Factory methods.                     */
 
-/* ___________________________________/ _/ _/ .*/
-/* == [ Factory methods. ] */
 std::optional<Value255> Value255::create(
     std::byte const *data, std::uint8_t size ) noexcept
 {
+    // Note: Creating a new instance, there's no need to lock it.
+
     Value255 pv;
     bool ans = pv.set( data, size );
 
@@ -25,9 +28,11 @@ std::optional<Value255> Value255::create(
     return std::nullopt;
 }
 
+/* #endregion */// Factory methods
 
-/* ___________________________________/ _/ _/ .*/
-/* == [ Operators. ] */
+/* ^\__________________________________________ */
+/* #region Operators.                           */
+
 Value255 &Value255::operator = ( Value255 &&other ) noexcept
 {
     SpinGuard guard( *this, other );
@@ -90,17 +95,18 @@ auto Value255::operator <=> ( Value255 const &other ) const noexcept
     );
 }
 
+/* #endregion */// Operators
 
-/* ___________________________________/ _/ _/ .*/
-/* == [ Protected methods. ] */
+/* ^\__________________________________________ */
+/* #region Protected methods.                   */
+
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
-    if ( size > 0 && data == nullptr ) // Early return on invalid parameters.
-    {
-        return false;
-    }
+    if ( size > 0 && data == nullptr ) { return false; }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on invalid parameters!! ]
+    // [===> Follows: All parameters are valid]
 
     if ( size <= INLINE_SIZE )  // Note: Use inline storage.
     {
@@ -138,9 +144,11 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
     return true;
 }
 
+/* #endregion */// Protected methods
 
-/* ___________________________________/ _/ _/ .*/
-/* == [ Private methods. ] */
+/* ^\__________________________________________ */
+/* #region Private methods.                     */
+
 void Value255::cleanup() noexcept
 {
     // [===> Prerequisite: This instance is locked]
@@ -175,6 +183,9 @@ void Value255::moveFrom( Value255 &&other ) noexcept
     other.size_ = 0;
     // [===> Follows: Other instance has no size]
 }
+
+/* #endregion */// Private methods
+
 
 std::ostream &operator << ( std::ostream &os, Value255 const &v )
 {

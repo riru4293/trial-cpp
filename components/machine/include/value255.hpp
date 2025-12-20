@@ -53,9 +53,11 @@ namespace value
     {
     /* ^\__________________________________________ */
     /* #region Static members, Inner types.         */
+
     public:
 
-    /* #region Factory methods */
+        /* #region Factory methods */
+
         /** @brief Creates a `Value255` instance from raw data. */
         /**
         * @details
@@ -89,7 +91,6 @@ namespace value
         *
         * @note
         * The failure cases are:
-        * - `data` is null while `size` is greater than 0.
         * - A situation where memory cannot be allocated to store a copy of `data`.
         */
         static std::optional<Value255> clone( Value255 const &other ) noexcept
@@ -100,59 +101,75 @@ namespace value
             std::byte    const *data = other.data_unlocked();
             std::uint8_t const  size = other.size_unlocked();
 
+            /* Note:
+                create() is public method but does not require a lock,
+                so there are no deadlock issues. */
             return create( data, size );
         }
-    /* #endregion */ // Factory methods
+
+        /* #endregion */// Factory methods
 
     protected:
 
-    /* #region SpinGuard */
+        /* #region SpinGuard */
+
         struct SpinGuard
         {
             Value255 const &a_;
             Value255 const &b_;
 
-            explicit SpinGuard( Value255 const &v ) : SpinGuard( v, v ) {}
+            explicit SpinGuard( Value255 const &v ) noexcept : SpinGuard( v, v ) {}
 
-            explicit SpinGuard( Value255 const &a, Value255 const &b ) : a_( a ), b_( b )
+            explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept : a_( a ), b_( b )
             {
+                // Note: To prevent deadlocks, only one if the same instance will be locked.
                 if ( &a_ == &b_ ) { a_.lock();            }
                 else              { a_.lock(); b_.lock(); }
             }
 
             ~SpinGuard()
             {
+                // Note: Unlock in reverse order.
                 if ( &a_ == &b_ ) {              a_.unlock(); }
                 else              { b_.unlock(); a_.unlock(); }
             }
 
             SpinGuard( SpinGuard const & ) = delete;
             SpinGuard &operator = ( SpinGuard const & ) = delete;
+            SpinGuard( SpinGuard && ) = delete;
+            SpinGuard &operator = ( SpinGuard && ) = delete;
         };
-    /* #endregion */ // SpinGuard
+
+        /* #endregion */// SpinGuard
 
     private:
+
         static constexpr std::uint8_t INLINE_SIZE = 4;
-    /* #endregion */ // Static members, Inner types
+
+    /* #endregion */// Static members, Inner types
 
     /* ^\__________________________________________ */
     /* #region Constructors.                        */
+
     public:
+
+        /** @brief Default constructor. */
         /**
-         * @brief Default constructor.
-         *
          * @details
          * Initializes an empty `Value255` with size 0 and no allocated memory.
          */
         explicit Value255() noexcept = default;
 
+        /** @brief Destructor. */
         /**
-         * @brief Destructor.
-         *
          * @details
          * Cleans up any heap-allocated memory when the `Value255` instance is destroyed.
          */
-        ~Value255() { cleanup(); }
+        ~Value255() noexcept
+        {
+            // Note: Destructor called, there's no need to lock it.
+            cleanup();
+        }
 
         /** @brief Copy constructor (deleted). */
         Value255( Value255 const & ) = delete;
@@ -172,14 +189,16 @@ namespace value
 
             moveFrom( std::move( other ) );
         }
-    /* #endregion */ // Constructors
+
+    /* #endregion */// Constructors
 
     /* ^\__________________________________________ */
     /* #region Operators.                           */
+
     public:
 
         /** @brief Copy assignment operator (deleted). */
-        Value255 &operator = ( Value255 const & ) = delete;
+        Value255 &operator = ( Value255 const & ) noexcept = delete;
 
         /** @brief Move assignment operator. */
         /**
@@ -227,19 +246,22 @@ namespace value
          * @return `std::strong_ordering` indicating the comparison result.
          */
         auto operator <=> ( Value255 const &other ) const noexcept;
-    /* #endregion */ // Operators
+
+    /* #endregion */// Operators
 
     /* ^\__________________________________________ */
     /* #region Instance members.                    */
+
     public:
+
+        /** @brief Returns the size of the value in bytes. */
         /**
-         * @brief Returns the value as a vector of bytes.
-         *
          * @return Vector of bytes representing the value.
          */
-        [[nodiscard]] std::vector<std::byte> bytes() const
+        [[nodiscard]] std::vector<std::byte> bytes() const noexcept
         {
             SpinGuard guard( *this );
+            // [===> Follows: Locked]
 
             std::vector<std::byte> out;
             out.reserve( size_ );
@@ -265,9 +287,10 @@ namespace value
          * ```
          * [ 0xA5 0xE7 0x00 0xFF ]
          * ```
+         *
          * @return String representation of the value.
          */
-        [[nodiscard]] std::string str() const
+        [[nodiscard]] std::string str() const noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -289,15 +312,26 @@ namespace value
 
             return oss.str();
         }
+
     protected:
+
         [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept;
+
     private:
+
+        /* #region Private methods. */
+
         bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
+
         void cleanup() noexcept;
+
         void moveFrom( Value255 &&other ) noexcept;
+
         void lock() const noexcept { while(
             lock_.exchange( true, std::memory_order_acquire ) ) { /* Busy loop */ } }
-        void unlock() const noexcept { lock_.store( false, std::memory_order_release ); }
+
+        void unlock() const noexcept {
+            lock_.store( false, std::memory_order_release ); }
 
         uintptr_t heapPointer() const noexcept
         {
@@ -308,24 +342,45 @@ namespace value
             return ptr;
         }
 
-        std::byte *heapPointerAsByte() const noexcept { return reinterpret_cast<std::byte *>( heapPointer() ); }
-        void *heapPointerAsVoid() const noexcept { return reinterpret_cast<void *>( heapPointer() ); }
+        std::byte *heapPointerAsByte() const noexcept {
+            return reinterpret_cast<std::byte *>( heapPointer() ); }
+
+        void *heapPointerAsVoid() const noexcept {
+            return reinterpret_cast<void *>( heapPointer() ); }
+
         std::uint8_t size_unlocked() const noexcept { return size_; }
 
-        std::byte const *data_unlocked() const noexcept
-        {
-            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
-        }
+        std::byte const *data_unlocked() const noexcept {
+            return isHeapAllocated() ? heapPointerAsByte() : raw_data_; }
 
-    /* #region Member variables */
-        std::atomic<bool> mutable lock_ = false; //!< Spinlock for thread safety. false=unlocked, true=locked.
-        std::uint8_t size_ = 0; //<! Size of the property value in bytes.
-        std::byte raw_data_[INLINE_SIZE] = {};  //!< Inline storage or heap pointer.
-    /* #endregion */ // Instance members
+        /* #endregion */// Private methods
+
+        /* #region Member variables */
+
+        std::atomic<bool> mutable lock_ = false;    //!< Spinlock for thread safety. false=unlocked, true=locked.
+        std::uint8_t size_ = 0;                     //!< Size of the property value in bytes.
+        std::byte raw_data_[INLINE_SIZE] = {};      //!< Inline storage or heap pointer.
+
+        /* #endregion */// Member variables
+
+    /* #endregion */// Instance members
 
     }; // class Value255
 
-    std::ostream &operator << ( std::ostream &os, Value255 const &v );
+    /** @brief Stream output operator for `Value255`. */
+    /**
+     * @details
+     * Outputs the string representation of the `Value255` instance to the provided
+     * output stream.
+     *
+     * @see Value255::str() for the format of the output.
+     *
+     * @param os The output stream to write to.
+     * @param v The `Value255` instance to output.
+     *
+     * @return Reference to the output stream after writing.
+     */
+    std::ostream &operator << ( std::ostream &os, Value255 const &v ) noexcept;
 
     /** @brief Mutable counterpart of `Value255`. */
     /**
@@ -355,12 +410,19 @@ namespace value
     class MutableValue255 : public Value255
     {
     /* ^\__________________________________________ */
-    /* Constructors.                                */
+    /* #region Constructors.                        */
+
     public:
+
         using Value255::Value255;
+
+    /* #endregion */// Constructors
+
     /* ^\__________________________________________ */
-    /* Instance members.                            */
+    /* #region Instance members.                    */
+
     public:
+
         /** @brief Sets the value's data and size. */
         /**
         * @details
@@ -371,10 +433,15 @@ namespace value
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
         *
-        * @param data Pointer to the new raw data.
+        * @param data Pointer to the new raw data. A null pointer is only valid if size is 0.
         * @param size Size of the new data in bytes.
+        *
         * @return `true` if the operation was successful; `false` otherwise.
-        */
+        * @note
+        * The failure cases are:
+        * - `data` is null while `size` is greater than 0.
+        * - A situation where memory cannot be allocated to store a copy of `data`.
+       */
         [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept
         {
             SpinGuard guard( *this );
@@ -382,6 +449,9 @@ namespace value
 
             return Value255::set( data, size );
         }
+
+    /* #endregion */// Instance members
+
     }; // class MutableValue255
 
     static_assert(  sizeof(value::Value255) == 6, "Unexpected Value255 size");
@@ -393,27 +463,33 @@ namespace std // Formatter specialization
 {
     /** @brief Formatter specialization for `value::Value255`. */
     /**
-    * @details
-    * Formats a `Value255` instance.
-    * For example, a value of 0xA5 0xE7 0x00 0xFF would be formatted as follows:
-    * ```
-    * [ 0xA5 0xE7, 0x00 0xFF ]
-    * ```
-    */
+     * @details
+     * This formatter allows `value::Value255` instances to be formatted
+     * using the C++20 `<format>` library.
+     *
+     * @see Value255::str() for the format of the output.
+     */
     template <>
     struct formatter<value::Value255>
     {
         /** @brief Parse format specifiers (no supported). */
-        constexpr auto parse( std::format_parse_context &ctx ) noexcept -> char const *
-        {
-            return ctx.begin();
-        }
+        /**
+         * @param ctx The format parse context.
+         *
+         * @return Iterator to the end of the parsed format specifiers.
+         */
+        constexpr auto parse( std::format_parse_context &ctx ) const noexcept {
+            return ctx.begin(); }
 
         /** @brief Format the `value::Value255`. */
+        /**
+         * @param v The `value::Value255` instance to format.
+         * @param ctx The format context.
+         *
+         * @return Iterator to the end of the formatted output.
+         */
         template <typename FormatContext>
-        auto format( value::Value255 const &v, FormatContext &ctx ) const noexcept
-        {
-            return std::ranges::copy( v.str(), ctx.out() ).out;
-        }
+        auto format( value::Value255 const &v, FormatContext &ctx ) const noexcept {
+            return std::ranges::copy( v.str(), ctx.out() ).out; }
     };
 } // namespace std
