@@ -1,3 +1,3 @@
-idf_component_register(SRCS "value255.cpp"
+idf_component_register(SRCS ""
                        INCLUDE_DIRS "include"
-                       REQUIRES util)
+                       REQUIRES util value)
