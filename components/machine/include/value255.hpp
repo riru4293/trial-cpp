@@ -1,13 +1,12 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <optional>
-#include <atomic>
-#include <ostream>
 #include <format>
-#include <iomanip>
+#include <optional>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -16,121 +15,121 @@ namespace value
 {
     /** @brief Represents an opaque value with dynamic storage up to 255 bytes. */
     /**
-     * @details
-     * This class manages an opaque value that may be stored either inline
-     * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
-     * constructing, moving, comparing, and streaming member values.
-     * Instances are movable but not copyable.
-     *
-     * For external users, this class behaves as an immutable value type.
-     * Mutation is only permitted through the derived `MutableValue255`.
-     *
-     * Critical sections are intentionally kept short; a spinlock is chosen
-     * to minimize memory footprint and locking overhead.
-     *
-     * The class supports equality comparison, ordering comparison,
-     * and stream output via `operator<<`.
-     *
-     * @thread_safety
-     * All **public methods** of this class acquire an `atomic<bool>`-based
-     * spinlock to ensure thread safety.
-     * Locking is performed per instance and held for the entire duration
-     * of each public method.
-     *
-     * @note
-     * Private/internal methods such as `set()` and `cleanup()` assume that
-     * the caller has already acquired the lock. They must not be invoked
-     * directly from outside the class.
-     *
-     * @attention
-     * - This class is **not reentrant**. Calling a public method from within
-     *   another public method will result in deadlock.
-     * - Avoid long-running operations inside public methods, as they hold
-     *   the lock for their entire execution.
-     * - Locking granularity is coarse (per instance), limiting concurrency
-     *   to a single thread at a time.
-     */
+    * @details
+    * This class manages an opaque value that may be stored either inline
+    * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
+    * constructing, moving, comparing, and streaming member values.
+    * Instances are movable but not copyable.
+    *
+    * For external users, this class behaves as an immutable value type.
+    * Mutation is only permitted through the derived `MutableValue255`.
+    *
+    * Critical sections are intentionally kept short; a spinlock is chosen
+    * to minimize memory footprint and locking overhead.
+    *
+    * The class supports equality comparison, ordering comparison,
+    * and stream output via `operator<<`.
+    *
+    * @par Thread Safety
+    * All **public methods** of this class acquire an `atomic<bool>`-based
+    * spinlock to ensure thread safety.
+    * Locking is performed per instance and held for the entire duration
+    * of each public method.
+    *
+    * @note
+    * Private/internal methods such as `set()` and `cleanup()` assume that
+    * the caller has already acquired the lock. They must not be invoked
+    * directly from outside the class.
+    *
+    * @attention
+    * - This class is **not reentrant**. Calling a public method from within
+    *   another public method will result in deadlock.
+    * - Avoid long-running operations inside public methods, as they hold
+    *   the lock for their entire execution.
+    * - Locking granularity is coarse (per instance), limiting concurrency
+    *   to a single thread at a time.
+    */
     class Value255
     {
     /* ^\__________________________________________ */
-    /* Static members, Inner types.                 */
+    /* #region Static members, Inner types.         */
     public:
-        #pragma region : factory methods
 
+    /* #region Factory methods */
         /** @brief Creates a `Value255` instance from raw data. */
         /**
-         * @details
-         * Allocates memory as needed and copies the provided data into the new instance.
-         * @param data Pointer to the raw data.
-         * @param size Size of the data in bytes.
-         * @return An optional containing the created `Value255` if successful; `std::nullopt` otherwise
-         */
+        * @details
+        * Allocates memory as needed and copies the provided data into the new
+        * instance.
+        *
+        * @param data Pointer to the raw data.
+        * @param size Size of the data in bytes.
+        * @return An optional containing the created `Value255` if successful;
+        * `std::nullopt` otherwise
+        */
         static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
         /** @brief Clones an existing `Value255` instance. */
         /**
-         * @details
-         * Creates a new `Value255` instance by copying the contents of the provided instance.
-         * Allocates memory as needed and copies the provided data into the new instance.
-         * @param other The `Value255` instance to clone.
-         * @return An optional containing the cloned `Value255` if successful; `std::nullopt` otherwise
-         */
+        * @details
+        * Creates a new `Value255` instance by copying the contents of the provided
+        * instance. Allocates memory as needed and copies the provided data into the
+        * new instance.
+        *
+        * @param other The `Value255` instance to clone.
+        * @return An optional containing the cloned `Value255` if successful;
+        * `std::nullopt` otherwise
+        */
         static std::optional<Value255> clone( Value255 const &other ) noexcept
         {
             SpinGuard guard( other );
             // [===> Follows: Locked]
 
-            std::uint8_t const size = other.size_unlocked();
-            std::byte const *data = other.data_unlocked();
+            std::byte    const *data = other.data_unlocked();
+            std::uint8_t const  size = other.size_unlocked();
 
             return create( data, size );
         }
+    /* #endregion */ // Factory methods
 
-        #pragma endregion
     protected:
+
+    /* #region SpinGuard */
         struct SpinGuard
         {
             Value255 const &a_;
             Value255 const &b_;
 
             explicit SpinGuard( Value255 const &v ) : SpinGuard( v, v ) {}
+
             explicit SpinGuard( Value255 const &a, Value255 const &b ) : a_( a ), b_( b )
             {
-                if ( &a_ == &b_ )
-                {
-                    a_.lock();
-                }
-                else
-                {
-                    a_.lock();
-                    b_.lock();
-                }
+                if ( &a_ == &b_ ) { a_.lock();            }
+                else              { a_.lock(); b_.lock(); }
             }
+
             ~SpinGuard()
             {
-                if ( &a_ == &b_ )
-                {
-                    a_.unlock();
-                }
-                else
-                {
-                    b_.unlock();
-                    a_.unlock();
-                }
+                if ( &a_ == &b_ ) {              a_.unlock(); }
+                else              { b_.unlock(); a_.unlock(); }
             }
+
             SpinGuard( SpinGuard const & ) = delete;
             SpinGuard &operator = ( SpinGuard const & ) = delete;
         };
+    /* #endregion */ // SpinGuard
+
     private:
         static constexpr std::uint8_t INLINE_SIZE = 4;
-    /* ^\__________________________________________ */
-    /* Constructors.                                */
-    public:
-        #pragma region : constructors
+    /* #endregion */ // Static members, Inner types
 
+    /* ^\__________________________________________ */
+    /* #region Constructors.                        */
+    public:
         /**
          * @brief Default constructor.
+         *
          * @details
          * Initializes an empty `Value255` with size 0 and no allocated memory.
          */
@@ -138,6 +137,7 @@ namespace value
 
         /**
          * @brief Destructor.
+         *
          * @details
          * Cleans up any heap-allocated memory when the `Value255` instance is destroyed.
          */
@@ -151,6 +151,7 @@ namespace value
          * @details
          * Transfers ownership of the data from the other `Value255` to this instance.
          * After the move, the other `Value255` is left in a valid but unspecified state.
+         *
          * @param other The other `Value255` to move from.
          */
         Value255( Value255 &&other ) noexcept
@@ -160,12 +161,11 @@ namespace value
 
             moveFrom( std::move( other ) );
         }
+    /* #endregion */ // Constructors
 
-        #pragma endregion
     /* ^\__________________________________________ */
-    /* Operators.                                   */
+    /* #region Operators.                           */
     public:
-        #pragma region : operators
 
         /** @brief Copy assignment operator (deleted). */
         Value255 &operator = ( Value255 const & ) = delete;
@@ -180,6 +180,7 @@ namespace value
          *    (heap pointer is moved, inline buffer is copied).
          * 4. Resets the other `Value255` by setting its size to 0 and
          *    its pointer to nullptr.
+         *
          * @param other The other `Value255` to move from.
          * @return Reference to this `Value255` after the move.
          */
@@ -193,6 +194,7 @@ namespace value
          * 2. If the sizes do not match, return `false`.
          * 3. If the size is `0`, return `true`.
          * 4. If the payload is an exact match, return `true`; otherwise, return `false`.
+         *
          * @param other other instance to compare with.
          * @return `true` if both instances are equal, `false` otherwise.
          */
@@ -206,14 +208,15 @@ namespace value
          * 2. If this instance's size is smaller, return `std::strong_ordering::less`.
          * 3. If this instance's size is larger, return `std::strong_ordering::greater`.
          * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
+         *
          * @param other The other `Value255` to compare with.
          * @return `std::strong_ordering` indicating the comparison result.
          */
         auto operator <=> ( Value255 const &other ) const noexcept;
+    /* #endregion */ // Operators
 
-        #pragma endregion
     /* ^\__________________________________________ */
-    /* Instance members.                            */
+    /* #region Instance members.                    */
     public:
         /**
          * @brief Returns the value as a vector of bytes.
@@ -253,11 +256,12 @@ namespace value
             std::ostringstream oss;
             oss << "[ ";
 
-            for ( size_t i = 0; i < v.size(); i++ )
+        std::byte const *ptr = data_unlocked();
+        std::uint8_t sz = size_unlocked();
+
+            for (uint8_t i = 0; i < sz; i++)
             {
-                oss << "0x"
-                    << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
-                    << static_cast<unsigned>( v[i] );
+                oss << std::format("0x{:02X}", static_cast<unsigned>(ptr[i]));
 
                 if ( i + 1 < v.size() ) oss << ' ';
             }
@@ -284,114 +288,112 @@ namespace value
             return ptr;
         }
 
-        std::byte *heapPointerAsByte() const noexcept
-        {
-            return reinterpret_cast<std::byte *>( heapPointer() );
-        }
+        std::byte *heapPointerAsByte() const noexcept { return reinterpret_cast<std::byte *>( heapPointer() ); }
+        void *heapPointerAsVoid() const noexcept { return reinterpret_cast<void *>( heapPointer() ); }
+        std::uint8_t size_unlocked() const noexcept { return size_; }
 
-        void *heapPointerAsVoid() const noexcept
-        {
-            return reinterpret_cast<void *>( heapPointer() );
-        }
-
-        [[nodiscard]] std::uint8_t size_unlocked() const noexcept
-        {
-            return size_;
-        }
-
-        [[nodiscard]] std::byte const *data_unlocked() const noexcept
+        std::byte const *data_unlocked() const noexcept
         {
             return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
 
-        #pragma region : member variables
-
+    /* #region Member variables */
         std::atomic<bool> mutable lock_ = false; //!< Spinlock for thread safety. false=unlocked, true=locked.
         std::uint8_t size_ = 0; //<! Size of the property value in bytes.
         std::byte raw_data_[INLINE_SIZE] = {};  //!< Inline storage or heap pointer.
+    /* #endregion */ // Instance members
 
-        #pragma endregion
     }; // class Value255
 
     std::ostream &operator << ( std::ostream &os, Value255 const &v );
 
+    /** @brief Mutable counterpart of `Value255`. */
     /**
-     * @brief Mutable counterpart of `Value255`.
-     *
-     * @details
-     * This class provides the only mechanism to modify the contents of a
-     * `Value255` instance. While `Value255` behaves as an immutable value type
-     * for external users, `MutableValue255` exposes a controlled mutation API
-     * through the `set()` method.
-     *
-     * Internally, this class does not introduce additional state; it simply
-     * inherits the storage and locking behavior of `Value255`. All thread-safety
-     * guarantees, locking rules, and non-reentrancy constraints of `Value255`
-     * apply equally to `MutableValue255`.
-     *
-     * @note
-     * - Mutation is performed in-place and is protected by the same per-instance
-     *   spinlock used by `Value255`.
-     * - After mutation, the instance remains a valid `Value255` and can be used
-     *   wherever an immutable value is expected.
-     *
-     * @attention
-     * - As with `Value255`, this class is **not reentrant**. Calling a public
-     *   method from within another public method will result in deadlock.
-     * - Avoid long-running operations inside `set()`, as the lock is held for
-     *   the entire duration of the mutation.
-     */
+    * @details
+    * This class provides the only mechanism to modify the contents of a
+    * `Value255` instance. While `Value255` behaves as an immutable value type
+    * for external users, `MutableValue255` exposes a controlled mutation API
+    * through the `set()` method.
+    *
+    * Internally, this class does not introduce additional state; it simply
+    * inherits the storage and locking behavior of `Value255`. All thread-safety
+    * guarantees, locking rules, and non-reentrancy constraints of `Value255`
+    * apply equally to `MutableValue255`.
+    *
+    * @note
+    * - Mutation is performed in-place and is protected by the same per-instance
+    *   spinlock used by `Value255`.
+    * - After mutation, the instance remains a valid `Value255` and can be used
+    *   wherever an immutable value is expected.
+    *
+    * @attention
+    * - As with `Value255`, this class is **not reentrant**. Calling a public
+    *   method from within another public method will result in deadlock.
+    * - Avoid long-running operations inside `set()`, as the lock is held for
+    *   the entire duration of the mutation.
+    */
     class MutableValue255 : public Value255
     {
+    /* ^\__________________________________________ */
+    /* Constructors.                                */
     public:
         using Value255::Value255;
-
-        [[nodiscard]] bool set(const std::byte* data, std::uint8_t size) {
+    /* ^\__________________________________________ */
+    /* Instance members.                            */
+    public:
+        /** @brief Sets the value's data and size. */
+        /**
+        * @details
+        * This method updates the contents of the `MutableValue255` instance
+        * with the provided data and size.
+        *
+        * @par Thread Safety
+        * This method is thread-safe and acquires the instance's spinlock
+        * for the duration of the operation.
+        *
+        * @param data Pointer to the new raw data.
+        * @param size Size of the new data in bytes.
+        * @return `true` if the operation was successful; `false` otherwise.
+        */
+        [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept
+        {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            return Value255::set(data, size);
+            return Value255::set( data, size );
         }
     }; // class MutableValue255
 
+    static_assert(  sizeof(value::Value255) == 6, "Unexpected Value255 size");
+    static_assert( alignof(value::Value255) == 1, "Unexpected Value255 alignment");
 
-    /* ^\__________________________________________ */
-    /* Static assertions.                           */
-    static_assert( sizeof(value::Value255) == 6, "Unexpected Value255 size" );
-    static_assert( alignof(value::Value255) == 1, "Unexpected Value255 alignment" );
 } // namespace value
 
-
-
-namespace std {
-
-    #pragma region : formatter specialization
-
+namespace std // Formatter specialization
+{
     /** @brief Formatter specialization for `value::Value255`. */
     /**
-     * @details
-     * Formats a `Value255` instance.
-     * For example, a value of 0xA5 0xE7 0x00 0xFF would be formatted as follows:
-     * ```
-     * [ 0xA5 0xE7, 0x00 0xFF ]
-     * ```
-     */
+    * @details
+    * Formats a `Value255` instance.
+    * For example, a value of 0xA5 0xE7 0x00 0xFF would be formatted as follows:
+    * ```
+    * [ 0xA5 0xE7, 0x00 0xFF ]
+    * ```
+    */
     template <>
     struct formatter<value::Value255>
     {
         /** @brief Parse format specifiers (no supported). */
-        constexpr auto parse( std::format_parse_context &ctx ) {
+        constexpr auto parse( std::format_parse_context &ctx ) noexcept -> char const *
+        {
             return ctx.begin();
         }
 
         /** @brief Format the `value::Value255`. */
         template <typename FormatContext>
-            auto format( value::Value255 const &v, FormatContext &ctx ) const
-            {
-                return std::ranges::copy( v.str(), ctx.out() ).out;
-            }
+        auto format( value::Value255 const &v, FormatContext &ctx ) const noexcept
+        {
+            return std::ranges::copy( v.str(), ctx.out() ).out;
+        }
     };
-
-    #pragma endregion
-
 } // namespace std
