@@ -3,10 +3,6 @@
 		{
 			"name": "trial-cpp (main)",
 			"path": "."
-		},
-		{
-			"name": "test_Value255",
-			"path": "test_value255"
 		}
 	],
 	"settings": {
@@ -33,6 +29,16 @@
 		"remote.extensionKind": {
 			"llvm-vs-code-extensions.vscode-clangd": ["workspace"],
 			"espressif.esp-idf-extension": ["workspace"]
-		}
+		},
+		"terminal.integrated.profiles.linux": {
+			"bash (ESP-IDF)": {
+				"path": "bash",
+				"args": [
+					"-c",
+					". $HOME/esp/esp-idf-v6.1-dev/export.sh && exec bash || (echo 'ESP-IDF export.sh failed'; exec bash)"
+				]
+			}
+		},
+		"terminal.integrated.defaultProfile.linux": "bash (ESP-IDF)"
 	}
 }
