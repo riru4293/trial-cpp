@@ -1,5 +1,0 @@
-idf_component_register(
-    SRCS "test_main.cpp"
-    PRIV_REQUIRES unity
-    INCLUDE_DIRS "."
-)
