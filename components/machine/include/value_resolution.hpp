@@ -1,72 +1,126 @@
 #pragma once
 
 #include <cstdint>
+#include <string_view>
+#include <array>
 
+// TODO : Make the Resolution class and Kind enum;
 namespace machine {
 
-    /** @brief A mask to extract the @ref Resolution ​​from the `uint8_t`. */
-    static constexpr std::uint8_t RESOLUTION_MASK = 0b111;
+    namespace detail {
 
-    /** @brief The %Resolution of the number. */
-    /** 
-        * @details %Resolution encoding (3-bit).
-        * - bit0: coefficient ( 0=x1, 1=x5 )
-        * - bit1,2: signed shift amount N (2's complement)
-        *   - `0b00 = +0 (10^+0)`
-        *   - `0b01 = +1 (10^+1)`
-        *   - `0b10 = -2 (10^-2)`
-        *   - `0b11 = -1 (10^-1)`
-        * 
-        * @par Examples:
-        * - `ShiftR1x5 (0b011) = 10^+1 × 5 = 50`
-        * - `ShiftL2x1 (0b100) = 10^-2 × 1 = 0.01`
-        */
-    enum class Resolution : std::uint8_t {
-        ShiftR0x1 = 0b0000, //!< `10^+0 x1 = x1`
-        ShiftR0x5 = 0b0001, //!< `10^+0 x5 = x5`
-        ShiftR1x1 = 0b0010, //!< `10^+1 x1 = x10`
-        ShiftR1x5 = 0b0011, //!< `10^+1 x5 = x50`
-        ShiftL2x1 = 0b0100, //!< `10^-2 x1 = x0.01`
-        ShiftL2x5 = 0b0101, //!< `10^-2 x5 = x0.05`
-        ShiftL1x1 = 0b0110, //!< `10^-1 x1 = x0.1`
-        ShiftL1x5 = 0b0111, //!< `10^-1 x5 = x0.5`
+        /** @brief The names of each @ref Resolution ​​value. */
+        constexpr std::array<std::string_view, 8> RESOLUTION_NAMES =
+        {
+            "x1",       "x5",
+            "x10",      "x50",
+            "x0.01",    "x0.05",
+            "x0.1",     "x0.5",
+        };
+
+    } // namespace detail
+
+    /** @brief The number of bits used to represent @ref Resolution. */
+    constexpr uint8_t RESOLUTION_BITS = 3U;
+
+    /** @brief A mask to extract the @ref Resolution ​​from the `uint8_t`. */
+    constexpr uint8_t RESOLUTION_MASK = ( 1U << RESOLUTION_BITS ) - 1U;
+
+    /** @brief The %resolution of the number. */
+    /**
+     * @details
+     * %Resolution encoding (3-bit).
+     * @code
+     * bit2 bit1 bit0
+     *   ^    ^    ^
+     *   |    |    +-- coefficient ( 0=x1, 1=x5 )
+     *   |    |
+     *   +----+------- signed shift N (2-bit, 2's complement)
+     * @endcode
+     *
+     * @par Examples:
+     * - `X50   (0b011) = 10^+1 × 5 = 50`
+     * - `X1    (0b000) = 10^+0 × 1 = 1`
+     * - `X0_01 (0b100) = 10^-2 × 1 = 0.01`
+     */
+    enum class Resolution : std::uint8_t
+    {
+        X1    = 0b000, //!< `10^+0 x 1 = x1`
+        X5    = 0b001, //!< `10^+0 x 5 = x5`
+        X10   = 0b010, //!< `10^+1 x 1 = x10`
+        X50   = 0b011, //!< `10^+1 x 5 = x50`
+        X0_01 = 0b100, //!< `10^-2 x 1 = x0.01`
+        X0_05 = 0b101, //!< `10^-2 x 5 = x0.05`
+        X0_1  = 0b110, //!< `10^-1 x 1 = x0.1`
+        X0_5  = 0b111, //!< `10^-1 x 5 = x0.5`
     };
 
-    // /** @brief Helper to get name of the @ref Resolution. */
-    // struct ResolutionName
-    // {
-    //     /**
-    //         * @brief Convert `machine::PropertySpec::Resolution` enum value to name.
-    //         * @param v value to convert
-    //         * @return name string view
-    //         */
-    //     static constexpr std::string_view of(Resolution v) noexcept {
-    //         using T = Resolution;
-    //         switch (v) {
-    //             case T::ShiftR0x1:  return "ShiftR0x1";
-    //             case T::ShiftR0x5:  return "ShiftR0x5";
-    //             case T::ShiftR1x1:  return "ShiftR1x1";
-    //             case T::ShiftR1x5:  return "ShiftR1x5";
-    //             case T::ShiftL2x1:  return "ShiftL2x1";
-    //             case T::ShiftL2x5:  return "ShiftL2x5";
-    //             case T::ShiftL1x1:  return "ShiftL1x1";
-    //             case T::ShiftL1x5:  return "ShiftL1x5";
-    //             default:            return "Unknown";
-    //         }
-    //     }
-    // };
+    /** @brief Get the signed exponent N of ScaleBy10Pow(N) from the given ​​value. */
+    /**
+     * @details
+     * Inputs and outputs are as follows:
+     * | INPUT             | OUTPUT |
+     * | ----------------- | -----: |
+     * | Resolution::X1    |     -2 |
+     * | Resolution::X5    |     -2 |
+     * | Resolution::X10   |     -1 |
+     * | Resolution::X50   |     -1 |
+     * | Resolution::X0_01 |      0 |
+     * | Resolution::X0_05 |      0 |
+     * | Resolution::X0_1  |     +1 |
+     * | Resolution::X0_5  |     +1 |
+     */
+    constexpr int8_t shift_of( Resolution v ) noexcept
+    {
+        /* 2-bit signed (two's complement) */
+        return static_cast<int8_t>(
+            ( static_cast<uint8_t>( v ) >> 1 ) & 0b11 ) - 2;
+    }
 
-    // std::ostream &operator<<(std::ostream &os, const PropertySpec::Resolution &v)
-    // {
-    //     os << machine::PropertySpec::ResolutionName::of(v) << "(" << static_cast<int>(v) << ")";
-    //     return os;
-    // }
+    /** @brief Get the coefficient of the given ​​value. */
+    /**
+     * @details
+     * Inputs and outputs are as follows:
+     * | INPUT             | OUTPUT |
+     * | ----------------- | -----: |
+     * | Resolution::X1    |      1 |
+     * | Resolution::X5    |      5 |
+     * | Resolution::X10   |      1 |
+     * | Resolution::X50   |      5 |
+     * | Resolution::X0_01 |      1 |
+     * | Resolution::X0_05 |      5 |
+     * | Resolution::X0_1  |      1 |
+     * | Resolution::X0_5  |      5 |
+     */
+    constexpr uint8_t coeff_of( Resolution v ) noexcept
+    {
+        return static_cast<uint8_t>(
+            ( static_cast<uint8_t>( v ) & 0b1 ) ? 5 : 1 );
+    }
 
+
+    /** @brief Get the name of the given ​​value. */
+    /** @details
+     * Inputs and outputs are as follows:
+     * | INPUT             | OUTPUT  |
+     * | ----------------- | ------- |
+     * | Resolution::X1    | "x1"    |
+     * | Resolution::X5    | "x5"    |
+     * | Resolution::X10   | "x10"   |
+     * | Resolution::X50   | "x50"   |
+     * | Resolution::X0_01 | "x0.01" |
+     * | Resolution::X0_05 | "x0.05" |
+     * | Resolution::X0_1  | "x0.1"  |
+     * | Resolution::X0_5  | "x0.5"  |
+     */
+    constexpr std::string_view name_of( Resolution v ) noexcept
+    {
+        return detail::RESOLUTION_NAMES[static_cast<uint8_t>( v )];
+    }
 } // namespace machine
 
 // namespace std {
 
-// #pragma region : formatter specialization
 //     /** @brief Formatter specialization for `machine::PropertySpec`. */
 //     /**
 //      * @details
@@ -95,6 +149,5 @@ namespace machine {
 //         }
 //     };
 
-// #pragma endregion
 
 // } // namespace std
