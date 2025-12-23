@@ -1,3 +1,4 @@
-idf_component_register(SRCS ""
-                       INCLUDE_DIRS "include"
-                       REQUIRES util value)
+idf_component_register(
+    INCLUDE_DIRS "include"
+    REQUIRES util value
+)
