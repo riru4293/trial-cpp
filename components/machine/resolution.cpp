@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <ostream>
+#include <format>
 
 using namespace machine;
 

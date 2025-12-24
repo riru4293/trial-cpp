@@ -8,7 +8,7 @@ namespace machine
     namespace detail {
 
         /** @brief The names of each @ref Resolution ​​value. */
-        std::array<std::string_view, 8> constexpr RESOLUTION_NAMES =
+        inline std::array<std::string_view, 8> constexpr RESOLUTION_NAMES =
         {
             "x1",       "x5",
             "x10",      "x50",
