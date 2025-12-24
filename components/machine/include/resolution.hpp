@@ -9,7 +9,22 @@ namespace machine
 {
 
     /**
-     * @brief 
+     * @brief Number resolution.
+     *
+     * @details
+     * The resolution of the number, expressed in 3 bits.
+     * See `Resolution::Kind` for the definition.
+     *
+     * For example, a value resolution of 0x7 indicates a resolution of 5 * 10^-1 = 0.5.
+     * As a concrete example, to represent a temperature of 25.5°C,
+     * the value would be 51 and the resolution would be 0.5.
+     *
+     * @note ja: 数値の解像度。3ビットで表現されます。
+     *           定義については `Resolution::Kind` を参照してください。
+     *           例えば、解像度が0x7の場合、5 * 10^-1 = 0.5の解像度を示します。
+     *           具体的な例として、25.5°Cの温度を表すには、値が51で解像度が0.5となります。
+     *
+     * @see machine::Resolution::Kind
      */
     class Resolution
     {
@@ -102,6 +117,44 @@ namespace machine
         * | Resolution::X0_5  | "x0.5"  |
         */
         static std::string_view constexpr name_of( Kind v ) noexcept;
+
+        /**
+        * @brief Get the real-valued scale factor of the given resolution.
+        *
+        * @details
+        * This function returns the multiplicative scale factor represented
+        * by the given @ref Resolution::Kind.
+        *
+        * The scale factor is defined as:
+        * @code
+        *   scale = coefficient × 10^(-shift)
+        * @endcode
+        *
+        * This value can be used to convert a raw integer value into a
+        * real-world quantity:
+        * @code
+        *   real_value = raw_value * Resolution::scale_factor(kind);
+        * @endcode
+        *
+        * Examples:
+        * - `Kind::X1`    → `1.0`
+        * - `Kind::X5`    → `5.0`
+        * - `Kind::X10`   → `10.0`
+        * - `Kind::X50`   → `50.0`
+        * - `Kind::X0_1`  → `0.1`
+        * - `Kind::X0_5`  → `0.5`
+        *
+        * @note
+        * This function introduces floating-point semantics intentionally.
+        * Low-level code may avoid calling this function and instead work
+        * with integer arithmetic using @ref shift_of and @ref coeff_of.
+        *
+        * @param v The resolution kind.
+        * @return The real-valued scale factor.
+        */
+        static double scale_factor( Kind v ) noexcept;
+
+    /* #endregion */// Static members, Inner types
 
     }; // class Resolution
 

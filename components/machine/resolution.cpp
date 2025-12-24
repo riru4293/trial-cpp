@@ -1,6 +1,7 @@
 #include "resolution_impl.hpp"
 #include <resolution.hpp>
 
+#include <cmath>
 #include <ostream>
 
 using namespace machine;
@@ -8,22 +9,33 @@ using namespace machine;
 int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
 {
     /* 2-bit signed (two's complement) */
-    return static_cast<int8_t>(
-        ( static_cast<uint8_t>( v ) >> 1 ) & 0b11 ) - 2;
+    auto raw = static_cast<uint8_t>( v );
+    auto bit2_bit1 = ( raw >> 1 ) & 0b11; // signed 2-bit
+    return bit2_bit1 - 2;
 }
 uint8_t constexpr Resolution::coeff_of( Resolution::Kind v ) noexcept
 {
-    return static_cast<uint8_t>(
-        ( static_cast<uint8_t>( v ) & 0b1 ) ? 5 : 1 );
+    auto raw = static_cast<uint8_t>( v );
+    auto bit0 = raw & 0b1;
+    return bit0 ? 5U : 1U;
 }
 
 std::string_view constexpr Resolution::name_of( Resolution::Kind v ) noexcept
 {
-    return detail::RESOLUTION_NAMES[static_cast<uint8_t>( v )];
+    auto idx = static_cast<uint8_t>( v );
+    assert( idx < detail::RESOLUTION_NAMES.size() );
+    return detail::RESOLUTION_NAMES[idx];
+}
+
+double Resolution::scale_factor( Resolution::Kind v ) noexcept
+{
+    double const coeff = static_cast<double>( coeff_of( v ) );
+    int8_t const shift = shift_of( v );
+
+    return coeff * std::pow( 10.0, -shift );
 }
 
 std::ostream &operator<<(std::ostream &os, const Resolution::Kind &v)
 {
-    os << Resolution::name_of(v) << "(" << static_cast<int>(v) << ")";
-    return os;
+    return os << std::format( "{}", v );
 }
