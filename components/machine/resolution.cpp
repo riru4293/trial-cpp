@@ -7,36 +7,51 @@
 
 using namespace machine;
 
-int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
+std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
 {
-    /* 2-bit signed (two's complement) */
-    auto raw = static_cast<uint8_t>( v );
-    auto bit2_bit1 = ( raw >> 1 ) & 0b11; // signed 2-bit
-    return bit2_bit1 - 2;
+    auto raw = static_cast<std::uint8_t>( v ); // Note: 0 to 7
+
+    std::uint8_t bit2_bit1 = static_cast<std::uint8_t>( (raw >> 1) & 0b11 ); // Note: 0 to 3
+    
+    /* Note: Calculation details.
+        + ------- + ------------------ + ---------------- + ------ +
+        | Step0:  | Step1:             | Step2:           | Step3: |
+        | Origin  | << 6 (as unsigned) | >> 6 (as signed) | Result |
+        + ------- + ------------------ + ---------------- + ------ +
+        |   0b00  |        0b00000000  |      0b00000000  |    +0  |
+        |   0b01  |        0b01000000  |      0b00000001  |    +1  |
+        |   0b10  |        0b10000000  |      0b11111110  |    -2  |
+        |   0b11  |        0b11000000  |      0b11111111  |    -1  |
+        + ------- + ------------------ + ---------------- + ------ +
+    */
+    return static_cast<std::int8_t>( bit2_bit1 << 6 ) >> 6; // Note: -2 to +1
 }
-uint8_t constexpr Resolution::coeff_of( Resolution::Kind v ) noexcept
+
+std::uint8_t constexpr Resolution::coeff_of( Resolution::Kind v ) noexcept
 {
-    auto raw = static_cast<uint8_t>( v );
+    auto raw = static_cast<std::uint8_t>( v );
     auto bit0 = raw & 0b1;
-    return bit0 ? 5U : 1U;
+    return bit0 ? 5U : 1U; // 5 if bit0 == 1, 1 if bit0 == 0
 }
 
 std::string_view constexpr Resolution::name_of( Resolution::Kind v ) noexcept
 {
-    auto idx = static_cast<uint8_t>( v );
-    assert( idx < detail::RESOLUTION_NAMES.size() );
-    return detail::RESOLUTION_NAMES[idx];
+    auto idx = static_cast<std::uint8_t>( v );
+
+    return ( idx < detail::RESOLUTION_NAMES.size() )
+        ? detail::RESOLUTION_NAMES[idx]
+        : "Unknown";
 }
 
-double Resolution::scale_factor( Resolution::Kind v ) noexcept
+double constexpr Resolution::scale_factor( Resolution::Kind v ) noexcept
 {
-    double const coeff = static_cast<double>( coeff_of( v ) );
-    int8_t const shift = shift_of( v );
+    double coeff = static_cast<double>( coeff_of( v ) );
+    std::int8_t shift = shift_of( v );
 
-    return coeff * std::pow( 10.0, -shift );
+    return coeff * std::pow( 10.0, shift );
 }
 
-std::ostream &operator<<(std::ostream &os, const Resolution::Kind &v)
+std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
 {
     return os << std::format( "{}", v );
 }
