@@ -33,7 +33,7 @@ std::optional<Value255> Value255::create(
 /* ^\__________________________________________ */
 /* #region Operators.                           */
 
-Value255 &Value255::operator = ( Value255 &&other ) noexcept
+Value255 &Value255::operator=( Value255 &&other ) noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -50,7 +50,7 @@ Value255 &Value255::operator = ( Value255 &&other ) noexcept
     return *this;
 }
 
-bool Value255::operator == ( Value255 const &other ) const noexcept
+bool Value255::operator==( Value255 const &other ) const noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -61,7 +61,7 @@ bool Value255::operator == ( Value255 const &other ) const noexcept
     if ( size_ != other.size_ ) { return false; }
     // [===> Follows: Sizes matched]
 
-    if ( size_ == 0 ) { return true; }
+    if ( size_ == 0U ) { return true; }
     // [===> Follows: Sizes present]
 
     auto *a = data_unlocked();
@@ -70,7 +70,7 @@ bool Value255::operator == ( Value255 const &other ) const noexcept
     return std::equal( a, a + size_, b );
 }
 
-auto Value255::operator <=> ( Value255 const &other ) const noexcept
+auto Value255::operator<=>( Value255 const &other ) const noexcept
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -104,7 +104,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
-    if ( size > 0 && data == nullptr )
+    if ( size > 0U && data == nullptr )
     {
         cleanup();
         return false;
@@ -116,7 +116,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
     {
         cleanup();
         // [===> Follows: All resources were released and cleared]
-        
+
         std::memcpy( raw_data_, data, size );
         // [===> Follows: Data copied to inline buffer]
     }
@@ -133,7 +133,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
             // [===> Follows: Heap memory reallocated]
 
             std::uintptr_t addr = reinterpret_cast<std::uintptr_t>( p );
-            static_assert( sizeof( std::uintptr_t ) == 4, "The `uintptr_t` must be 4 bytes." );
+            static_assert( sizeof( std::uintptr_t ) == 4U, "The `uintptr_t` must be 4 bytes." );
             std::memcpy( raw_data_, &addr, INLINE_SIZE );
         }
         // [===> Follows: Heap memory allocation completed]
@@ -184,14 +184,14 @@ void Value255::moveFrom( Value255 &&other ) noexcept
     std::memset( other.raw_data_, 0, INLINE_SIZE );
     // [===> Follows: Other instance has no data]
 
-    other.size_ = 0;
+    other.size_ = 0U;
     // [===> Follows: Other instance has no size]
 }
 
 /* #endregion */// Private methods
 
 
-std::ostream &operator << ( std::ostream &os, Value255 const &v )
+std::ostream &operator<<( std::ostream &os, Value255 const &v )
 {
     os << v.str();
     return os;

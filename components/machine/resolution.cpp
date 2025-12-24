@@ -12,7 +12,7 @@ std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
     auto raw = static_cast<std::uint8_t>( v ); // Note: 0 to 7
 
     std::uint8_t bit2_bit1 = static_cast<std::uint8_t>( (raw >> 1) & 0b11 ); // Note: 0 to 3
-    
+
     /* Note: Calculation details.
         + ------- + ------------------ + ---------------- + ------ +
         | Step0:  | Step1:             | Step2:           | Step3: |

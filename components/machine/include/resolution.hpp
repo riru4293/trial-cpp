@@ -81,7 +81,7 @@ namespace machine
          * | Resolution::X0_1  | 0b11 (-1 as 2's complement) |     -1 |
          * | Resolution::X0_5  | 0b11 (-1 as 2's complement) |     -1 |
          */
-        static std::int8_t constexpr shift_of( Kind v ) noexcept;
+        [[nodiscard]] static std::int8_t constexpr shift_of( Kind v ) noexcept;
 
         /** @brief Get the coefficient of the given ​​value. */
         /**
@@ -98,7 +98,7 @@ namespace machine
          * | Resolution::X0_1  |      1 |
          * | Resolution::X0_5  |      5 |
          */
-        static std::uint8_t constexpr coeff_of( Kind v ) noexcept;
+        [[nodiscard]] static std::uint8_t constexpr coeff_of( Kind v ) noexcept;
 
         /** @brief Get the name of the given ​​value. */
         /** @details
@@ -114,7 +114,7 @@ namespace machine
          * | Resolution::X0_1  | "x0.1"  |
          * | Resolution::X0_5  | "x0.5"  |
          */
-        static std::string_view constexpr name_of( Kind v ) noexcept;
+        [[nodiscard]] static std::string_view constexpr name_of( Kind v ) noexcept;
 
         /** @brief Get the real-valued scale factor of the given resolution. */
         /**
@@ -149,7 +149,7 @@ namespace machine
          * @param v The resolution kind.
          * @return The real-valued scale factor.
          */
-        static double constexpr scale_factor( Kind v ) noexcept;
+        [[nodiscard]] static double constexpr scale_factor( Kind v ) noexcept;
 
     /* #endregion */// Static members, Inner types
 

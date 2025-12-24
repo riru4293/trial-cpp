@@ -135,9 +135,9 @@ namespace value
             }
 
             SpinGuard( SpinGuard const & ) = delete;
-            SpinGuard &operator = ( SpinGuard const & ) = delete;
+            SpinGuard &operator=( SpinGuard const & ) = delete;
             SpinGuard( SpinGuard && ) = delete;
-            SpinGuard &operator = ( SpinGuard && ) = delete;
+            SpinGuard &operator=( SpinGuard && ) = delete;
         };
 
         /* #endregion */// SpinGuard
@@ -198,7 +198,7 @@ namespace value
     public:
 
         /** @brief Copy assignment operator (deleted). */
-        Value255 &operator = ( Value255 const & ) noexcept = delete;
+        Value255 &operator=( Value255 const & ) noexcept = delete;
 
         /** @brief Move assignment operator. */
         /**
@@ -215,7 +215,7 @@ namespace value
          *
          * @return Reference to this `Value255` after the move.
          */
-        Value255 &operator = ( Value255 &&other ) noexcept;
+        Value255 &operator=( Value255 &&other ) noexcept;
 
         /** @brief Equality operator. */
         /**
@@ -230,7 +230,7 @@ namespace value
          *
          * @return `true` if both instances are equal, `false` otherwise.
          */
-        bool operator == ( Value255 const &other ) const noexcept;
+        bool operator==( Value255 const &other ) const noexcept;
 
         /** @brief Three-way comparison operator. */
         /**
@@ -245,7 +245,7 @@ namespace value
          *
          * @return `std::strong_ordering` indicating the comparison result.
          */
-        auto operator <=> ( Value255 const &other ) const noexcept;
+        auto operator<=>( Value255 const &other ) const noexcept;
 
     /* #endregion */// Operators
 
@@ -333,9 +333,9 @@ namespace value
         void unlock() const noexcept {
             lock_.store( false, std::memory_order_release ); }
 
-        uintptr_t heapPointer() const noexcept
+        std::uintptr_t heapPointer() const noexcept
         {
-            uintptr_t ptr = 0;
+            std::uintptr_t ptr = 0;
 
             std::memcpy( &ptr, raw_data_, INLINE_SIZE );
 
@@ -380,7 +380,7 @@ namespace value
      *
      * @return Reference to the output stream after writing.
      */
-    std::ostream &operator << ( std::ostream &os, Value255 const &v ) noexcept;
+    std::ostream &operator<<( std::ostream &os, Value255 const &v ) noexcept;
 
     /** @brief Mutable counterpart of `Value255`. */
     /**
@@ -454,8 +454,8 @@ namespace value
 
     }; // class MutableValue255
 
-    static_assert(  sizeof(value::Value255) == 6, "Unexpected Value255 size");
-    static_assert( alignof(value::Value255) == 1, "Unexpected Value255 alignment");
+    static_assert(  sizeof(value::Value255) == 6U, "Unexpected Value255 size");
+    static_assert( alignof(value::Value255) == 1U, "Unexpected Value255 alignment");
 
 } // namespace value
 
