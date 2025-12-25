@@ -39,6 +39,10 @@
 				]
 			}
 		},
-		"terminal.integrated.defaultProfile.linux": "bash (ESP-IDF)"
+		"terminal.integrated.defaultProfile.linux": "bash (ESP-IDF)",
+		"cSpell.words": [
+			"Reso",
+			"Perm"
+		]
 	}
 }

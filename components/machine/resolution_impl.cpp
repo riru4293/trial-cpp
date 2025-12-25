@@ -22,6 +22,8 @@ std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
     return os << std::format( "{}", v );
 }
 
+/* #endregion */// Operators.
+
 
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
@@ -69,3 +71,5 @@ double constexpr Resolution::scale_factor( Resolution::Kind v ) noexcept
 
     return coeff * std::pow( 10.0, shift );
 }
+
+/* #endregion */// Public methods.

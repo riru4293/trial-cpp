@@ -39,9 +39,9 @@ namespace machine
          * @code
          * bit2 bit1 bit0
          *   ^    ^    ^
-         *   |    |    +-- coefficient ( 0=x1, 1=x5 )
+         *   |    |    '-- coefficient ( 0=x1, 1=x5 )
          *   |    |
-         *   +----+------- signed shift N (2-bit, 2's complement)
+         *   '----'------- signed shift N (2-bit, 2's complement)
          * @endcode
          *
          * @par Examples:
@@ -71,16 +71,16 @@ namespace machine
         /**
          * @details
          * Inputs and outputs are as follows:
-         * | INPUT             | bit2, bit1 of INPUT value   | OUTPUT |
-         * | ----------------- | --------------------------: | -----: |
-         * | Resolution::X1    | 0b00 (+0 as 2's complement) |     +0 |
-         * | Resolution::X5    | 0b00 (+0 as 2's complement) |     +0 |
-         * | Resolution::X10   | 0b01 (+1 as 2's complement) |     +1 |
-         * | Resolution::X50   | 0b01 (+1 as 2's complement) |     +1 |
-         * | Resolution::X0_01 | 0b10 (-2 as 2's complement) |     -2 |
-         * | Resolution::X0_05 | 0b10 (-2 as 2's complement) |     -2 |
-         * | Resolution::X0_1  | 0b11 (-1 as 2's complement) |     -1 |
-         * | Resolution::X0_5  | 0b11 (-1 as 2's complement) |     -1 |
+         * | INPUT       | bit2, bit1 of INPUT value   | OUTPUT |
+         * | ------------| --------------------------: | -----: |
+         * | Kind::X1    | 0b00 (+0 as 2's complement) |     +0 |
+         * | Kind::X5    | 0b00 (+0 as 2's complement) |     +0 |
+         * | Kind::X10   | 0b01 (+1 as 2's complement) |     +1 |
+         * | Kind::X50   | 0b01 (+1 as 2's complement) |     +1 |
+         * | Kind::X0_01 | 0b10 (-2 as 2's complement) |     -2 |
+         * | Kind::X0_05 | 0b10 (-2 as 2's complement) |     -2 |
+         * | Kind::X0_1  | 0b11 (-1 as 2's complement) |     -1 |
+         * | Kind::X0_5  | 0b11 (-1 as 2's complement) |     -1 |
          */
         [[nodiscard]] static std::int8_t constexpr shift_of( Kind v ) noexcept;
 
@@ -88,32 +88,32 @@ namespace machine
         /**
          * @details
          * Inputs and outputs are as follows:
-         * | INPUT             | OUTPUT |
-         * | ----------------- | -----: |
-         * | Resolution::X1    |      1 |
-         * | Resolution::X5    |      5 |
-         * | Resolution::X10   |      1 |
-         * | Resolution::X50   |      5 |
-         * | Resolution::X0_01 |      1 |
-         * | Resolution::X0_05 |      5 |
-         * | Resolution::X0_1  |      1 |
-         * | Resolution::X0_5  |      5 |
+         * | INPUT       | OUTPUT |
+         * | ------------| -----: |
+         * | Kind::X1    |      1 |
+         * | Kind::X5    |      5 |
+         * | Kind::X10   |      1 |
+         * | Kind::X50   |      5 |
+         * | Kind::X0_01 |      1 |
+         * | Kind::X0_05 |      5 |
+         * | Kind::X0_1  |      1 |
+         * | Kind::X0_5  |      5 |
          */
         [[nodiscard]] static std::uint8_t constexpr coeff_of( Kind v ) noexcept;
 
         /** @brief Get the name of the given ​​value. */
         /** @details
          * Inputs and outputs are as follows:
-         * | INPUT             | OUTPUT  |
-         * | ----------------- | ------- |
-         * | Resolution::X1    | "x1"    |
-         * | Resolution::X5    | "x5"    |
-         * | Resolution::X10   | "x10"   |
-         * | Resolution::X50   | "x50"   |
-         * | Resolution::X0_01 | "x0.01" |
-         * | Resolution::X0_05 | "x0.05" |
-         * | Resolution::X0_1  | "x0.1"  |
-         * | Resolution::X0_5  | "x0.5"  |
+         * | INPUT       | OUTPUT  |
+         * | ------------| ------- |
+         * | Kind::X1    | "x1"    |
+         * | Kind::X5    | "x5"    |
+         * | Kind::X10   | "x10"   |
+         * | Kind::X50   | "x50"   |
+         * | Kind::X0_01 | "x0.01" |
+         * | Kind::X0_05 | "x0.05" |
+         * | Kind::X0_1  | "x0.1"  |
+         * | Kind::X0_5  | "x0.5"  |
          */
         [[nodiscard]] static std::string_view constexpr name_of( Kind v ) noexcept;
 
@@ -157,7 +157,7 @@ namespace machine
     }; // class Resolution
 
     /** @brief Alias of the @ref Resolution::Kind */
-    using Scale = Resolution::Kind;
+    using Reso = Resolution::Kind;
 
 } // namespace machine
 
