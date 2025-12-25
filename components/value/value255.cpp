@@ -1,13 +1,18 @@
-#include <algorithm>
-#include <esp_heap_caps.h>
-
+/* Self */
 #include <value255.hpp>
+
+/* C++ Standard Library */
+#include <algorithm>
+
+/* ESP-IDF */
+#include <esp_heap_caps.h>
 
 
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
 
 using namespace value;
+
 
 /* ^\__________________________________________ */
 /* #region Factory methods.                     */
@@ -29,6 +34,7 @@ std::optional<Value255> Value255::create(
 }
 
 /* #endregion */// Factory methods
+
 
 /* ^\__________________________________________ */
 /* #region Operators.                           */
@@ -97,6 +103,7 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
 
 /* #endregion */// Operators
 
+
 /* ^\__________________________________________ */
 /* #region Protected methods.                   */
 
@@ -149,6 +156,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 }
 
 /* #endregion */// Protected methods
+
 
 /* ^\__________________________________________ */
 /* #region Private methods.                     */

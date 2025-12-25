@@ -1,11 +1,30 @@
+/* Self */
 #include "resolution_impl.hpp"
 #include <resolution.hpp>
 
+/* C++ Standard Library */
 #include <cmath>
-#include <ostream>
 #include <format>
+#include <ostream>
+
+
+/* ^\__________________________________________ */
+/* Namespaces.                                  */
 
 using namespace machine;
+
+
+/* ^\__________________________________________ */
+/* #region Operators.                           */
+
+std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
+{
+    return os << std::format( "{}", v );
+}
+
+
+/* ^\__________________________________________ */
+/* #region Public methods.                      */
 
 std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
 {
@@ -49,9 +68,4 @@ double constexpr Resolution::scale_factor( Resolution::Kind v ) noexcept
     std::int8_t shift = shift_of( v );
 
     return coeff * std::pow( 10.0, shift );
-}
-
-std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
-{
-    return os << std::format( "{}", v );
 }
