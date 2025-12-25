@@ -156,6 +156,9 @@ namespace machine
 
     }; // class Resolution
 
+    /** @brief Alias of the @ref Resolution::Kind */
+    using Scale = Resolution::Kind;
+
 } // namespace machine
 
 namespace std {
