@@ -78,36 +78,6 @@ namespace value
         static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
-        /** @brief Clones an existing `Value255` instance. */
-        /**
-        * @details
-        * Creates a new `Value255` instance by copying the contents of the provided
-        * instance. Allocates memory as needed and copies the provided data into the
-        * new instance.
-        *
-        * @param other The `Value255` instance to clone.
-        *
-        * @return An optional containing the cloned `Value255` if successful;
-        * `std::nullopt` otherwise.
-        *
-        * @note
-        * The failure cases are:
-        * - A situation where memory cannot be allocated to store a copy of `data`.
-        */
-        static std::optional<Value255> clone( Value255 const &other ) noexcept
-        {
-            SpinGuard guard( other );
-            // [===> Follows: Locked]
-
-            std::byte    const *data = other.data_unlocked();
-            std::uint8_t const  size = other.size_unlocked();
-
-            /* Note:
-                create() is public method but does not require a lock,
-                so there are no deadlock issues. */
-            return create( data, size );
-        }
-
         /* #endregion */// Factory methods
 
     protected:
@@ -258,6 +228,18 @@ namespace value
 
     public:
 
+        /**
+         * @brief Returns the size of the value in bytes.
+         * @return Size of the value in bytes.
+         */
+        [[nodiscard]] std::uint8_t size() const noexcept
+        {
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
+            return size_;
+        }
+
         /** @brief Returns the size of the value in bytes. */
         /**
          * @return Vector of bytes representing the value.
@@ -315,6 +297,35 @@ namespace value
             oss << " ]";
 
             return oss.str();
+        }
+
+        /** @brief Create clone from this instance. */
+        /**
+        * @details
+        * Creates a new `Value255` instance by copying the contents of this
+        * instance.
+        * Allocates memory as needed and copies the provided data into the
+        * new instance.
+        *
+        * @return An optional containing the cloned `Value255` if successful;
+        * `std::nullopt` otherwise.
+        *
+        * @note
+        * The failure cases are:
+        * - A situation where memory cannot be allocated to store a copy of `data`.
+        */
+        [[nodiscard]] std::optional<Value255> clone( void ) const noexcept
+        {
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
+            std::byte    const *data = data_unlocked();
+            std::uint8_t const  size = size_unlocked();
+
+            /* Note:
+                create() is public method but does not require a lock,
+                so there are no deadlock issues. */
+            return create( data, size );
         }
 
     protected:

@@ -44,11 +44,40 @@ namespace machine
             ReadWrite = 0b11, //!< Read-write access permission
         };
 
-        /** @brief The number of bits used to represent @ref Permission. */
-        static std::uint8_t constexpr PERMISSION_BITS = 2U;
+        /** @brief The number of bits used to represent @ref Permission::Kind. */
+        static std::uint8_t constexpr KIND_BITS = 2U;
 
-        /** @brief A mask to extract the @ref Permission ​​from the `std::uint8_t`. */
-        static std::uint8_t constexpr PERMISSION_MASK = ( 1U << PERMISSION_BITS ) - 1U;
+        /** @brief A mask to extract the @ref Permission::Kind ​​from the `std::uint8_t`. */
+        static std::uint8_t constexpr KIND_MASK = ( 1U << KIND_BITS ) - 1U;
+
+        /** @brief Convert raw 2-bit value to @ref Permission::Kind. */
+        /**
+        * @details
+        * Converts the given raw value (lower 2 bits) into a corresponding
+        * @ref Permission::Kind value.
+        *
+        * The input value is masked with @ref PERMISSION_MASK to ensure that
+        * only the valid permission bits are used.
+        *
+        * @par Input / Output
+        * | raw (uint8_t) | masked  | Resulting Kind      |
+        * | ------------- | ------- | ------------------- |
+        * | 0b'0000'0000  | 0b'00   | Kind::None          |
+        * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly     |
+        * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly      |
+        * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite     |
+        *
+        * @note ja: 下位2ビットを @ref Permission::Kind に変換します。
+        *           入力値は @ref KIND_MASK によりマスクされます。
+        *
+        * @param raw The raw 2-bit encoded permission value.
+        * @return The corresponding @ref Permission::Kind.
+        */
+        [[nodiscard]] static constexpr Kind from_raw( std::uint8_t raw ) noexcept
+        {
+            std::uint8_t const v = raw & KIND_MASK;
+            return static_cast<Kind>( v );
+        }
 
         /** @brief Get the name of the given ​​value. */
         /** @details
@@ -65,6 +94,21 @@ namespace machine
     /* #endregion */// Static members, Inner types.
 
     }; // class Permission
+
+    /** @brief Stream output operator for `Permission::Kind`. */
+    /**
+     * @details
+     * Outputs the string representation of the `Permission::Kind` instance
+     * to the provided output stream.
+     *
+     * @see Permission::name_of() for the format of the output.
+     *
+     * @param os The output stream to write to.
+     * @param v The `Permission::Kind` instance to output.
+     *
+     * @return Reference to the output stream after writing.
+     */
+    std::ostream &operator<<( std::ostream &os, Permission::Kind const &v ) noexcept;
 
     /** @brief Alias of the @ref Permission::Kind */
     using Perm = Permission::Kind;

@@ -31,8 +31,8 @@ std::string_view constexpr Permission::name_of( Permission::Kind v ) noexcept
 {
     auto idx = static_cast<std::uint8_t>( v );
 
-    return ( idx < detail::PERMISSION_NAMES.size() )
-        ? detail::PERMISSION_NAMES[idx]
+    return ( idx < detail::PERMISSION_KIND_NAMES.size() )
+        ? detail::PERMISSION_KIND_NAMES[idx]
         : "Unknown";
 }
 

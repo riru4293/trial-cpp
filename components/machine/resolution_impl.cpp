@@ -39,10 +39,10 @@ std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
         | Step0:  | Step1:             | Step2:           | Step3: |
         | Origin  | << 6 (as unsigned) | >> 6 (as signed) | Result |
         + ------- + ------------------ + ---------------- + ------ +
-        |   0b00  |        0b00000000  |      0b00000000  |    +0  |
-        |   0b01  |        0b01000000  |      0b00000001  |    +1  |
-        |   0b10  |        0b10000000  |      0b11111110  |    -2  |
-        |   0b11  |        0b11000000  |      0b11111111  |    -1  |
+        |  0b'00  |      0b'0000'0000  |    0b'0000'0000  |    +0  |
+        |  0b'01  |      0b'0100'0000  |    0b'0000'0001  |    +1  |
+        |  0b'10  |      0b'1000'0000  |    0b'1111'1110  |    -2  |
+        |  0b'11  |      0b'1100'0000  |    0b'1111'1111  |    -1  |
         + ------- + ------------------ + ---------------- + ------ +
     */
     return static_cast<std::int8_t>( bit2_bit1 << 6 ) >> 6; // Note: -2 to +1
@@ -59,8 +59,8 @@ std::string_view constexpr Resolution::name_of( Resolution::Kind v ) noexcept
 {
     auto idx = static_cast<std::uint8_t>( v );
 
-    return ( idx < detail::RESOLUTION_NAMES.size() )
-        ? detail::RESOLUTION_NAMES[idx]
+    return ( idx < detail::RESOLUTION_KIND_NAMES.size() )
+        ? detail::RESOLUTION_KIND_NAMES[idx]
         : "Unknown";
 }
 
