@@ -3,6 +3,7 @@
 /**
  * @namespace machine
  * @brief Provides foundational functionality for communication with external machine.
+ * @note ja: 外部機械との通信に関する基礎的な機能を提供する名前空間。
  *
  * @details
  * This namespace defines abstractions and implementations used to identify,
@@ -14,16 +15,10 @@
  * to intermediate levels.
  *
  * The logical structure can be illustrated as follows:
- *
- * @code
- * machine
- *  |
- *  `-- unit[]
- *       |
- *       `-- component[]
- *            |
- *            `-- property[]
- * @endcode
+ * - machine
+ *   - unit[]
+ *     - component[]
+ *       - property[]
  *
  * Only properties represent meaningful operation targets.
  * Intermediate levels (unit, component) exist solely as parts of an address
@@ -37,7 +32,8 @@ namespace machine
 {
     /**
      * @namespace machine::property
-     * @brief Groups concepts and operations related to machine properties.
+     * @brief Groups concepts and operations related to external machine properties.
+     * @note ja: 外部機械のプロパティに関連する概念と操作をまとめた名前空間。
      *
      * @details
      * A property represents the smallest meaningful unit of interaction
