@@ -67,12 +67,12 @@ namespace machine::property
          *
          * @par Input / Output
          *
-         * | raw (uint8_t) | masked  | Resulting Kind      |
-         * | ------------- | ------- | ------------------- |
-         * | 0b'0000'0000  | 0b'00   | Kind::None          |
-         * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly     |
-         * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly      |
-         * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite     |
+         * | raw (uint8_t) | masked  | OUTPUT          |
+         * | ------------- | ------- | --------------- |
+         * | 0b'0000'0000  | 0b'00   | Kind::None      |
+         * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly |
+         * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly  |
+         * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite |
          *
          * @note ja: 下位2ビットを @ref Kind に変換します。
          *           入力値は @ref KIND_MASK によりマスクされます。
@@ -97,6 +97,9 @@ namespace machine::property
          * | Kind::WriteOnly | `write-only` |
          * | Kind::ReadOnly  | `read-only`  |
          * | Kind::ReadWrite | `read-write` |
+         *
+         * @param v [in] the `Kind`
+         * @return enumerator name
          */
         [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
 

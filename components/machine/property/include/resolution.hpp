@@ -82,16 +82,16 @@ namespace machine::property
          *
          * @par Input / Output
          *
-         * | raw (uint8_t) | masked  | Resulting Kind |
-         * | ------------- | ------- | -------------- |
-         * | 0b'0000'0000  | 0b'000  | Kind::X1       |
-         * | 0b'0000'0001  | 0b'001  | Kind::X5       |
-         * | 0b'0000'0010  | 0b'010  | Kind::X10      |
-         * | 0b'0000'0011  | 0b'011  | Kind::X50      |
-         * | 0b'0000'0100  | 0b'100  | Kind::X0_01    |
-         * | 0b'0000'0101  | 0b'101  | Kind::X0_05    |
-         * | 0b'0000'0110  | 0b'110  | Kind::X0_1     |
-         * | 0b'0000'0111  | 0b'111  | Kind::X0_5     |
+         * | raw (uint8_t) | masked  | OUTPUT      |
+         * | ------------- | ------- | ----------- |
+         * | 0b'0000'0000  | 0b'000  | Kind::X1    |
+         * | 0b'0000'0001  | 0b'001  | Kind::X5    |
+         * | 0b'0000'0010  | 0b'010  | Kind::X10   |
+         * | 0b'0000'0011  | 0b'011  | Kind::X50   |
+         * | 0b'0000'0100  | 0b'100  | Kind::X0_01 |
+         * | 0b'0000'0101  | 0b'101  | Kind::X0_05 |
+         * | 0b'0000'0110  | 0b'110  | Kind::X0_1  |
+         * | 0b'0000'0111  | 0b'111  | Kind::X0_5  |
          *
          * @note ja: 下位3ビットを @ref Kind に変換します。
          *           入力値は @ref KIND_MASK によりマスクされます。
@@ -99,7 +99,7 @@ namespace machine::property
          * @param raw [in] raw 3-bit encoded resolution value
          * @return corresponding @ref Kind.
          */
-        [[nodiscard]] static constexpr Kind fromRaw( std::uint8_t const &raw ) noexcept
+        [[nodiscard]] static Kind constexpr fromRaw( std::uint8_t const &raw ) noexcept
         {
             std::uint8_t const v = raw & KIND_MASK;
             return static_cast<Kind>( v );
@@ -120,6 +120,9 @@ namespace machine::property
          * | Kind::X0_05 | `x0.05` |
          * | Kind::X0_1  | `x0.1`  |
          * | Kind::X0_5  | `x0.5`  |
+         *
+         * @param v [in] the `Kind`
+         * @return enumerator name
          */
         [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
 
