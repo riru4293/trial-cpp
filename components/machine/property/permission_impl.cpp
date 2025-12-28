@@ -12,7 +12,7 @@ using namespace machine::property;
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
 
-std::string_view constexpr Permission::nameOf( Permission::Kind const &v ) noexcept
+std::string_view constexpr Permission::nameOf( Kind const &v ) noexcept
 {
     auto idx = static_cast<std::uint8_t>( v );
     auto const &names = detail::PERMISSION_KIND_NAMES;

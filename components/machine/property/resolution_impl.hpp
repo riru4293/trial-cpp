@@ -7,7 +7,7 @@
 namespace machine::property::detail
 {
 
-        /** @brief The names of each @ref Resolution::Kind ​​value. */
+        /** @brief The names of each @ref machine::property::Resolution::Kind ​​value. */
         inline std::array<std::string_view, 8U> constexpr RESOLUTION_KIND_NAMES =
         {
             "x1",       "x5",

@@ -7,7 +7,7 @@
 namespace machine::property::detail
 {
 
-    /** @brief The names of each @ref Permission::Kind ​​value. */
+    /** @brief The names of each @ref machine::property::Permission::Kind ​​value. */
     inline std::array<std::string_view, 4U> constexpr PERMISSION_KIND_NAMES =
     {
         "none",       "write-only",

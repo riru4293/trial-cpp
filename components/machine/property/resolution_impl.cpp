@@ -15,11 +15,19 @@ using namespace machine::property;
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
 
+std::string_view constexpr Resolution::nameOf( Kind const &v ) noexcept
+{
+    auto idx = static_cast<std::uint8_t>( v );
+    auto const &names = detail::RESOLUTION_KIND_NAMES;
+
+    return ( idx < names.size() ) ? names[idx] : "Unknown";
+}
+
 std::int8_t constexpr Resolution::shiftOf( Kind const &v ) noexcept
 {
     auto raw = static_cast<std::uint8_t>( v ); // Note: 0 to 7
 
-    std::uint8_t bit2_bit1 = static_cast<std::uint8_t>( (raw >> 1) & 0b11 ); // Note: 0 to 3
+    std::uint8_t bit2_bit1 = static_cast<std::uint8_t>( ( raw >> 1 ) & 0b11 ); // Note: 0 to 3
 
     /* Note: Calculation details.
         + ------- + ------------------ + ---------------- + ------ +
@@ -40,15 +48,6 @@ std::uint8_t constexpr Resolution::coeffOf( Kind const &v ) noexcept
     auto raw = static_cast<std::uint8_t>( v );
     auto bit0 = raw & 0b1;
     return bit0 ? 5U : 1U; // 5 if bit0 == 1, 1 if bit0 == 0
-}
-
-std::string_view constexpr Resolution::nameOf( Kind const &v ) noexcept
-{
-    auto idx = static_cast<std::uint8_t>( v );
-
-    return ( idx < detail::RESOLUTION_KIND_NAMES.size() )
-        ? detail::RESOLUTION_KIND_NAMES[idx]
-        : "Unknown";
 }
 
 double constexpr Resolution::scaleFactorOf( Kind const &v ) noexcept

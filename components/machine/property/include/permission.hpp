@@ -34,6 +34,7 @@ namespace machine::property
         /**
          * @details
          * %Permission encoding (2-bit).
+         *
          * @code
          * bit1 bit0
          *   ^    ^
@@ -49,35 +50,36 @@ namespace machine::property
             ReadWrite = 0b11, //!< Read-write access permission
         };
 
-        /** @brief The number of bits used to represent @ref Permission::Kind. */
+        /** @brief The number of bits used to represent @ref Kind. */
         static std::uint8_t constexpr KIND_BITS = 2U;
 
-        /** @brief A mask to extract the @ref Permission::Kind ​​from the `std::uint8_t`. */
+        /** @brief A mask to extract the @ref Kind ​​from the `std::uint8_t`. */
         static std::uint8_t constexpr KIND_MASK = ( 1U << KIND_BITS ) - 1U;
 
-        /** @brief Convert raw 2-bit value to @ref Permission::Kind. */
+        /** @brief Convert raw 2-bit value to @ref Kind. */
         /**
-        * @details
-        * Converts the given raw value (lower 2 bits) into a corresponding
-        * @ref Permission::Kind value.
-        *
-        * The input value is masked with @ref PERMISSION_MASK to ensure that
-        * only the valid permission bits are used.
-        *
-        * @par Input / Output
-        * | raw (uint8_t) | masked  | Resulting Kind      |
-        * | ------------- | ------- | ------------------- |
-        * | 0b'0000'0000  | 0b'00   | Kind::None          |
-        * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly     |
-        * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly      |
-        * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite     |
-        *
-        * @note ja: 下位2ビットを @ref Permission::Kind に変換します。
-        *           入力値は @ref KIND_MASK によりマスクされます。
-        *
-        * @param raw [in] The raw 2-bit encoded permission value.
-        * @return The corresponding @ref Permission::Kind.
-        */
+         * @details
+         * Converts the given raw value (lower 2 bits) into a corresponding
+         * @ref Kind value.
+         *
+         * The input value is masked with @ref KIND_MASK to ensure that
+         * only the valid permission bits are used.
+         *
+         * @par Input / Output
+         *
+         * | raw (uint8_t) | masked  | Resulting Kind      |
+         * | ------------- | ------- | ------------------- |
+         * | 0b'0000'0000  | 0b'00   | Kind::None          |
+         * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly     |
+         * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly      |
+         * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite     |
+         *
+         * @note ja: 下位2ビットを @ref Kind に変換します。
+         *           入力値は @ref KIND_MASK によりマスクされます。
+         *
+         * @param raw [in] raw 2-bit encoded permission value
+         * @return corresponding @ref Kind
+         */
         [[nodiscard]] static Kind constexpr fromRaw( std::uint8_t const &raw ) noexcept
         {
             std::uint8_t const v = raw & KIND_MASK;
@@ -85,15 +87,17 @@ namespace machine::property
         }
 
         /** @brief Returns the enumerator name of the given value. */
-        /** @details
-        * Inputs and outputs are as follows:
-        * | INPUT           | OUTPUT       |
-        * | --------------- | ------------ |
-        * | Kind::None      | "none"       |
-        * | Kind::WriteOnly | "write-only" |
-        * | Kind::ReadOnly  | "read-only"  |
-        * | Kind::ReadWrite | "read-write" |
-        */
+        /**
+         * @details
+         * Inputs and outputs are as follows:
+         *
+         * | INPUT           | OUTPUT       |
+         * | --------------- | ------------ |
+         * | Kind::None      | `none`       |
+         * | Kind::WriteOnly | `write-only` |
+         * | Kind::ReadOnly  | `read-only`  |
+         * | Kind::ReadWrite | `read-write` |
+         */
         [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types.
@@ -106,7 +110,7 @@ namespace machine::property
      * Outputs the string representation of the `Permission::Kind` instance
      * to the provided output stream.
      *
-     * @see Permission::name_of() for the format of the output.
+     * @see std::formatter<machine::property::Permission::Kind> for formatting details.
      *
      * @param os [out] The output stream to write to.
      * @param v [in] The `Permission::Kind` instance to output.
@@ -124,6 +128,7 @@ namespace std
     /**
      * @details
      * Formats a `Kind` instance. Examples are follows:
+     *
      * - `Kind::None     `: `none(0)`
      * - `Kind::WriteOnly`: `write-only(1)`
      * - `Kind::ReadOnly `: `read-only(2)`
