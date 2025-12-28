@@ -1,6 +1,7 @@
 #pragma once
 
 /* Custom Library */
+#include <namespace.hpp>
 #include <value255.hpp>
 
 namespace machine::property

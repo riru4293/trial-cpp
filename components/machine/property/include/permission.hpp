@@ -6,6 +6,9 @@
 #include <ostream>
 #include <string_view>
 
+/* Custom Library */
+#include <namespace.hpp>
+
 namespace machine::property
 {
 

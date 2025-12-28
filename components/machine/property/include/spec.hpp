@@ -9,6 +9,9 @@
 #include <permission.hpp>
 #include <resolution.hpp>
 
+/* Custom Library */
+#include <namespace.hpp>
+
 namespace machine {
 
     /** @brief Represents a property specification. */
@@ -310,7 +313,7 @@ namespace machine {
 
         /* #region Getter methods */
 
-        [[nodiscard]] Kind kind() const noexcept 
+        [[nodiscard]] Kind kind() const noexcept
         {
             return from_raw( frags_.kind );
         }

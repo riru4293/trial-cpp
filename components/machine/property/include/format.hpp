@@ -7,6 +7,7 @@
 #include <string_view>
 
 /* Custom Library */
+#include <namespace.hpp>
 #include <value.hpp>
 
 namespace machine::property
