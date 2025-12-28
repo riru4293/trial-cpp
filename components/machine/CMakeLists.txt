@@ -1,5 +1,5 @@
 idf_component_register(
-    SRC_DIRS "."
-    INCLUDE_DIRS "include"
+    SRC_DIRS "." "property/."
+    INCLUDE_DIRS "include" "property/include"
     REQUIRES util value
 )

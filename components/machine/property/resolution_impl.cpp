@@ -4,31 +4,18 @@
 
 /* C++ Standard Library */
 #include <cmath>
-#include <format>
-#include <ostream>
 
 
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
 
-using namespace machine;
-
-
-/* ^\__________________________________________ */
-/* #region Operators.                           */
-
-std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
-{
-    return os << std::format( "{}", v );
-}
-
-/* #endregion */// Operators.
+using namespace machine::property;
 
 
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
 
-std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
+std::int8_t constexpr Resolution::shiftOf( Kind const &v ) noexcept
 {
     auto raw = static_cast<std::uint8_t>( v ); // Note: 0 to 7
 
@@ -48,14 +35,14 @@ std::int8_t constexpr Resolution::shift_of( Resolution::Kind v ) noexcept
     return static_cast<std::int8_t>( bit2_bit1 << 6 ) >> 6; // Note: -2 to +1
 }
 
-std::uint8_t constexpr Resolution::coeff_of( Resolution::Kind v ) noexcept
+std::uint8_t constexpr Resolution::coeffOf( Kind const &v ) noexcept
 {
     auto raw = static_cast<std::uint8_t>( v );
     auto bit0 = raw & 0b1;
     return bit0 ? 5U : 1U; // 5 if bit0 == 1, 1 if bit0 == 0
 }
 
-std::string_view constexpr Resolution::name_of( Resolution::Kind v ) noexcept
+std::string_view constexpr Resolution::nameOf( Kind const &v ) noexcept
 {
     auto idx = static_cast<std::uint8_t>( v );
 
@@ -64,12 +51,54 @@ std::string_view constexpr Resolution::name_of( Resolution::Kind v ) noexcept
         : "Unknown";
 }
 
-double constexpr Resolution::scale_factor( Resolution::Kind v ) noexcept
+double constexpr Resolution::scaleFactorOf( Kind const &v ) noexcept
 {
-    double coeff = static_cast<double>( coeff_of( v ) );
-    std::int8_t shift = shift_of( v );
+    double coeff = static_cast<double>( coeffOf( v ) );
+    std::int8_t shift = shiftOf( v );
 
     return coeff * std::pow( 10.0, shift );
 }
 
 /* #endregion */// Public methods.
+
+
+/* ^\__________________________________________ */
+/* #region Formatter.                           */
+
+namespace std
+{
+
+    template <>
+    struct formatter<machine::property::Resolution::Kind>
+    {
+        using Resolution = machine::property::Resolution;
+
+        /** @brief Parse format specifiers (none supported). */
+        constexpr auto parse( std::format_parse_context &ctx )
+        {
+            return ctx.begin();
+        }
+
+        /** @brief Format `machine::property::Resolution::Kind` value. */
+        template <typename FormatContext>
+        auto format( Resolution::Kind const &v, FormatContext &ctx ) const
+        {
+            return std::format_to( ctx.out(), "{}({})",
+                Resolution::nameOf( v ), static_cast<int>( v ) );
+        }
+    };
+
+} // namespace std
+
+/* #endregion */// Formatter.
+
+
+/* ^\__________________________________________ */
+/* #region Operators.                           */
+
+std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
+{
+    return os << std::format( "{}", v );
+}
+
+/* #endregion */// Operators.

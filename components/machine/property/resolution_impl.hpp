@@ -1,13 +1,11 @@
 #pragma once
 
 /* C++ Standard Library */
-#include <string_view>
 #include <array>
+#include <string_view>
 
-namespace machine
+namespace machine::property::detail
 {
-    namespace detail
-    {
 
         /** @brief The names of each @ref Resolution::Kind ​​value. */
         inline std::array<std::string_view, 8U> constexpr RESOLUTION_KIND_NAMES =
@@ -18,5 +16,4 @@ namespace machine
             "x0.1",     "x0.5",
         };
 
-    } // namespace machine::detail
-} // namespace machine
+} // namespace machine::property::detail

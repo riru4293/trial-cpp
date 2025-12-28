@@ -3,9 +3,10 @@
 /* C++ Standard Library */
 #include <cstdint>
 #include <format>
+#include <ostream>
 #include <string_view>
 
-namespace machine
+namespace machine::property
 {
 
     /** @brief Property value access permission. */
@@ -17,15 +18,19 @@ namespace machine
      * @note ja: 2ビットで表現されるプロパティ値へのアクセス権限。
      *           定義については `Permission::Kind` を参照してください。
      *
-     * @see machine::Permission::Kind
+     * @see machine::property::Permission::Kind
      */
     class Permission
     {
+    public:
+        explicit Permission() noexcept = delete; //!< @brief Default constructor (deleted).
+
     /* ^\__________________________________________ */
     /* #region Static members, Inner types.         */
 
     public:
-        /** @brief The permission for the property value access. */
+
+        /** @brief Kind of the permission for the property value access. */
         /**
          * @details
          * %Permission encoding (2-bit).
@@ -70,26 +75,26 @@ namespace machine
         * @note ja: 下位2ビットを @ref Permission::Kind に変換します。
         *           入力値は @ref KIND_MASK によりマスクされます。
         *
-        * @param raw The raw 2-bit encoded permission value.
+        * @param raw [in] The raw 2-bit encoded permission value.
         * @return The corresponding @ref Permission::Kind.
         */
-        [[nodiscard]] static constexpr Kind from_raw( std::uint8_t raw ) noexcept
+        [[nodiscard]] static Kind constexpr fromRaw( std::uint8_t const &raw ) noexcept
         {
             std::uint8_t const v = raw & KIND_MASK;
             return static_cast<Kind>( v );
         }
 
-        /** @brief Get the name of the given ​​value. */
+        /** @brief Returns the enumerator name of the given value. */
         /** @details
-          * Inputs and outputs are as follows:
-          * | INPUT           | OUTPUT      |
-          * | --------------- | ----------- |
-          * | Kind::None      | "none"      |
-          * | Kind::WriteOnly | "write-only"|
-          * | Kind::ReadOnly  | "read-only" |
-          * | Kind::ReadWrite | "read-write"|
-          */
-        [[nodiscard]] static std::string_view constexpr name_of( Kind v ) noexcept;
+        * Inputs and outputs are as follows:
+        * | INPUT           | OUTPUT       |
+        * | --------------- | ------------ |
+        * | Kind::None      | "none"       |
+        * | Kind::WriteOnly | "write-only" |
+        * | Kind::ReadOnly  | "read-only"  |
+        * | Kind::ReadWrite | "read-write" |
+        */
+        [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types.
 
@@ -103,21 +108,19 @@ namespace machine
      *
      * @see Permission::name_of() for the format of the output.
      *
-     * @param os The output stream to write to.
-     * @param v The `Permission::Kind` instance to output.
+     * @param os [out] The output stream to write to.
+     * @param v [in] The `Permission::Kind` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
     std::ostream &operator<<( std::ostream &os, Permission::Kind const &v ) noexcept;
 
-    /** @brief Alias of the @ref Permission::Kind */
-    using Perm = Permission::Kind;
-
-} // namespace machine
+} // namespace machine::property
 
 namespace std
 {
-    /** @brief Formatter specialization for `machine::Permission::Kind`. */
+
+    /** @brief Formatter specialization for `machine::property::Permission::Kind`. */
     /**
      * @details
      * Formats a `Kind` instance. Examples are follows:
@@ -127,21 +130,6 @@ namespace std
      * - `Kind::ReadWrite`: `read-write(3)`
      */
     template <>
-    struct formatter<machine::Permission::Kind>
-    {
-        /** @brief Parse format specifiers (none supported). */
-        constexpr auto parse( std::format_parse_context &ctx )
-        {
-            return ctx.begin();
-        }
-
-        /** @brief Format `machine::Permission::Kind` value. */
-        template <typename FormatContext>
-        auto format( machine::Permission::Kind const &v, FormatContext &ctx ) const
-        {
-            return std::format_to( ctx.out(), "{}({})",
-                machine::Permission::name_of( v ), static_cast<int>( v ) );
-        }
-    };
+    struct formatter<machine::property::Permission::Kind>;
 
 } // namespace std
