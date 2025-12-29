@@ -72,68 +72,8 @@ namespace machine {
 
     public:
 
-        /** @brief The kind of the property value. */
-        enum class Kind : std::uint8_t {
-            Numeric, //!< Signed 1-3 byte integer
-            Boolean, //!< 1 byte; 0=false, non-0=true
-            BitSet,  //!< 1-3 byte
-            String,  //!< 1-192 bytes
-        };
 
-        /** @brief The number of bits used to represent @ref Kind. */
-        static constexpr std::uint8_t KIND_BITS = 2U;
 
-        /** @brief A mask to extract the @ref PropertySpec::Kind ​​from the `std::uint8_t`. */
-        static constexpr std::uint8_t KIND_MASK = ( 1U << KIND_BITS ) - 1U;
-
-        /** @brief Get the name of the given ​​value. */
-        /** @details
-         * Inputs and outputs are as follows:
-         * | INPUT         | OUTPUT    |
-         * | ------------- | --------- |
-         * | Kind::Numeric | "numeric" |
-         * | Kind::Boolean | "boolean" |
-         * | Kind::BitSet  | "bitset"  |
-         * | Kind::String  | "string"  |
-         */
-        [[nodiscard]]
-        static constexpr std::string_view name_of( Kind v ) noexcept;
-
-        [[nodiscard]]
-        static constexpr std::string_view name_of( PropertySpec v ) noexcept
-        {
-            return name_of( v.kind() );
-        }
-
-        /** @brief Convert raw 2-bit value to @ref PropertySpec::Kind. */
-        /**
-        * @details
-        * Converts the given raw value (lower 2 bits) into a corresponding
-        * @ref PropertySpec::Kind value.
-        *
-        * The input value is masked with @ref KIND_MASK to ensure that
-        * only the valid resolution bits are used.
-        *
-        * @par Input / Output
-        * | raw (uint8_t) | masked | Resulting Kind |
-        * | ------------- | ------ | -------------- |
-        * | 0b'0000'0000  | 0b'00  | Kind::Numeric  |
-        * | 0b'0000'0001  | 0b'01  | Kind::Boolean  |
-        * | 0b'0000'0010  | 0b'10  | Kind::BitSet   |
-        * | 0b'0000'0011  | 0b'11  | Kind::String   |
-        *
-        * @note ja: 下位2ビットを @ref PropertySpec::Kind に変換します。
-        *           入力値は @ref KIND_MASK によりマスクされます。
-        *
-        * @param raw The raw 2-bit encoded property spec kind value.
-        * @return The corresponding @ref PropertySpec::Kind.
-        */
-        [[nodiscard]]
-        static constexpr Kind from_raw( std::uint8_t raw ) noexcept
-        {
-            std::uint8_t const v = raw & KIND_MASK;
-            return static_cast<Kind>( v );
-        }
 
         /** @brief Returns a string representation of this. */
         /**
@@ -165,33 +105,6 @@ namespace machine {
 
     private:
 
-        static constexpr std::byte BOOL_MIN = std::byte{ 0x00 };
-        static constexpr std::byte BOOL_MAX = std::byte{ 0x01 };
-
-        [[nodiscard]]
-        static constexpr Kind kind_of( Value const &min, Value const &max ) noexcept
-        {
-            auto min_size = min.size();
-            auto max_size = max.size();
-
-            if ( ( min_size == 0U ) && ( max_size == 0U ) )
-            {
-                return Kind::String;
-            }
-
-            if ( ( min_size == 0U ) && ( max_size != 0U ) )
-            {
-                return Kind::BitSet;
-            }
-
-            if ( ( min_size == 1U ) && ( min.bytes().at( 0U ) == BOOL_MIN ) &&
-                 ( max_size == 1U ) && ( max.bytes().at( 0U ) == BOOL_MAX ) )
-            {
-                return Kind::Boolean;
-            }
-
-            return Kind::Numeric;
-        }
 
         /* #region Factory methods */
 
