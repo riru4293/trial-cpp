@@ -44,12 +44,12 @@ namespace machine::property
          * @details
          * %Resolution encoding (3-bit).
          *
-         * @code
-         * bit2 bit1 bit0
-         *   ^    ^    ^
-         *   |    |    '-- coefficient ( 0=x1, 1=x5 )
-         *   '----'------- signed shift N (2-bit, 2's complement)
-         * @endcode
+         * @verbatim
+           bit2 bit1 bit0
+             ^    ^    ^
+             |    |    '-- coefficient (0=x1, 1=x5)
+             '----'------- signed shift N (2-bit, 2's complement)
+           @endverbatim
          *
          * @par Examples:
          * - `X50   (0b'011) = 10^+1 × 5 = 50`
@@ -79,16 +79,16 @@ namespace machine::property
          *
          * @par Input / Output
          *
-         * | raw (uint8_t) | masked  | OUTPUT      |
-         * | ------------- | ------- | ----------- |
-         * | 0b'0000'0000  | 0b'000  | Kind::X1    |
-         * | 0b'0000'0001  | 0b'001  | Kind::X5    |
-         * | 0b'0000'0010  | 0b'010  | Kind::X10   |
-         * | 0b'0000'0011  | 0b'011  | Kind::X50   |
-         * | 0b'0000'0100  | 0b'100  | Kind::X0_01 |
-         * | 0b'0000'0101  | 0b'101  | Kind::X0_05 |
-         * | 0b'0000'0110  | 0b'110  | Kind::X0_1  |
-         * | 0b'0000'0111  | 0b'111  | Kind::X0_5  |
+         * | raw (uint8_t)   | masked    | OUTPUT        |
+         * | --------------- | --------- | ------------- |
+         * | `0b'0000'0000`  | `0b'000`  | `Kind::X1`    |
+         * | `0b'0000'0001`  | `0b'001`  | `Kind::X5`    |
+         * | `0b'0000'0010`  | `0b'010`  | `Kind::X10`   |
+         * | `0b'0000'0011`  | `0b'011`  | `Kind::X50`   |
+         * | `0b'0000'0100`  | `0b'100`  | `Kind::X0_01` |
+         * | `0b'0000'0101`  | `0b'101`  | `Kind::X0_05` |
+         * | `0b'0000'0110`  | `0b'110`  | `Kind::X0_1`  |
+         * | `0b'0000'0111`  | `0b'111`  | `Kind::X0_5`  |
          *
          * @note ja: 下位3ビットを @ref Kind に変換します。
          *
@@ -104,16 +104,16 @@ namespace machine::property
          * @details
          * Inputs and outputs are as follows:
          *
-         * | INPUT       | OUTPUT  |
-         * | ------------| ------- |
-         * | Kind::X1    | `x1`    |
-         * | Kind::X5    | `x5`    |
-         * | Kind::X10   | `x10`   |
-         * | Kind::X50   | `x50`   |
-         * | Kind::X0_01 | `x0.01` |
-         * | Kind::X0_05 | `x0.05` |
-         * | Kind::X0_1  | `x0.1`  |
-         * | Kind::X0_5  | `x0.5`  |
+         * | INPUT         | OUTPUT  |
+         * | ------------- | ------- |
+         * | `Kind::X1`    | `x1`    |
+         * | `Kind::X5`    | `x5`    |
+         * | `Kind::X10`   | `x10`   |
+         * | `Kind::X50`   | `x50`   |
+         * | `Kind::X0_01` | `x0.01` |
+         * | `Kind::X0_05` | `x0.05` |
+         * | `Kind::X0_1`  | `x0.1`  |
+         * | `Kind::X0_5`  | `x0.5`  |
          *
          * @param v [in] the `Kind`
          *
@@ -127,16 +127,16 @@ namespace machine::property
          * @details
          * Inputs and outputs are as follows:
          *
-         * | INPUT       | bit2, bit1 of INPUT value    | OUTPUT |
-         * | ----------- | ---------------------------: | -----: |
-         * | Kind::X1    | 0b'00 (+0 as 2's complement) |     +0 |
-         * | Kind::X5    | 0b'00 (+0 as 2's complement) |     +0 |
-         * | Kind::X10   | 0b'01 (+1 as 2's complement) |     +1 |
-         * | Kind::X50   | 0b'01 (+1 as 2's complement) |     +1 |
-         * | Kind::X0_01 | 0b'10 (-2 as 2's complement) |     -2 |
-         * | Kind::X0_05 | 0b'10 (-2 as 2's complement) |     -2 |
-         * | Kind::X0_1  | 0b'11 (-1 as 2's complement) |     -1 |
-         * | Kind::X0_5  | 0b'11 (-1 as 2's complement) |     -1 |
+         * | INPUT                  | bit2, bit1 of INPUT value        | OUTPUT |
+         * | ---------------------- | -------------------------------- | -----: |
+         * | `Kind::X1    (0b'000)` | `0b'00` (` 0` as 2's complement) |    `0` |
+         * | `Kind::X5    (0b'001)` | `0b'00` (` 0` as 2's complement) |    `0` |
+         * | `Kind::X10   (0b'010)` | `0b'01` (`+1` as 2's complement) |   `+1` |
+         * | `Kind::X50   (0b'011)` | `0b'01` (`+1` as 2's complement) |   `+1` |
+         * | `Kind::X0_01 (0b'100)` | `0b'10` (`-2` as 2's complement) |   `-2` |
+         * | `Kind::X0_05 (0b'101)` | `0b'10` (`-2` as 2's complement) |   `-2` |
+         * | `Kind::X0_1  (0b'110)` | `0b'11` (`-1` as 2's complement) |   `-1` |
+         * | `Kind::X0_5  (0b'111)` | `0b'11` (`-1` as 2's complement) |   `-1` |
          *
          * @param v [in] the `Kind`
          *
@@ -150,16 +150,16 @@ namespace machine::property
          * @details
          * Inputs and outputs are as follows:
          *
-         * | INPUT       | bit0 of INPUT value | OUTPUT |
-         * | ----------- | ------------------: | -----: |
-         * | Kind::X1    | 0b'0                |      1 |
-         * | Kind::X5    | 0b'1                |      5 |
-         * | Kind::X10   | 0b'0                |      1 |
-         * | Kind::X50   | 0b'1                |      5 |
-         * | Kind::X0_01 | 0b'0                |      1 |
-         * | Kind::X0_05 | 0b'1                |      5 |
-         * | Kind::X0_1  | 0b'0                |      1 |
-         * | Kind::X0_5  | 0b'1                |      5 |
+         * | INPUT                  | bit0 of INPUT value | OUTPUT |
+         * | ---------------------- | ------------------- | -----: |
+         * | `Kind::X1    (0b'000)` | `0b'0`              |    `1` |
+         * | `Kind::X5    (0b'001)` | `0b'1`              |    `5` |
+         * | `Kind::X10   (0b'010)` | `0b'0`              |    `1` |
+         * | `Kind::X50   (0b'011)` | `0b'1`              |    `5` |
+         * | `Kind::X0_01 (0b'100)` | `0b'0`              |    `1` |
+         * | `Kind::X0_05 (0b'101)` | `0b'1`              |    `5` |
+         * | `Kind::X0_1  (0b'110)` | `0b'0`              |    `1` |
+         * | `Kind::X0_5  (0b'111)` | `0b'1`              |    `5` |
          *
          * @param v [in] the `Kind`
          *
@@ -176,27 +176,27 @@ namespace machine::property
          *
          * The scale factor is defined as:
          * @code
-         *   scale = coefficient × 10^( shift )
+         *   scale = coefficient × 10^(shift)
          * @endcode
          *
          * This value can be used to convert a raw integer value into a
          * real-world quantity:
          * @code
-         *   real_value = raw_value * scaleFactorOf( kind );
+         *   real_value = raw_value * scaleFactorOf(kind);
          * @endcode
          *
          * @par Input / Output
          *
-         * | INPUT       | OUTPUT  |
-         * | ----------- | ------: |
-         * | Kind::X1    | ` 1.0 ` |
-         * | Kind::X5    | ` 5.0 ` |
-         * | Kind::X10   | `10.0 ` |
-         * | Kind::X50   | `50.0 ` |
-         * | Kind::X0_01 | ` 0.01` |
-         * | Kind::X0_05 | ` 0.05` |
-         * | Kind::X0_1  | ` 0.1 ` |
-         * | Kind::X0_5  | ` 0.5 ` |
+         * | INPUT         | OUTPUT  |
+         * | ------------- | ------: |
+         * | `Kind::X1`    |  `1.0 ` |
+         * | `Kind::X5`    |  `5.0 ` |
+         * | `Kind::X10`   | `10.0 ` |
+         * | `Kind::X50`   | `50.0 ` |
+         * | `Kind::X0_01` |  `0.01` |
+         * | `Kind::X0_05` |  `0.05` |
+         * | `Kind::X0_1`  |  `0.1 ` |
+         * | `Kind::X0_5`  |  `0.5 ` |
          *
          * @note
          * This function introduces floating-point semantics intentionally.

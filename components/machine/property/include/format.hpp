@@ -53,12 +53,12 @@ namespace machine::property
         *
         * @par Input / Output
         *
-        * | raw (uint8_t) | masked | OUTPUT        |
-        * | ------------- | ------ | ------------- |
-        * | 0b'0000'0000  | 0b'00  | Kind::Numeric |
-        * | 0b'0000'0001  | 0b'01  | Kind::Boolean |
-        * | 0b'0000'0010  | 0b'10  | Kind::BitSet  |
-        * | 0b'0000'0011  | 0b'11  | Kind::String  |
+        * | raw (uint8_t)  | masked  | OUTPUT          |
+        * | -------------- | ------- | --------------- |
+        * | `0b'0000'0000` | `0b'00` | `Kind::Numeric` |
+        * | `0b'0000'0001` | `0b'01` | `Kind::Boolean` |
+        * | `0b'0000'0010` | `0b'10` | `Kind::BitSet`  |
+        * | `0b'0000'0011` | `0b'11` | `Kind::String`  |
         *
         * @note ja: 下位2ビットを @ref Kind に変換します。
         *
@@ -96,12 +96,12 @@ namespace machine::property
          * @details
          * Inputs and outputs are as follows:
          *
-         * | INPUT         | OUTPUT    |
-         * | ------------- | --------- |
-         * | Kind::Numeric | "numeric" |
-         * | Kind::Boolean | "boolean" |
-         * | Kind::BitSet  | "bitset"  |
-         * | Kind::String  | "string"  |
+         * | INPUT           | OUTPUT    |
+         * | --------------- | --------- |
+         * | `Kind::Numeric` | `numeric` |
+         * | `Kind::Boolean` | `boolean` |
+         * | `Kind::BitSet`  | `bitset`  |
+         * | `Kind::String`  | `string`  |
          *
          * @param v [in] the `Kind`
          *

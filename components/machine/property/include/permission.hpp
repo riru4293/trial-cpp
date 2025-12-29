@@ -38,12 +38,12 @@ namespace machine::property
          * @details
          * %Permission encoding (2-bit).
          *
-         * @code
-         * bit1 bit0
-         *   ^    ^
-         *   |    '-- write permission (0=denied, 1=allowed)
-         *   '------- read  permission (0=denied, 1=allowed)
-         * @endcode
+         * @verbatim
+           bit1 bit0
+             ^    ^
+             |    '-- write permission (0=denied, 1=allowed)
+             '------- read  permission (0=denied, 1=allowed)
+           @endverbatim
          */
         enum class Kind : std::uint8_t
         {
@@ -64,12 +64,12 @@ namespace machine::property
          *
          * @par Input / Output
          *
-         * | raw (uint8_t) | masked  | OUTPUT          |
-         * | ------------- | ------- | --------------- |
-         * | 0b'0000'0000  | 0b'00   | Kind::None      |
-         * | 0b'0000'0001  | 0b'01   | Kind::WriteOnly |
-         * | 0b'0000'0010  | 0b'10   | Kind::ReadOnly  |
-         * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite |
+         * | raw (uint8_t)  | masked  | OUTPUT            |
+         * | -------------- | ------- | ----------------- |
+         * | `0b'0000'0000` | `0b'00` | `Kind::None`      |
+         * | `0b'0000'0001` | `0b'01` | `Kind::WriteOnly` |
+         * | `0b'0000'0010` | `0b'10` | `Kind::ReadOnly`  |
+         * | `0b'0000'0011` | `0b'11` | `Kind::ReadWrite` |
          *
          * @note ja: 下位2ビットを @ref Kind に変換します。
          *
@@ -85,12 +85,12 @@ namespace machine::property
          * @details
          * Inputs and outputs are as follows:
          *
-         * | INPUT           | OUTPUT       |
-         * | --------------- | ------------ |
-         * | Kind::None      | `none`       |
-         * | Kind::WriteOnly | `write-only` |
-         * | Kind::ReadOnly  | `read-only`  |
-         * | Kind::ReadWrite | `read-write` |
+         * | INPUT             | OUTPUT       |
+         * | ----------------- | ------------ |
+         * | `Kind::None`      | `none`       |
+         * | `Kind::WriteOnly` | `write-only` |
+         * | `Kind::ReadOnly`  | `read-only`  |
+         * | `Kind::ReadWrite` | `read-write` |
          *
          * @param v [in] the `Kind`
          *

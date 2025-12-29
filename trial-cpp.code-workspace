@@ -46,6 +46,7 @@
 			"ESP_LOGI",
 			"ESP_LOGD",
 			"ESP_LOGV",
+			"endverbatim"
 		]
 	}
 }

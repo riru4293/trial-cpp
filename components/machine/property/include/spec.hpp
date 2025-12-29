@@ -94,8 +94,7 @@ namespace machine::property
         {
             std::ostringstream oss;
 
-            oss << "{ code: "       << code_
-                << ", kind: "       << name_of( kind() )
+            oss << "{ format: "       << name_of( kind() )
                 << ", permission: " << Permission::name_of( permission() )
                 << ", resolution: " << Resolution::name_of( resolution() )
                 << ", init: "       << initVal_.str()
@@ -158,9 +157,9 @@ namespace machine::property
     private:
         struct Fragments
         {
-            std::uint8_t perm: 2;
-            std::uint8_t kind : 2;
-            std::uint8_t reso: 3;
+            std::uint8_t format : 2;
+            std::uint8_t permission: 2;
+            std::uint8_t resolution: 3;
             std::uint8_t reserved : 1;
         };
 
