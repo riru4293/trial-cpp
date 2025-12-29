@@ -217,13 +217,13 @@ namespace machine::property
     /** @brief Stream output operator for `Resolution::Kind`. */
     /**
      * @details
-     * Outputs the string representation of the `Resolution::Kind` instance
+     * Outputs the string representation of the `Resolution::Kind` value
      * to the provided output stream.
      *
      * @see std::formatter<machine::property::Resolution::Kind> for formatting details.
      *
      * @param os [out] The output stream to write to.
-     * @param v  [in]  The `Resolution::Kind` instance to output.
+     * @param v  [in]  The `Resolution::Kind` value to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -236,7 +236,7 @@ namespace std {
     /** @brief Formatter specialization for `machine::property::Resolution::Kind`. */
     /**
      * @details
-     * Formats a `Kind` instance. Examples are follows:
+     * Formats a `machine::property::Resolution::Kind` value. Examples are follows:
      *
      * - `Kind::X1   `: `x1(0)`
      * - `Kind::X0_01`: `x0.01(4)`
@@ -259,7 +259,7 @@ namespace std {
             return ctx.begin();
         }
 
-        /** @brief Format `machine::property::Resolution::Kind` value. */
+        /** @brief Format `Resolution::Kind` value. */
         /**
          * @param v   [in]     The `Resolution::Kind` value to format.
          * @param ctx [in,out] The format context.

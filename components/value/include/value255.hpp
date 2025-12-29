@@ -492,7 +492,7 @@ namespace std // Formatter specialization
     /** @brief Formatter specialization for `value::Value255`. */
     /**
      * @details
-     * Formats a `Kind` instance. Examples are follows:
+     * Formats a `value::Value255` instance. Examples are follows:
      *
      * - A `Value255` containing the bytes `0xA5, 0xE7, 0x00, 0xFF`
      *   will be formatted as: `[ 0xA5 0xE7 0x00 0xFF ]`

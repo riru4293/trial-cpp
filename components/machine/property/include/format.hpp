@@ -117,13 +117,13 @@ namespace machine::property
     /** @brief Stream output operator for `Format::Kind`. */
     /**
      * @details
-     * Outputs the string representation of the `Format::Kind` instance
+     * Outputs the string representation of the `Format::Kind` value
      * to the provided output stream.
      *
      * @see std::formatter<machine::property::Format::Kind> for formatting details.
      *
      * @param os [out] The output stream to write to.
-     * @param v  [in]  The `Format::Kind` instance to output.
+     * @param v  [in]  The `Format::Kind` value to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -137,7 +137,7 @@ namespace std
     /** @brief Formatter specialization for `machine::property::Format::Kind`. */
     /**
      * @details
-     * Formats a `Kind` instance. Examples are follows:
+     * Formats a `machine::property::Format::Kind` value. Examples are follows:
      *
      * - `Kind::Numeric`: `numeric(0)`
      * - `Kind::Boolean`: `boolean(1)`
@@ -161,7 +161,7 @@ namespace std
             return ctx.begin();
         }
 
-        /** @brief Format `machine::property::Format::Kind` value. */
+        /** @brief Format `Format::Kind` value. */
         /**
          * @param v   [in]     The `Format::Kind` value to format.
          * @param ctx [in,out] The format context.
@@ -177,4 +177,3 @@ namespace std
     };
 
 } // namespace std
-

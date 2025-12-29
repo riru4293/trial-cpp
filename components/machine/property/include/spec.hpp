@@ -8,11 +8,14 @@
 #include <value255.hpp>
 #include <permission.hpp>
 #include <resolution.hpp>
+#include <format.hpp>
+#include <value.hpp>
 
 /* Custom Library */
 #include <namespace.hpp>
 
-namespace machine {
+namespace machine::property
+{
 
     /** @brief Represents a property specification. */
     /**
@@ -63,9 +66,9 @@ namespace machine {
      *       - `Property[]`  (unique: code)
      *         - `std::uint8_t code`
      *         - `value::Value255 value`
-     *         - `machine::PropertySpec spec` <---[this]
+     *         - `machine::property::Spec spec` <---[this]
      */
-    class PropertySpec
+    class Spec
     {
     /* ^\__________________________________________ */
     /* #region Static members, Inner types.         */
@@ -231,31 +234,31 @@ namespace machine {
         /* #region Getter methods */
 
         [[nodiscard]]
-        Kind kind() const noexcept
+        Format::Kind format() const noexcept
         {
-            return from_raw( frags_.kind );
+            return Format::fromRaw( frags_.kind );
         }
 
         [[nodiscard]]
-        Perm permission() const noexcept
+        Permission::Kind permission() const noexcept
         {
-            return Permission::from_raw( frags_.perm );
+            return Permission::fromRaw( frags_.perm );
         }
 
         [[nodiscard]]
-        Reso resolution() const noexcept
+        Resolution::Kind resolution() const noexcept
         {
-            return Resolution::from_raw( frags_.reso );
+            return Resolution::fromRaw( frags_.reso );
         }
 
         [[nodiscard]]
-        value::Value255 const &initVal() const noexcept { return initVal_; }
+        Value const &initVal() const noexcept { return initVal_; }
 
         [[nodiscard]]
-        value::Value255 const &minVal() const noexcept { return minVal_; }
+        Value const &minVal() const noexcept { return minVal_; }
 
         [[nodiscard]]
-        value::Value255 const &maxVal() const noexcept { return maxVal_; }
+        Value const &maxVal() const noexcept { return maxVal_; }
 
         /* #endregion */
 
@@ -263,71 +266,89 @@ namespace machine {
 
         /* #region : member variables */
 
-        std::uint8_t code_;       // 1 bytes
-        Fragments frags_;         // 1 bytes
-        value::Value255 initVal_; // 6 bytes
-        value::Value255 minVal_;  // 6 bytes
-        value::Value255 maxVal_;  // 6 bytes
+        Fragments frags_;   // 1 bytes
+        Value initVal_;     // 6 bytes
+        Value minVal_;      // 6 bytes
+        Value maxVal_;      // 6 bytes
         // ---------------------------------
-        //                   Total: 20 bytes
+        //             Total: 19 bytes
 
         /* #endregion */
 
     }; // class PropertySpec
 
-    /** @brief Stream output operator for `PropertySpec::Kind`. */
+    /** @brief Stream output operator for `Spec`. */
     /**
      * @details
-     * Outputs the string representation of the `PropertySpec::Kind` instance
+     * Outputs the string representation of the `Spec` instance
      * to the provided output stream.
      *
-     * @see PropertySpec::name_of() for the format of the output.
+     * @see Spec::name_of() for the format of the output.
      *
      * @param os The output stream to write to.
-     * @param v The `PropertySpec::Kind` instance to output.
+     * @param v The `Spec::Kind` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
-    std::ostream &operator<<( std::ostream &os, PropertySpec::Kind const &v ) noexcept;
-
-    /** @brief Alias of the @ref PropertySpec::Kind */
-    using PropKind = PropertySpec::Kind;
+    std::ostream &operator<<( std::ostream &os, Spec::Kind const &v ) noexcept;
 
     /* ^\__________________________________________ */
     /* Static assertions.                           */
-    static_assert( sizeof(machine::PropertySpec) == 20, "Unexpected PropertySpec size" );
-    static_assert( alignof(machine::PropertySpec) == 1, "Unexpected PropertySpec alignment" );
+    static_assert( sizeof(machine::property::Spec) == 19, "Unexpected Spec size" );
+    static_assert( alignof(machine::property::Spec) == 1, "Unexpected Spec alignment" );
 
 } // namespace machine
 
-namespace std {
+namespace std
+{
 
-    /** @brief Formatter specialization for `machine::PropertySpec::Kind`. */
+    /** @brief Formatter specialization for `machine::property::Spec`. */
     /**
      * @details
-     * Formats a `Kind` instance. Examples are follows:
-     * - `Kind::Numeric`: `numeric(0)`
-     * - `Kind::Boolean`: `boolean(1)`
-     * - `Kind::BitSet` : `bitset(2)`
-     * - `Kind::String` : `string(3)`
+     * Formats a `machine::property::Spec` instance. Examples are follows:
+     *
+     * - A `Spec` with format=`Numeric`, permission=`ReadWrite`, resolution=`X1`,
+     *   initial_value=`10`, minimum_value=`0`, maximum_value=`1024`
+     *   will be formatted as:
+     *   `{ format: numeric(0), permission: read-write(3), resolution: x1(0),
+     *     initial_value: [ 0x0A ], minimum_value: [ 0x00 ], maximum_value: [ 0x00 0x04 ] }`
      */
     template <>
-    struct formatter<machine::PropertySpec::Kind>
+    struct formatter<machine::property::Spec>
     {
+        using Spec = machine::property::Spec;
+
         /** @brief Parse format specifiers (none supported). */
+        /**
+         * @param ctx [in,out] The format parse context.
+         *
+         * @return Iterator pointing to the next character to be parsed
+         *         (no specifiers are consumed).
+         */
         constexpr auto parse( std::format_parse_context &ctx )
         {
             return ctx.begin();
         }
 
-        /** @brief Format `machine::PropertySpec::Kind` value. */
+        /** @brief Format `Spec` value. */
+        /**
+         * @param v   [in]     The `Spec` value to format.
+         * @param ctx [in,out] The format context.
+         *
+         * @return Iterator to the end of the formatted output.
+         */
         template <typename FormatContext>
-        auto format( machine::PropertySpec::Kind const &v, FormatContext &ctx ) const
+        auto format( Spec const &v, FormatContext &ctx ) const
         {
-            return std::format_to( ctx.out(), "{}({})",
-                machine::PropertySpec::name_of( v ), static_cast<int>( v ) );
+            return std::format_to( ctx.out(),
+                R"({{ )"
+                    R"(format: {}, permission: {}, resolution: {})"
+                    R"(, initial_value: {}, minimum_value: {}, maximum_value: {})"
+                R"( }})",
+                v.format(), v.permission(), v.resolution(),
+                v.initVal(), v.minVal(), v.maxVal()
+            );
         }
     };
 
 } // namespace std
-

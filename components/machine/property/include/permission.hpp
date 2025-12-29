@@ -106,13 +106,13 @@ namespace machine::property
     /** @brief Stream output operator for `Permission::Kind`. */
     /**
      * @details
-     * Outputs the string representation of the `Permission::Kind` instance
+     * Outputs the string representation of the `Permission::Kind` value
      * to the provided output stream.
      *
      * @see std::formatter<machine::property::Permission::Kind> for formatting details.
      *
      * @param os [out] The output stream to write to.
-     * @param v  [in]  The `Permission::Kind` instance to output.
+     * @param v  [in]  The `Permission::Kind` value to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -126,7 +126,7 @@ namespace std
     /** @brief Formatter specialization for `machine::property::Permission::Kind`. */
     /**
      * @details
-     * Formats a `Kind` instance. Examples are follows:
+     * Formats a `machine::property::Permission::Kind` value. Examples are follows:
      *
      * - `Kind::None     `: `none(0)`
      * - `Kind::WriteOnly`: `write-only(1)`
@@ -150,7 +150,7 @@ namespace std
             return ctx.begin();
         }
 
-        /** @brief Format `machine::property::Permission::Kind` value. */
+        /** @brief Format `Permission::Kind` value. */
         /**
          * @param v   [in]     The `Permission::Kind` value to format.
          * @param ctx [in,out] The format context.
