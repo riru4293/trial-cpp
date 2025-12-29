@@ -7,31 +7,30 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include <sstream>
-#include <iomanip>
-#include <format>
+#include <format.hpp>
+#include <permission.hpp>
+#include <resolution.hpp>
 
 static const char* TAG = "app_main";
 
 // main processing method that runs inside the task's infinite loop
 static void processing_loop()
 {
-    // std::size_t counter = sizeof(machine::Property);
-    // std::size_t counter = sizeof(unsigned long);
-
     // Minimal work: log a message once per loop iteration.
     ESP_LOGI(TAG, "processing_loop iteration");
 
-    // machine::Unit iu = machine::Unit(machine::Unit::Kind::Internal, 0);
-    // machine::Unit eu = machine::Unit(machine::Unit::Kind::External, 0);
-    
-    // std::ostringstream os;
-    // os << "<<operator: iu=" << iu << " eu=" << eu;
-    // std::string s1 = os.str();
-    // ESP_LOGI(TAG, "%s", s1.c_str());
+    using namespace machine::property;
 
-    // std::string s2 = std::format("std::format: iu={} eu={}", iu, eu);
-    // ESP_LOGI(TAG, "%s", s2.c_str());
+    Format::Kind fmtBool = Format::Kind::Boolean;
+    Permission::Kind permRo = Permission::Kind::ReadOnly;
+    Resolution::Kind resoKind = Resolution::Kind::X0_5;
+
+    // ESP_LOGI( TAG, "Format::Kind: %s(%hhu)",
+    //     Format::nameOf( fmtBool ).data(), static_cast<std::uint8_t>( fmtBool ) );
+    ESP_LOGI( TAG, "Permission::Kind: %s(%hhu)",
+        Permission::nameOf( permRo ).data(), static_cast<std::uint8_t>( permRo ) );
+    // ESP_LOGI( TAG, "Resolution::Kind: %s(%hhu)",
+    //     Resolution::nameOf( resoKind ).data(), static_cast<std::uint8_t>( resoKind ) );
 }
 
 // C++ class that owns the task and runs the processing loop

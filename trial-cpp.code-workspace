@@ -41,8 +41,11 @@
 		},
 		"terminal.integrated.defaultProfile.linux": "bash (ESP-IDF)",
 		"cSpell.words": [
-			"Reso",
-			"Perm"
+			"ESP_LOGE",
+			"ESP_LOGW",
+			"ESP_LOGI",
+			"ESP_LOGD",
+			"ESP_LOGV",
 		]
 	}
 }

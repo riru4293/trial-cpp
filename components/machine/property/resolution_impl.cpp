@@ -1,29 +1,44 @@
 /* Self */
 #include "resolution_impl.hpp"
-#include <resolution.hpp>
 
 /* C++ Standard Library */
 #include <cmath>
 
-
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
-
 using namespace machine::property;
+using namespace machine::property::detail;
+
+
+/* ^\__________________________________________ */
+/* #region Operators.                           */
+
+std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
+{
+    return os << std::format( "{}", v );
+}
+
+/* #endregion */// Operators.
 
 
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
 
-std::string_view constexpr Resolution::nameOf( Kind const &v ) noexcept
+Resolution::Kind Resolution::fromRaw( std::uint8_t const &raw ) noexcept
+{
+    std::uint8_t const v = raw & RESOLUTION_KIND_MASK;
+    return static_cast<Kind>( v );
+}
+
+std::string_view Resolution::nameOf( Kind const &v ) noexcept
 {
     auto idx = static_cast<std::uint8_t>( v );
-    auto const &names = detail::RESOLUTION_KIND_NAMES;
+    auto const &names = RESOLUTION_KIND_NAMES;
 
     return ( idx < names.size() ) ? names[idx] : "Unknown";
 }
 
-std::int8_t constexpr Resolution::shiftOf( Kind const &v ) noexcept
+std::int8_t Resolution::shiftOf( Kind const &v ) noexcept
 {
     auto raw = static_cast<std::uint8_t>( v ); // Note: 0 to 7
 
@@ -43,14 +58,14 @@ std::int8_t constexpr Resolution::shiftOf( Kind const &v ) noexcept
     return static_cast<std::int8_t>( bit2_bit1 << 6 ) >> 6; // Note: -2 to +1
 }
 
-std::uint8_t constexpr Resolution::coeffOf( Kind const &v ) noexcept
+std::uint8_t Resolution::coeffOf( Kind const &v ) noexcept
 {
     auto raw = static_cast<std::uint8_t>( v );
     auto bit0 = raw & 0b1;
     return bit0 ? 5U : 1U; // 5 if bit0 == 1, 1 if bit0 == 0
 }
 
-double constexpr Resolution::scaleFactorOf( Kind const &v ) noexcept
+double Resolution::scaleFactorOf( Kind const &v ) noexcept
 {
     double coeff = static_cast<double>( coeffOf( v ) );
     std::int8_t shift = shiftOf( v );
@@ -59,45 +74,3 @@ double constexpr Resolution::scaleFactorOf( Kind const &v ) noexcept
 }
 
 /* #endregion */// Public methods.
-
-
-/* ^\__________________________________________ */
-/* #region Formatter.                           */
-
-namespace std
-{
-
-    template <>
-    struct formatter<machine::property::Resolution::Kind>
-    {
-        using Resolution = machine::property::Resolution;
-
-        /** @brief Parse format specifiers (none supported). */
-        constexpr auto parse( std::format_parse_context &ctx )
-        {
-            return ctx.begin();
-        }
-
-        /** @brief Format `machine::property::Resolution::Kind` value. */
-        template <typename FormatContext>
-        auto format( Resolution::Kind const &v, FormatContext &ctx ) const
-        {
-            return std::format_to( ctx.out(), "{}({})",
-                Resolution::nameOf( v ), static_cast<int>( v ) );
-        }
-    };
-
-} // namespace std
-
-/* #endregion */// Formatter.
-
-
-/* ^\__________________________________________ */
-/* #region Operators.                           */
-
-std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
-{
-    return os << std::format( "{}", v );
-}
-
-/* #endregion */// Operators.

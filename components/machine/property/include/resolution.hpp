@@ -68,19 +68,13 @@ namespace machine::property
             X0_5  = 0b111, //!< `10^-1 x 5 = x0.5`
         };
 
-        /** @brief The number of bits used to represent @ref Kind. */
-        static std::uint8_t constexpr KIND_BITS = 3U;
-
-        /** @brief A mask to extract the @ref Kind ​​from the `std::uint8_t`. */
-        static std::uint8_t constexpr KIND_MASK = ( 1U << KIND_BITS ) - 1U;
-
         /** @brief Convert raw 3-bit value to @ref Kind. */
         /**
          * @details
          * Converts the given raw value (lower 3 bits) into a corresponding
          * @ref Kind value.
          *
-         * The input value is masked with @ref KIND_MASK to ensure that
+         * The input value is masked with the lower 3 bits so that
          * only the valid resolution bits are used.
          *
          * @par Input / Output
@@ -97,16 +91,13 @@ namespace machine::property
          * | 0b'0000'0111  | 0b'111  | Kind::X0_5  |
          *
          * @note ja: 下位3ビットを @ref Kind に変換します。
-         *           入力値は @ref KIND_MASK によりマスクされます。
          *
          * @param raw [in] raw 3-bit encoded resolution value
+         *
          * @return corresponding @ref Kind.
          */
-        [[nodiscard]] static Kind constexpr fromRaw( std::uint8_t const &raw ) noexcept
-        {
-            std::uint8_t const v = raw & KIND_MASK;
-            return static_cast<Kind>( v );
-        }
+        [[nodiscard]]
+        static Kind fromRaw( std::uint8_t const &raw ) noexcept;
 
         /** @brief Returns the enumerator name of the given value. */
         /**
@@ -125,9 +116,11 @@ namespace machine::property
          * | Kind::X0_5  | `x0.5`  |
          *
          * @param v [in] the `Kind`
+         *
          * @return enumerator name
          */
-        [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
+        [[nodiscard]]
+        static std::string_view nameOf( Kind const &v ) noexcept;
 
         /** @brief Extracts the signed exponent N of ScaleBy10Pow(N) from the given ​​value. */
         /**
@@ -144,8 +137,13 @@ namespace machine::property
          * | Kind::X0_05 | 0b'10 (-2 as 2's complement) |     -2 |
          * | Kind::X0_1  | 0b'11 (-1 as 2's complement) |     -1 |
          * | Kind::X0_5  | 0b'11 (-1 as 2's complement) |     -1 |
+         *
+         * @param v [in] the `Kind`
+         *
+         * @return signed shift N
          */
-        [[nodiscard]] static std::int8_t constexpr shiftOf( Kind const &v ) noexcept;
+        [[nodiscard]]
+        static std::int8_t shiftOf( Kind const &v ) noexcept;
 
         /** @brief Extracts the coefficient from the given ​​value. */
         /**
@@ -162,8 +160,13 @@ namespace machine::property
          * | Kind::X0_05 | 0b'1                |      5 |
          * | Kind::X0_1  | 0b'0                |      1 |
          * | Kind::X0_5  | 0b'1                |      5 |
+         *
+         * @param v [in] the `Kind`
+         *
+         * @return coefficient (1 or 5)
          */
-        [[nodiscard]] static std::uint8_t constexpr coeffOf( Kind const &v ) noexcept;
+        [[nodiscard]]
+        static std::uint8_t coeffOf( Kind const &v ) noexcept;
 
         /** @brief Get the real-valued scale factor of the given resolution. */
         /**
@@ -200,10 +203,12 @@ namespace machine::property
          * Low-level code may avoid calling this function and instead work
          * with integer arithmetic using @ref shiftOf and @ref coeffOf.
          *
-         * @param v the `Kind`
+         * @param v [in] the `Kind`
+         *
          * @return real-valued scale factor
          */
-        [[nodiscard]] static double constexpr scaleFactorOf( Kind const &v ) noexcept;
+        [[nodiscard]]
+        static double scaleFactorOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types
 
@@ -217,8 +222,8 @@ namespace machine::property
      *
      * @see std::formatter<machine::property::Resolution::Kind> for formatting details.
      *
-     * @param os The output stream to write to.
-     * @param v The `Resolution::Kind` instance to output.
+     * @param os [out] The output stream to write to.
+     * @param v  [in]  The `Resolution::Kind` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -238,6 +243,35 @@ namespace std {
      * - `Kind::X0_5 `: `x0.5(7)`
      */
     template <>
-    struct formatter<machine::property::Resolution::Kind>;
+    struct formatter<machine::property::Resolution::Kind>
+    {
+        using Resolution = machine::property::Resolution;
+
+        /** @brief Parse format specifiers (none supported). */
+        /**
+         * @param ctx [in,out] The format parse context.
+         *
+         * @return Iterator pointing to the next character to be parsed
+         *         (no specifiers are consumed).
+         */
+        constexpr auto parse( std::format_parse_context &ctx )
+        {
+            return ctx.begin();
+        }
+
+        /** @brief Format `machine::property::Resolution::Kind` value. */
+        /**
+         * @param v   [in]     The `Resolution::Kind` value to format.
+         * @param ctx [in,out] The format context.
+         *
+         * @return Iterator to the end of the formatted output.
+         */
+        template <typename FormatContext>
+        auto format( Resolution::Kind const &v, FormatContext &ctx ) const
+        {
+            return std::format_to( ctx.out(), "{}({})",
+                Resolution::nameOf( v ), static_cast<int>( v ) );
+        }
+    };
 
 } // namespace std

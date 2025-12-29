@@ -159,7 +159,8 @@ namespace machine {
     /* ^\__________________________________________ */
     /* Instance members.                            */
     public:
-        [[nodiscard]] constexpr std::uint8_t code() const noexcept { return code_; }
+        [[nodiscard]]
+        constexpr std::uint8_t code() const noexcept { return code_; }
     private:
         // TODO PropertySpec
         std::array<std::byte, 4> value_;

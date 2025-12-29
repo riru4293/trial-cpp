@@ -22,7 +22,7 @@ namespace machine {
      * 4. Initial value
      * 5. Minimum value
      * 6. Maximum value
-     * 
+     *
      * @par Value kind:
      * The value types are as follows; if no value exists, the value is set to 0 bytes.
      * | Hex | Kind    | Details                     | Minimum value | Maximum value |
@@ -32,7 +32,7 @@ namespace machine {
      * | 0x2 | Boolean | 1 byte; 0=false, non-0=true | Fixed 0       | Fixed 1       |
      * | 0x3 | BitSet  | 1-3 byte                    | N/A           | 1-3 byte      |
      * | 0x4 | String  | 1-192 bytes                 | N/A           | N/A           |
-     * 
+     *
      * @par Value access permission:
      * Indicates whether the property value is none, read-write, read-only or write-only in 2 bits, as follows:
      * | Bits    | Permission |
@@ -59,30 +59,30 @@ namespace machine {
      * | 0x5 | 0b101 | `10^-2 x5 = x0.05` |
      * | 0x6 | 0b110 | `10^-1 x1 = x0.1 ` |
      * | 0x7 | 0b111 | `10^-1 x5 = x0.5 ` |
-     * 
+     *
      * For example, a value resolution of 0x7 indicates a resolution of 5 * 10^-1 = 0.5.
      * As a concrete example, to represent a temperature of 25.5°C,
      * the value would be 51 and the resolution would be 0.5.
      * @note ja: プロパティ値の解像度。3ビットで表現されます。さらに、これは初期値、最小値、最大値にも適用されます。
      * この解像度は、これらの値に既に適用されています。数値以外の型には解像度はありません。常に0になります。
-     * 
+     *
      * @par Initial value:
      * Default value used when no specific property value is provided, but a valid value is required.
      * 0-3 byte value, 0 byte indicates no value. If this value is not present, it defaults to 0.
      * @note ja: 特定の値を設定できない場合でも、有効な値を必ず設定するための初期値。
      * この値が存在しない場合、初期値は0とします。
-     * 
+     *
      * @par Minimum value:
      * The smallest possible value for the property value.
      * @note ja: プロパティ値の最小可能値。
-     * 
+     *
      * @par Maximum value:
      * The largest possible value for the property value.
      * However, if it is a bitset, it is treated as a bitmask,
      * with all valid bits set to 1 and undefined bits set to 0.
      * @note ja: プロパティ値の最大可能値。
      * ただし、ビットセットの場合はビットマスクとして扱い、有効なビットをすべて1に、未定義のビットを0に設定します。
-     * 
+     *
      * @par Hierarchy:
      * - Machine
      *   - `Unit[]` (unique: kind, index)
@@ -279,12 +279,24 @@ namespace machine {
     public:
         /* #region Getter methods */
 
-        [[nodiscard]] ValueKind valueKind() const noexcept;
-        [[nodiscard]] value::Value255 const &initVal() const noexcept { return initVal_; }
-        [[nodiscard]] value::Value255 const &minVal() const noexcept { return minVal_; }
-        [[nodiscard]] value::Value255 const &maxVal() const noexcept { return maxVal_; }
-        [[nodiscard]] Permission permission() const noexcept { return static_cast<Permission>(flags_.permission); }
-        [[nodiscard]] Resolution resolution() const noexcept { return static_cast<Resolution>(flags_.resolution); }
+        [[nodiscard]]
+        ValueKind valueKind() const noexcept;
+
+        [[nodiscard]]
+        value::Value255 const &initVal() const noexcept { return initVal_; }
+
+        [[nodiscard]]
+        value::Value255 const &minVal() const noexcept { return minVal_; }
+
+        [[nodiscard]]
+        value::Value255 const &maxVal() const noexcept { return maxVal_; }
+
+        [[nodiscard]]
+        Permission permission() const noexcept { return static_cast<Permission>(flags_.permission); }
+
+        [[nodiscard]]
+        Resolution resolution() const noexcept { return static_cast<Resolution>(flags_.resolution); }
+
 
         /* #endregion */
 

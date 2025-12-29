@@ -14,7 +14,7 @@ namespace machine {
      * @par Overview:
      * A Unit represents a component within a machine.
      * For example, Board Unit, Expansion Board Unit, Thermal Unit, Storage Unit, Power Unit, Light Unit.
-     * 
+     *
      * @par Identification:
      * Each unit is identified by a kind and an index.
      *
@@ -90,9 +90,15 @@ namespace machine {
     /* ^\__________________________________________ */
     /* Instance members.                            */
     public:
-        [[nodiscard]] constexpr Kind kind() const noexcept { return kind_; }
-        [[nodiscard]] constexpr std::uint8_t index() const noexcept { return index_; }
-        [[nodiscard]] constexpr bool isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
+        [[nodiscard]]
+        constexpr Kind kind() const noexcept { return kind_; }
+
+        [[nodiscard]]
+        constexpr std::uint8_t index() const noexcept { return index_; }
+
+        [[nodiscard]]
+        constexpr bool isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
+
     private:
         const Kind kind_;
         const std::uint8_t index_;
@@ -104,7 +110,7 @@ namespace machine {
             os << machine::Unit::KindName::of(v) << "(" << static_cast<int>(v) << ")";
             return os;
         }
-    
+
         std::ostream &operator<<(std::ostream &os, const Unit &v)
         {
             os  << "Unit{"
@@ -214,7 +220,7 @@ namespace std {
                 static_cast<int>(v.index()));
         }
     };
-    
+
 #pragma endregion
 
 } // namespace std

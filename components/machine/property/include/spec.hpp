@@ -81,10 +81,10 @@ namespace machine {
         };
 
         /** @brief The number of bits used to represent @ref Kind. */
-        static std::uint8_t constexpr KIND_BITS = 2U;
+        static constexpr std::uint8_t KIND_BITS = 2U;
 
         /** @brief A mask to extract the @ref PropertySpec::Kind ​​from the `std::uint8_t`. */
-        static std::uint8_t constexpr KIND_MASK = ( 1U << KIND_BITS ) - 1U;
+        static constexpr std::uint8_t KIND_MASK = ( 1U << KIND_BITS ) - 1U;
 
         /** @brief Get the name of the given ​​value. */
         /** @details
@@ -96,9 +96,11 @@ namespace machine {
          * | Kind::BitSet  | "bitset"  |
          * | Kind::String  | "string"  |
          */
-        [[nodiscard]] static std::string_view constexpr name_of( Kind v ) noexcept;
+        [[nodiscard]]
+        static constexpr std::string_view name_of( Kind v ) noexcept;
 
-        [[nodiscard]] static std::string_view constexpr name_of( PropertySpec v ) noexcept
+        [[nodiscard]]
+        static constexpr std::string_view name_of( PropertySpec v ) noexcept
         {
             return name_of( v.kind() );
         }
@@ -126,7 +128,8 @@ namespace machine {
         * @param raw The raw 2-bit encoded property spec kind value.
         * @return The corresponding @ref PropertySpec::Kind.
         */
-        [[nodiscard]] static Kind constexpr from_raw( std::uint8_t raw ) noexcept
+        [[nodiscard]]
+        static constexpr Kind from_raw( std::uint8_t raw ) noexcept
         {
             std::uint8_t const v = raw & KIND_MASK;
             return static_cast<Kind>( v );
@@ -143,7 +146,8 @@ namespace machine {
          *
          * @return String representation of this.
          */
-        [[nodiscard]] std::string str() const noexcept
+        [[nodiscard]]
+        std::string str() const noexcept
         {
             std::ostringstream oss;
 
@@ -164,8 +168,8 @@ namespace machine {
         static constexpr std::byte BOOL_MIN = std::byte{ 0x00 };
         static constexpr std::byte BOOL_MAX = std::byte{ 0x01 };
 
-        [[nodiscard]] static Kind constexpr kind_of(
-            value::Value255 const &min, value::Value255 const &max ) noexcept
+        [[nodiscard]]
+        static constexpr Kind kind_of( Value const &min, Value const &max ) noexcept
         {
             auto min_size = min.size();
             auto max_size = max.size();
@@ -313,24 +317,32 @@ namespace machine {
 
         /* #region Getter methods */
 
-        [[nodiscard]] Kind kind() const noexcept
+        [[nodiscard]]
+        Kind kind() const noexcept
         {
             return from_raw( frags_.kind );
         }
 
-        [[nodiscard]] Perm permission() const noexcept
+        [[nodiscard]]
+        Perm permission() const noexcept
         {
             return Permission::from_raw( frags_.perm );
         }
 
-        [[nodiscard]] Reso resolution() const noexcept
+        [[nodiscard]]
+        Reso resolution() const noexcept
         {
             return Resolution::from_raw( frags_.reso );
         }
 
-        [[nodiscard]] value::Value255 const &initVal() const noexcept { return initVal_; }
-        [[nodiscard]] value::Value255 const &minVal() const noexcept { return minVal_; }
-        [[nodiscard]] value::Value255 const &maxVal() const noexcept { return maxVal_; }
+        [[nodiscard]]
+        value::Value255 const &initVal() const noexcept { return initVal_; }
+
+        [[nodiscard]]
+        value::Value255 const &minVal() const noexcept { return minVal_; }
+
+        [[nodiscard]]
+        value::Value255 const &maxVal() const noexcept { return maxVal_; }
 
         /* #endregion */
 

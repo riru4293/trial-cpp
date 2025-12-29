@@ -53,19 +53,13 @@ namespace machine::property
             ReadWrite = 0b11, //!< Read-write access permission
         };
 
-        /** @brief The number of bits used to represent @ref Kind. */
-        static std::uint8_t constexpr KIND_BITS = 2U;
-
-        /** @brief A mask to extract the @ref Kind ​​from the `std::uint8_t`. */
-        static std::uint8_t constexpr KIND_MASK = ( 1U << KIND_BITS ) - 1U;
-
         /** @brief Convert raw 2-bit value to @ref Kind. */
         /**
          * @details
          * Converts the given raw value (lower 2 bits) into a corresponding
          * @ref Kind value.
          *
-         * The input value is masked with @ref KIND_MASK to ensure that
+         * The input value is masked with the lower 2 bits so that
          * only the valid permission bits are used.
          *
          * @par Input / Output
@@ -78,16 +72,13 @@ namespace machine::property
          * | 0b'0000'0011  | 0b'11   | Kind::ReadWrite |
          *
          * @note ja: 下位2ビットを @ref Kind に変換します。
-         *           入力値は @ref KIND_MASK によりマスクされます。
          *
          * @param raw [in] raw 2-bit encoded permission value
+         *
          * @return corresponding @ref Kind
          */
-        [[nodiscard]] static Kind constexpr fromRaw( std::uint8_t const &raw ) noexcept
-        {
-            std::uint8_t const v = raw & KIND_MASK;
-            return static_cast<Kind>( v );
-        }
+        [[nodiscard]]
+        static Kind fromRaw( std::uint8_t const &raw ) noexcept;
 
         /** @brief Returns the enumerator name of the given value. */
         /**
@@ -102,9 +93,11 @@ namespace machine::property
          * | Kind::ReadWrite | `read-write` |
          *
          * @param v [in] the `Kind`
+         *
          * @return enumerator name
          */
-        [[nodiscard]] static std::string_view constexpr nameOf( Kind const &v ) noexcept;
+        [[nodiscard]]
+        static std::string_view nameOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types.
 
@@ -119,7 +112,7 @@ namespace machine::property
      * @see std::formatter<machine::property::Permission::Kind> for formatting details.
      *
      * @param os [out] The output stream to write to.
-     * @param v [in] The `Permission::Kind` instance to output.
+     * @param v  [in]  The `Permission::Kind` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -141,6 +134,35 @@ namespace std
      * - `Kind::ReadWrite`: `read-write(3)`
      */
     template <>
-    struct formatter<machine::property::Permission::Kind>;
+    struct formatter<machine::property::Permission::Kind>
+    {
+        using Permission = machine::property::Permission;
+
+        /** @brief Parse format specifiers (none supported). */
+        /**
+         * @param ctx [in,out] The format parse context.
+         *
+         * @return Iterator pointing to the next character to be parsed
+         *         (no specifiers are consumed).
+         */
+        constexpr auto parse( std::format_parse_context &ctx )
+        {
+            return ctx.begin();
+        }
+
+        /** @brief Format `machine::property::Permission::Kind` value. */
+        /**
+         * @param v   [in]     The `Permission::Kind` value to format.
+         * @param ctx [in,out] The format context.
+         *
+         * @return Iterator to the end of the formatted output.
+         */
+        template <typename FormatContext>
+        auto format( Permission::Kind const &v, FormatContext &ctx ) const
+        {
+            return std::format_to( ctx.out(), "{}({})",
+                Permission::nameOf( v ), static_cast<int>( v ) );
+        }
+    };
 
 } // namespace std

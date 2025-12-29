@@ -15,13 +15,13 @@ namespace machine {
      * A Component represents a component within a machine unit.
      * For example, a board unit includes components such as
      * the CPU, memory, sound controller, BIOS, VRM, and clock generator.
-     * 
+     *
      * @par Identification:
      * Each component is identified by a code and an index.
      *
      * @par Indexing:
      * Index 0 is the primary component for each code; indices 1 and above are secondary components.
-     * 
+     *
      * @par Hierarchy:
      * - Machine
      *   - Unit[] (unique: kind, index)
@@ -50,7 +50,7 @@ namespace machine {
          */
         explicit constexpr Component(const std::uint8_t code, const std::uint8_t index) noexcept
             : Component(code, index, ROOT_LEVEL) {}
-    
+
         /** @brief Construct with given code, index, and level. */
         /**
          * @param code Component code.
@@ -59,7 +59,7 @@ namespace machine {
          */
         explicit constexpr Component(const std::uint8_t code, const std::uint8_t index, const std::uint8_t level) noexcept
             : code_(code), index_(index), level_(level) {}
-    
+
         ~Component() noexcept = default;                            //!< Destructor (default).
         Component(const Component &) noexcept = default;            //!< Copy constructor (default).
         Component(Component &&) noexcept = default;                 //!< Move constructor (default).
@@ -70,10 +70,18 @@ namespace machine {
     /* ^\__________________________________________ */
     /* Instance members.                            */
     public:
-        [[nodiscard]] constexpr std::uint8_t code() const noexcept { return code_; }
-        [[nodiscard]] constexpr std::uint8_t index() const noexcept { return index_; }
-        [[nodiscard]] constexpr std::uint8_t level() const noexcept { return level_; }
-        [[nodiscard]] constexpr bool isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
+        [[nodiscard]]
+        constexpr std::uint8_t code() const noexcept { return code_; }
+
+        [[nodiscard]]
+        constexpr std::uint8_t index() const noexcept { return index_; }
+
+        [[nodiscard]]
+        constexpr std::uint8_t level() const noexcept { return level_; }
+
+        [[nodiscard]]
+        constexpr bool isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
+
     private:
         const std::uint8_t code_;
         const std::uint8_t index_;
@@ -146,7 +154,7 @@ namespace std {
                 v.code(), static_cast<int>(v.index()), static_cast<int>(v.level()));
         }
     };
-    
+
 #pragma endregion
 
 } // namespace std

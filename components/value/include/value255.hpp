@@ -65,8 +65,8 @@ namespace value
         * Allocates memory as needed and copies the provided data into the new
         * instance.
         *
-        * @param data Pointer to the raw data. A null pointer is only valid if size is 0.
-        * @param size Size of the data in bytes.
+        * @param data [in] Pointer to the raw data. A null pointer is only valid if size is 0.
+        * @param size [in] Size of the data in bytes.
         *
         * @return An optional containing the created `Value255` if successful;
         * `std::nullopt` otherwise.
@@ -152,7 +152,7 @@ namespace value
          * Transfers ownership of the data from the other `Value255` to this instance.
          * After the move, the other `Value255` is left in a valid but unspecified state.
          *
-         * @param other The other `Value255` to move from.
+         * @param other [in,out] The other `Value255` to move from.
          */
         Value255( Value255 &&other ) noexcept
         {
@@ -177,6 +177,7 @@ namespace value
         /**
          * @details
          * Performs the following steps:
+         *
          * 1. If this and other instance are same, do nothing and return *this.
          * 2. Releases any heap memory currently owned by this instance.
          * 3. Transfers or copies the contents from the other `Value255`
@@ -184,7 +185,7 @@ namespace value
          * 4. Resets the other `Value255` by setting its size to 0 and
          *    its pointer to nullptr.
          *
-         * @param other The other `Value255` to move from.
+         * @param other [in,out] The other `Value255` to move from.
          *
          * @return Reference to this `Value255` after the move.
          */
@@ -194,12 +195,13 @@ namespace value
         /**
          * @details
          * Perform the following steps:
+         *
          * 1. If this and other instance are same, return `true`.
          * 2. If the sizes do not match, return `false`.
          * 3. If the size is `0`, return `true`.
          * 4. If the payload is an exact match, return `true`; otherwise, return `false`.
          *
-         * @param other other instance to compare with.
+         * @param other [in] other instance to compare with.
          *
          * @return `true` if both instances are equal, `false` otherwise.
          */
@@ -209,12 +211,13 @@ namespace value
         /**
          * @details
          * Performs the following steps:
+         *
          * 1. If this and other instance are same, return `std::strong_ordering::equal`.
          * 2. If this instance's size is smaller, return `std::strong_ordering::less`.
          * 3. If this instance's size is larger, return `std::strong_ordering::greater`.
          * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
          *
-         * @param other The other `Value255` to compare with.
+         * @param other [in] The other `Value255` to compare with.
          *
          * @return `std::strong_ordering` indicating the comparison result.
          */
@@ -228,11 +231,12 @@ namespace value
 
     public:
 
+        /** @brief Returns the size of the value in bytes. */
         /**
-         * @brief Returns the size of the value in bytes.
          * @return Size of the value in bytes.
          */
-        [[nodiscard]] std::uint8_t size() const noexcept
+        [[nodiscard]]
+        std::uint8_t size() const noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -240,11 +244,12 @@ namespace value
             return size_;
         }
 
-        /** @brief Returns the size of the value in bytes. */
+        /** @brief Returns the value as a vector of bytes. */
         /**
          * @return Vector of bytes representing the value.
          */
-        [[nodiscard]] std::vector<std::byte> bytes() const noexcept
+        [[nodiscard]]
+        std::vector<std::byte> bytes() const noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -269,14 +274,16 @@ namespace value
         /**
          * @details
          * The string representation is formatted as a list of hexadecimal byte values.
-         * For example, a value containing the bytes 0xA5, 0xE7, 0x00, 0xFF would be represented as:
+         * For example, a value containing the bytes 0xA5, 0xE7, 0x00, 0xFF
+         * would be represented as:
          * ```
          * [ 0xA5 0xE7 0x00 0xFF ]
          * ```
          *
          * @return String representation of the value.
          */
-        [[nodiscard]] std::string str() const noexcept
+        [[nodiscard]]
+        std::string str() const noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -304,17 +311,19 @@ namespace value
         * @details
         * Creates a new `Value255` instance by copying the contents of this
         * instance.
+        *
         * Allocates memory as needed and copies the provided data into the
         * new instance.
         *
         * @return An optional containing the cloned `Value255` if successful;
-        * `std::nullopt` otherwise.
+        *         `std::nullopt` otherwise.
         *
         * @note
         * The failure cases are:
         * - A situation where memory cannot be allocated to store a copy of `data`.
         */
-        [[nodiscard]] std::optional<Value255> clone( void ) const noexcept
+        [[nodiscard]]
+        std::optional<Value255> clone( void ) const noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -330,7 +339,8 @@ namespace value
 
     protected:
 
-        [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept;
+        [[nodiscard]]
+        bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
     private:
 
@@ -390,8 +400,8 @@ namespace value
      *
      * @see Value255::str() for the format of the output.
      *
-     * @param os The output stream to write to.
-     * @param v The `Value255` instance to output.
+     * @param os [out] The output stream to write to.
+     * @param v  [in]  The `Value255` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
@@ -449,8 +459,9 @@ namespace value
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
         *
-        * @param data Pointer to the new raw data. A null pointer is only valid if size is 0.
-        * @param size Size of the new data in bytes.
+        * @param data [in] Pointer to the new raw data.
+        *                  A null pointer is only valid if size is 0.
+        * @param size [in] Size of the new data in bytes.
         *
         * @return `true` if the operation was successful; `false` otherwise.
         * @note
@@ -458,7 +469,8 @@ namespace value
         * - `data` is null while `size` is greater than 0.
         * - A situation where memory cannot be allocated to store a copy of `data`.
        */
-        [[nodiscard]] bool set( std::byte const *data, std::uint8_t size ) noexcept
+        [[nodiscard]]
+        bool set( std::byte const *data, std::uint8_t size ) noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
@@ -480,8 +492,13 @@ namespace std // Formatter specialization
     /** @brief Formatter specialization for `value::Value255`. */
     /**
      * @details
-     * This formatter allows `value::Value255` instances to be formatted
-     * using the C++20 `<format>` library.
+     * Formats a `Kind` instance. Examples are follows:
+     *
+     * - A `Value255` containing the bytes `0xA5, 0xE7, 0x00, 0xFF`
+     *   will be formatted as: `[ 0xA5 0xE7 0x00 0xFF ]`
+     * - A `Value255` containing the bytes `0x12, 0x34`
+     *   will be formatted as: `[ 0x12 0x34 ]`
+     * - An empty `Value255` (size 0) will be formatted as: `[ ]`
      *
      * @see Value255::str() for the format of the output.
      */
@@ -490,17 +507,18 @@ namespace std // Formatter specialization
     {
         /** @brief Parse format specifiers (no supported). */
         /**
-         * @param ctx The format parse context.
+         * @param ctx [in,out] The format parse context.
          *
-         * @return Iterator to the end of the parsed format specifiers.
+         * @return Iterator pointing to the next character to be parsed
+         *         (no specifiers are consumed).
          */
         constexpr auto parse( std::format_parse_context &ctx ) const noexcept {
             return ctx.begin(); }
 
         /** @brief Format the `value::Value255`. */
         /**
-         * @param v The `value::Value255` instance to format.
-         * @param ctx The format context.
+         * @param v   [in]     The `value::Value255` instance to format.
+         * @param ctx [in,out] The format context.
          *
          * @return Iterator to the end of the formatted output.
          */
