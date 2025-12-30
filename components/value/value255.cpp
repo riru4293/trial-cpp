@@ -3,6 +3,10 @@
 
 /* C++ Standard Library */
 #include <algorithm>
+#include <cstring>
+#include <compare>
+#include <sstream>
+#include <utility>
 
 /* ESP-IDF */
 #include <esp_heap_caps.h>
@@ -34,6 +38,20 @@ std::optional<Value255> Value255::create(
 }
 
 /* #endregion */// Factory methods
+
+
+/* ^\__________________________________________ */
+/* #region Constructors.                        */
+
+Value255::Value255( Value255 &&other ) noexcept
+{
+    SpinGuard guard( *this, other );
+    // [===> Follows: Locked]
+
+    moveFrom( std::move( other ) );
+}
+
+/* #endregion */// Constructors
 
 
 /* ^\__________________________________________ */
@@ -70,13 +88,14 @@ bool Value255::operator==( Value255 const &other ) const noexcept
     if ( size_ == 0U ) { return true; }
     // [===> Follows: Sizes present]
 
-    auto *a = data_unlocked();
-    auto *b = other.data_unlocked();
+    std::byte const *a = data_unlocked();
+    std::byte const *b = other.data_unlocked();
 
     return std::equal( a, a + size_, b );
 }
 
 auto Value255::operator<=>( Value255 const &other ) const noexcept
+    ->std::strong_ordering
 {
     SpinGuard guard( *this, other );
     // [===> Follows: Locked]
@@ -91,8 +110,8 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
     if (size_ == 0) { return std::strong_ordering::equal; }
     // [===> Follows: Sizes present]
 
-    auto *a = data_unlocked();
-    auto *b = other.data_unlocked();
+    std::byte const *a = data_unlocked();
+    std::byte const *b = other.data_unlocked();
 
     return std::lexicographical_compare_three_way(
         a, a + size_,
@@ -101,7 +120,62 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
     );
 }
 
+std::ostream &operator<<( std::ostream &os, Value255 const &v )
+{
+    os << v.str();
+    return os;
+}
+
 /* #endregion */// Operators
+
+
+/* ^\__________________________________________ */
+/* #region Public methods.                      */
+
+std::vector<std::byte> Value255::bytes() const noexcept
+{
+    SpinGuard guard( *this );
+    // [===> Follows: Locked]
+
+    std::vector<std::byte> out;
+    out.reserve( size_ );
+
+    if ( isHeapAllocated() )
+    {
+        std::byte *ptr = heapPointerAsByte();
+        out.insert( out.end(), ptr, ptr + size_ );
+    }
+    else
+    {
+        out.insert( out.end(), raw_data_, raw_data_ + size_ );
+    }
+
+    return out;
+}
+
+std::string Value255::str() const noexcept
+{
+    SpinGuard guard( *this );
+    // [===> Follows: Locked]
+
+    std::byte const *ptr = data_unlocked();
+    std::ostringstream oss;
+
+    oss << "[ ";
+
+    for ( uint8_t i = 0; i < size_; i++ )
+    {
+        oss << std::format( "0x{:02X}", static_cast<unsigned>( ptr[i] ) );
+
+        if ( i + 1 < size_ ) oss << ' ';
+    }
+
+    oss << " ]";
+
+    return oss.str();
+}
+
+/* #endregion */// Public methods
 
 
 /* ^\__________________________________________ */
@@ -140,7 +214,6 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
             // [===> Follows: Heap memory reallocated]
 
             std::uintptr_t addr = reinterpret_cast<std::uintptr_t>( p );
-            static_assert( sizeof( std::uintptr_t ) == 4U, "The `uintptr_t` must be 4 bytes." );
             std::memcpy( raw_data_, &addr, INLINE_SIZE );
         }
         // [===> Follows: Heap memory allocation completed]
@@ -154,6 +227,8 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 
     return true;
 }
+
+static_assert( sizeof( std::uintptr_t ) == 4U, "The `uintptr_t` must be 4 bytes." );
 
 /* #endregion */// Protected methods
 
@@ -196,11 +271,13 @@ void Value255::moveFrom( Value255 &&other ) noexcept
     // [===> Follows: Other instance has no size]
 }
 
-/* #endregion */// Private methods
-
-
-std::ostream &operator<<( std::ostream &os, Value255 const &v )
+std::uintptr_t Value255::heapPointer() const noexcept
 {
-    os << v.str();
-    return os;
+    std::uintptr_t ptr = 0;
+
+    std::memcpy( &ptr, raw_data_, INLINE_SIZE );
+
+    return ptr;
 }
+
+/* #endregion */// Private methods

@@ -4,11 +4,8 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
-#include <format>
 #include <optional>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -89,9 +86,11 @@ namespace value
             Value255 const &a_;
             Value255 const &b_;
 
-            explicit SpinGuard( Value255 const &v ) noexcept : SpinGuard( v, v ) {}
+            explicit SpinGuard( Value255 const &v ) noexcept
+                : SpinGuard( v, v ) {}
 
-            explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept : a_( a ), b_( b )
+            explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept
+                : a_( a ), b_( b )
             {
                 // Note: To prevent deadlocks, only one if the same instance will be locked.
                 if ( &a_ == &b_ ) { a_.lock();            }
@@ -154,13 +153,7 @@ namespace value
          *
          * @param other [in,out] The other `Value255` to move from.
          */
-        Value255( Value255 &&other ) noexcept
-        {
-            SpinGuard guard( *this, other );
-            // [===> Follows: Locked]
-
-            moveFrom( std::move( other ) );
-        }
+        Value255( Value255 &&other ) noexcept;
 
     /* #endregion */// Constructors
 
@@ -221,7 +214,8 @@ namespace value
          *
          * @return `std::strong_ordering` indicating the comparison result.
          */
-        auto operator<=>( Value255 const &other ) const noexcept;
+        auto operator<=>( Value255 const &other ) const noexcept
+            ->std::strong_ordering;
 
     /* #endregion */// Operators
 
@@ -249,26 +243,7 @@ namespace value
          * @return Vector of bytes representing the value.
          */
         [[nodiscard]]
-        std::vector<std::byte> bytes() const noexcept
-        {
-            SpinGuard guard( *this );
-            // [===> Follows: Locked]
-
-            std::vector<std::byte> out;
-            out.reserve( size_ );
-
-            if ( isHeapAllocated() )
-            {
-                std::byte *ptr = heapPointerAsByte();
-                out.insert( out.end(), ptr, ptr + size_ );
-            }
-            else
-            {
-                out.insert( out.end(), raw_data_, raw_data_ + size_ );
-            }
-
-            return out;
-        }
+        std::vector<std::byte> bytes() const noexcept;
 
         /** @brief Returns a string representation of the value. */
         /**
@@ -283,28 +258,7 @@ namespace value
          * @return String representation of the value.
          */
         [[nodiscard]]
-        std::string str() const noexcept
-        {
-            SpinGuard guard( *this );
-            // [===> Follows: Locked]
-
-            auto *ptr = data_unlocked();
-            auto   sz = size_unlocked();
-            std::ostringstream oss;
-
-            oss << "[ ";
-
-            for ( uint8_t i = 0; i < sz; i++ )
-            {
-                oss << std::format( "0x{:02X}", static_cast<unsigned>( ptr[i] ) );
-
-                if ( i + 1 < sz ) oss << ' ';
-            }
-
-            oss << " ]";
-
-            return oss.str();
-        }
+        std::string str() const noexcept;
 
         /** @brief Create clone from this instance. */
         /**
@@ -328,13 +282,10 @@ namespace value
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            std::byte    const *data = data_unlocked();
-            std::uint8_t const  size = size_unlocked();
-
             /* Note:
                 create() is public method but does not require a lock,
                 so there are no deadlock issues. */
-            return create( data, size );
+            return create( data_unlocked(), size_ );
         }
 
     protected:
@@ -352,31 +303,35 @@ namespace value
 
         void moveFrom( Value255 &&other ) noexcept;
 
-        void lock() const noexcept { while(
-            lock_.exchange( true, std::memory_order_acquire ) ) { /* Busy loop */ } }
-
-        void unlock() const noexcept {
-            lock_.store( false, std::memory_order_release ); }
-
-        std::uintptr_t heapPointer() const noexcept
+        void lock() const noexcept
         {
-            std::uintptr_t ptr = 0;
-
-            std::memcpy( &ptr, raw_data_, INLINE_SIZE );
-
-            return ptr;
+            while( lock_.exchange( true, std::memory_order_acquire ) )
+            {
+                /* Busy loop */
+            }
         }
 
-        std::byte *heapPointerAsByte() const noexcept {
-            return reinterpret_cast<std::byte *>( heapPointer() ); }
+        void unlock() const noexcept
+        {
+            lock_.store( false, std::memory_order_release );
+        }
 
-        void *heapPointerAsVoid() const noexcept {
-            return reinterpret_cast<void *>( heapPointer() ); }
+        std::uintptr_t heapPointer() const noexcept;
 
-        std::uint8_t size_unlocked() const noexcept { return size_; }
+        std::byte *heapPointerAsByte() const noexcept
+        {
+            return reinterpret_cast<std::byte *>( heapPointer() );
+        }
 
-        std::byte const *data_unlocked() const noexcept {
-            return isHeapAllocated() ? heapPointerAsByte() : raw_data_; }
+        void *heapPointerAsVoid() const noexcept
+        {
+            return reinterpret_cast<void *>( heapPointer() );
+        }
+
+        std::byte const *data_unlocked() const noexcept
+        {
+            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
+        }
 
         /* #endregion */// Private methods
 
@@ -486,44 +441,3 @@ namespace value
     static_assert( alignof(value::Value255) == 1U, "Unexpected Value255 alignment");
 
 } // namespace value
-
-namespace std // Formatter specialization
-{
-    /** @brief Formatter specialization for `value::Value255`. */
-    /**
-     * @details
-     * Formats a `value::Value255` instance. Examples are follows:
-     *
-     * - A `Value255` containing the bytes `0xA5, 0xE7, 0x00, 0xFF`
-     *   will be formatted as: `[ 0xA5 0xE7 0x00 0xFF ]`
-     * - A `Value255` containing the bytes `0x12, 0x34`
-     *   will be formatted as: `[ 0x12 0x34 ]`
-     * - An empty `Value255` (size 0) will be formatted as: `[ ]`
-     *
-     * @see Value255::str() for the format of the output.
-     */
-    template <>
-    struct formatter<value::Value255>
-    {
-        /** @brief Parse format specifiers (no supported). */
-        /**
-         * @param ctx [in,out] The format parse context.
-         *
-         * @return Iterator pointing to the next character to be parsed
-         *         (no specifiers are consumed).
-         */
-        constexpr auto parse( std::format_parse_context &ctx ) const noexcept {
-            return ctx.begin(); }
-
-        /** @brief Format the `value::Value255`. */
-        /**
-         * @param v   [in]     The `value::Value255` instance to format.
-         * @param ctx [in,out] The format context.
-         *
-         * @return Iterator to the end of the formatted output.
-         */
-        template <typename FormatContext>
-        auto format( value::Value255 const &v, FormatContext &ctx ) const noexcept {
-            return std::ranges::copy( v.str(), ctx.out() ).out; }
-    };
-} // namespace std
