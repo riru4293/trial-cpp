@@ -1,5 +1,6 @@
 /* Self */
 #include "permission_impl.hpp"
+#include <permission_format.hpp>
 
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
