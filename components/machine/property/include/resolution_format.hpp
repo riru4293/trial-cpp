@@ -1,28 +1,26 @@
 #pragma once
 
 /* Self */
-#include <permission.hpp>
+#include <resolution.hpp>
 
 /* C++ Standard Library */
 #include <format>
 
-namespace std
-{
+namespace std {
 
-    /** @brief Formatter specialization for `machine::property::Permission::Kind`. */
+    /** @brief Formatter specialization for `machine::property::Resolution::Kind`. */
     /**
      * @details
-     * Formats a `machine::property::Permission::Kind` value. Examples are follows:
+     * Formats a `machine::property::Resolution::Kind` value. Examples are follows:
      *
-     * - `Kind::None     `: `none(0)`
-     * - `Kind::WriteOnly`: `write-only(1)`
-     * - `Kind::ReadOnly `: `read-only(2)`
-     * - `Kind::ReadWrite`: `read-write(3)`
+     * - `Kind::X1   `: `x1(0)`
+     * - `Kind::X0_01`: `x0.01(4)`
+     * - `Kind::X0_5 `: `x0.5(7)`
      */
     template <>
-    struct formatter<machine::property::Permission::Kind>
+    struct formatter<machine::property::Resolution::Kind>
     {
-        using Permission = machine::property::Permission;
+        using Resolution = machine::property::Resolution;
 
         /** @brief Parse format specifiers (none supported). */
         /**
@@ -37,18 +35,18 @@ namespace std
             return ctx.begin();
         }
 
-        /** @brief Format `Permission::Kind` value. */
+        /** @brief Format `Resolution::Kind` value. */
         /**
-         * @param v   [in]     The `Permission::Kind` value to format.
+         * @param v   [in]     The `Resolution::Kind` value to format.
          * @param ctx [in,out] The format context.
          *
          * @return Iterator to the end of the formatted output.
          */
         template <typename FormatContext>
-        auto format( Permission::Kind const &v, FormatContext &ctx ) const
+        auto format( Resolution::Kind const &v, FormatContext &ctx ) const
         {
             return std::format_to( ctx.out(), "{}({})",
-                Permission::nameOf( v ), static_cast<int>( v ) );
+                Resolution::nameOf( v ), static_cast<int>( v ) );
         }
     };
 

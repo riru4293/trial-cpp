@@ -1,5 +1,6 @@
 /* Self */
 #include "resolution_impl.hpp"
+#include <resolution_format.hpp>
 
 /* C++ Standard Library */
 #include <cmath>
