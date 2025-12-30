@@ -20,17 +20,18 @@ static void processing_loop()
     ESP_LOGI(TAG, "processing_loop iteration");
 
     using namespace machine::property;
-
+    
     Format::Kind fmtBool = Format::Kind::Boolean;
-    Permission::Kind permRo = Permission::Kind::ReadOnly;
-    Resolution::Kind resoKind = Resolution::Kind::X0_5;
-
-    // ESP_LOGI( TAG, "Format::Kind: %s(%hhu)",
-    //     Format::nameOf( fmtBool ).data(), static_cast<std::uint8_t>( fmtBool ) );
+    ESP_LOGI( TAG, "Format::Kind: %s(%hhu)",
+        Format::nameOf( fmtBool ).data(), static_cast<std::uint8_t>( fmtBool ) );
+        
+    Permission::Kind ro = Permission::Kind::ReadOnly;
     ESP_LOGI( TAG, "Permission::Kind: %s(%hhu)",
-        Permission::nameOf( permRo ).data(), static_cast<std::uint8_t>( permRo ) );
-    // ESP_LOGI( TAG, "Resolution::Kind: %s(%hhu)",
-    //     Resolution::nameOf( resoKind ).data(), static_cast<std::uint8_t>( resoKind ) );
+        Permission::nameOf( ro ).data(), static_cast<std::uint8_t>( ro ) );
+
+    Resolution::Kind x0_5 = Resolution::Kind::X0_5;
+    ESP_LOGI( TAG, "Resolution::Kind: %s(%hhu)",
+        Resolution::nameOf( x0_5 ).data(), static_cast<std::uint8_t>( x0_5 ) );
 }
 
 // C++ class that owns the task and runs the processing loop
