@@ -1,6 +1,8 @@
 /* Self */
 #include "format_impl.hpp"
-#include <format_format.hpp>
+
+/* C++ Standard Library */
+#include <sstream>
 
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
@@ -13,7 +15,7 @@ using namespace machine::property::detail;
 
 std::ostream &operator<<( std::ostream &os, Format::Kind const &v )
 {
-    return os << std::format( "{}", v );
+    return os << Format::strOf( v );
 }
 
 /* #endregion */// Operators.
@@ -58,6 +60,15 @@ std::string_view Format::nameOf( Kind const &v ) noexcept
     auto const &names = FORMAT_KIND_NAMES;
 
     return ( idx < names.size() ) ? names[idx] : "Unknown";
+}
+
+std::string Format::strOf( Kind const &v ) noexcept
+{
+    std::ostringstream oss;
+
+    oss << nameOf( v ) << "(" << static_cast<unsigned>( v ) << ")";
+
+    return oss.str();
 }
 
 /* #endregion */// Public methods.

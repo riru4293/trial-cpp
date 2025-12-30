@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <string>
 
 namespace machine::property
 {
@@ -94,6 +95,25 @@ namespace machine::property
          */
         [[nodiscard]]
         static std::string_view nameOf( Kind const &v ) noexcept;
+
+        /** @brief Returns a string representation of the `Kind`. */
+        /**
+         * @details
+         * Inputs and outputs are as follows:
+         *
+         * | INPUT             | OUTPUT          |
+         * | ----------------- | --------------- |
+         * | `Kind::None`      | `none(0)`       |
+         * | `Kind::WriteOnly` | `write-only(1)` |
+         * | `Kind::ReadOnly`  | `read-only(2)`  |
+         * | `Kind::ReadWrite` | `read-write(3)` |
+         *
+         * @param v [in] the `Kind`
+         *
+         * @return String representation of the `Kind`.
+         */
+        [[nodiscard]]
+        static std::string strOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types.
 

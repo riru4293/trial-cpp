@@ -47,8 +47,14 @@ namespace std // Formatter specialization
         template <typename FormatContext>
         auto format( Format::Kind const &v, FormatContext &ctx ) const
         {
-            return std::format_to( ctx.out(), "{}({})",
-                Format::nameOf( v ), static_cast<int>( v ) );
+            std::string str = Format::strOf( v );
+            
+            for ( char c : str )
+            {
+                *ctx.out()++ = c;
+            }
+
+            return ctx.out();
         }
     };
 

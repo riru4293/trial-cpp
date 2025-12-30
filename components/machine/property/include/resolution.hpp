@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <string>
 
 namespace machine::property
 {
@@ -117,6 +118,29 @@ namespace machine::property
          */
         [[nodiscard]]
         static std::string_view nameOf( Kind const &v ) noexcept;
+
+        /** @brief Returns a string representation of the `Kind`. */
+        /**
+         * @details
+         * Inputs and outputs are as follows:
+         *
+         * | INPUT         | OUTPUT     |
+         * | ------------- | ---------- |
+         * | `Kind::X1`    | `x1(0)`    |
+         * | `Kind::X5`    | `x5(1)`    |
+         * | `Kind::X10`   | `x10(2)`   |
+         * | `Kind::X50`   | `x50(3)`   |
+         * | `Kind::X0_01` | `x0.01(4)` |
+         * | `Kind::X0_05` | `x0.05(5)` |
+         * | `Kind::X0_1`  | `x0.1(6)`  |
+         * | `Kind::X0_5`  | `x0.5(7)`  |
+         *
+         * @param v [in] the `Kind`
+         *
+         * @return String representation of the `Kind`.
+         */
+        [[nodiscard]]
+        static std::string strOf( Kind const &v ) noexcept;
 
         /** @brief Extracts the signed exponent N of ScaleBy10Pow(N) from the given ​​value. */
         /**

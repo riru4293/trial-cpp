@@ -83,9 +83,9 @@ namespace machine::property
          */
         static std::optional<Spec> create( Permission::Kind permission
                                          , Resolution::Kind resolution
-                                         , Value const init_val
-                                         , Value const min_val
-                                         , Value const max_val ) noexcept
+                                         , Value const &init_val
+                                         , Value const &min_val
+                                         , Value const &max_val ) noexcept
         {
             auto cloned_init = init_val.clone();
             auto cloned_min = min_val.clone();

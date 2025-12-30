@@ -45,8 +45,14 @@ namespace std {
         template <typename FormatContext>
         auto format( Resolution::Kind const &v, FormatContext &ctx ) const
         {
-            return std::format_to( ctx.out(), "{}({})",
-                Resolution::nameOf( v ), static_cast<int>( v ) );
+            std::string str = Resolution::strOf( v );
+            
+            for ( char c : str )
+            {
+                *ctx.out()++ = c;
+            }
+
+            return ctx.out();
         }
     };
 

@@ -47,8 +47,14 @@ namespace std
         template <typename FormatContext>
         auto format( Permission::Kind const &v, FormatContext &ctx ) const
         {
-            return std::format_to( ctx.out(), "{}({})",
-                Permission::nameOf( v ), static_cast<int>( v ) );
+            std::string str = Permission::strOf( v );
+            
+            for ( char c : str )
+            {
+                *ctx.out()++ = c;
+            }
+
+            return ctx.out();
         }
     };
 

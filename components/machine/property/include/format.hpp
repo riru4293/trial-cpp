@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <string>
 
 /* Custom Library */
 #include <value.hpp>
@@ -107,6 +108,25 @@ namespace machine::property
          */
         [[nodiscard]]
         static std::string_view nameOf( Kind const &v ) noexcept;
+
+        /** @brief Returns a string representation of the `Kind`. */
+        /**
+         * @details
+         * Inputs and outputs are as follows:
+         *
+         * | INPUT           | OUTPUT       |
+         * | --------------- | ------------ |
+         * | `Kind::Numeric` | `numeric(0)` |
+         * | `Kind::Boolean` | `boolean(1)` |
+         * | `Kind::BitSet`  | `bitset(2)`  |
+         * | `Kind::String`  | `string(3)`  |
+         *
+         * @param v [in] the `Kind`
+         *
+         * @return String representation of the `Kind`.
+         */
+        [[nodiscard]]
+        static std::string strOf( Kind const &v ) noexcept;
 
     /* #endregion */// Static members, Inner types
 
