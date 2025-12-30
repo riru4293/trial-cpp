@@ -12,6 +12,7 @@
 
 namespace std // Formatter specialization
 {
+
     /** @brief Formatter specialization for `value::Value255`. */
     /**
      * @details
@@ -61,4 +62,5 @@ namespace std // Formatter specialization
             return ctx.out();
         }
     };
+
 } // namespace std

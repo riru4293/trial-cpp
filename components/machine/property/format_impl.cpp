@@ -1,5 +1,6 @@
 /* Self */
 #include "format_impl.hpp"
+#include <format_format.hpp>
 
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
