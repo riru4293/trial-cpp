@@ -1,18 +1,15 @@
 #pragma once
 
+/* C++ Standard Library */
 #include <cstdint>
-#include <ostream>
-#include <format>
 #include <optional>
-#include <string_view>
-#include <value255.hpp>
-#include <permission.hpp>
-#include <resolution.hpp>
-#include <format.hpp>
-#include <value.hpp>
+#include <ostream>
 
 /* Custom Library */
-#include <namespace.hpp>
+#include <format.hpp>
+#include <permission.hpp>
+#include <resolution.hpp>
+#include <value.hpp>
 
 namespace machine::property
 {
@@ -75,73 +72,40 @@ namespace machine::property
 
     public:
 
-
-
-
-        /** @brief Returns a string representation of this. */
-        /**
-         * @details
-         * The string representation is formatted as:
-         * ```
-         * { kind: <kind>, permission: <permission>, resolution: <resolution>,
-         *   initial_value: <initial_value>, min_value: <min_value>, max_value: <max_value> }
-         * ```
-         *
-         * @return String representation of this.
-         */
-        [[nodiscard]]
-        std::string str() const noexcept
-        {
-            std::ostringstream oss;
-
-            oss << "{ format: "       << name_of( kind() )
-                << ", permission: " << Permission::name_of( permission() )
-                << ", resolution: " << Resolution::name_of( resolution() )
-                << ", init: "       << initVal_.str()
-                << ", min: "        << minVal_.str()
-                << ", max: "        << maxVal_.str()
-                << " }";
-
-            return oss.str();
-        }
-
-    private:
-
-
         /* #region Factory methods */
 
-        /** @brief Create a PropertySpec instance with given parameters. */
+        /** @brief Create a Spec instance with given parameters. */
         /**
-         * @param perm value access permission
-         * @param reso value resolution
-         * @param init initial property value
-         * @param min minimum property value
-         * @param max maximum property value
-         * @return PropertySpec instance if parameters are valid; std::nullopt otherwise.
+         * @param permission value access permission
+         * @param resolution value resolution
+         * @param init_val initial property value
+         * @param min_val minimum property value
+         * @param max_val maximum property value
+         * @return Spec instance if parameters are valid; std::nullopt otherwise.
          */
-        static std::optional<PropertySpec> create(
-            Perm perm,
-            Reso reso,
-            value::Value255 const init,
-            value::Value255 const min,
-            value::Value255 const max
-        ) noexcept
+        static std::optional<Spec> create( Permission::Kind permission
+                                         , Resolution::Kind resolution
+                                         , Value const init_val
+                                         , Value const min_val
+                                         , Value const max_val ) noexcept
         {
-            auto cloned_init = init.clone();
-            auto cloned_min = min.clone();
-            auto cloned_max = max.clone();
-            Fragments frags = {
-                static_cast<std::uint8_t>( perm ), 0,
-                static_cast<std::uint8_t>( reso ), 0
-            };
+            auto cloned_init = init_val.clone();
+            auto cloned_min = min_val.clone();
+            auto cloned_max = max_val.clone();
 
             if ( cloned_init.has_value() &&
                  cloned_min.has_value()  &&
                  cloned_max.has_value() )
             {
-                return std::optional<PropertySpec>{
-                    PropertySpec{
-                        std::move( frags ),
+                return std::optional<Spec>{
+                    Spec{
+                        {
+                            static_cast<std::uint8_t>(
+                                Format::fromValueRange( min_val, max_val ) ),
+                            static_cast<std::uint8_t>( permission ),
+                            static_cast<std::uint8_t>( resolution ),
+                            0
+                        },
                         std::move( cloned_init.value() ),
                         std::move( cloned_min.value() ),
                         std::move( cloned_max.value() )
@@ -155,6 +119,7 @@ namespace machine::property
         /* #endregion */// Factory methods
 
     private:
+
         struct Fragments
         {
             std::uint8_t format : 2;
@@ -172,43 +137,44 @@ namespace machine::property
 
         /** @brief Constructor with given parameters. */
         /**
-         * @param perm value access permission
-         * @param reso value resolution
+         * @param permission value access permission
+         * @param resolution value resolution
          * @param init_val initial property value
          * @param min_val minimum property value
          * @param max_val maximum property value
          */
-        explicit PropertySpec(
-            Perm perm, Reso reso, value::Value255 &&init_val,
-            value::Value255 &&min_val, value::Value255 &&max_val
-        ) noexcept :
-            PropertySpec (
-                {
-                    static_cast<std::uint8_t>( perm ),
-                    static_cast<std::uint8_t>( kind_of( min_val, max_val ) ),
-                    static_cast<std::uint8_t>( reso ),
-                    0
-                },
+        explicit Spec( Permission::Kind permission
+                     , Resolution::Kind resolution
+                     , Value &&init_val
+                     , Value &&min_val
+                     , Value &&max_val ) noexcept
+            : Spec ( {
+                        static_cast<std::uint8_t>(
+                            Format::fromValueRange( min_val, max_val ) ),
+                        static_cast<std::uint8_t>( permission ),
+                        static_cast<std::uint8_t>( resolution ),
+                        0
+                     },
                 std::move( init_val ),
                 std::move( min_val ),
                 std::move( max_val )
             )
         { /* Do nothing */ }
 
-        ~PropertySpec() noexcept = default;                   //!< Destructor (default).
-        PropertySpec(const PropertySpec &) noexcept = delete; //!< Copy constructor (deleted).
-        PropertySpec(PropertySpec &&) noexcept = default;     //!< Move constructor (default).
+        ~Spec() noexcept = default;             //!< Destructor (default).
+        Spec( const Spec & ) noexcept = delete; //!< Copy constructor (deleted).
+        Spec( Spec && ) noexcept = default;     //!< Move constructor (default).
 
     private:
 
-        explicit PropertySpec(
-            Fragments       &&frags,
-            value::Value255 &&init_val,
-            value::Value255 &&min_val,
-            value::Value255 &&max_val
-        ) noexcept :
-            frags_ ( std::move( frags   ) ), initVal_( std::move( init_val ) ),
-            minVal_( std::move( min_val ) ), maxVal_ ( std::move( max_val  ) )
+        explicit Spec( Fragments frags
+                     , Value &&init_val
+                     , Value &&min_val
+                     , Value &&max_val ) noexcept
+            : frags_( frags )
+            , initVal_( std::move( init_val ) )
+            , minVal_( std::move( min_val ) )
+            , maxVal_( std::move( max_val ) )
         { /* Do nothing */ }
 
     /* #endregion */// Constructors
@@ -218,10 +184,10 @@ namespace machine::property
 
     public:
 
-        PropertySpec &operator=( PropertySpec const & ) noexcept = delete;          //!< Copy operator (deleted).
-        PropertySpec &operator=( PropertySpec && ) noexcept = default;              //!< Move operator (default).
-        bool constexpr operator==( PropertySpec const & ) const noexcept = delete;  //!< Equality operator (deleted).
-        auto constexpr operator<=>( PropertySpec const & ) const noexcept = delete; //!< Three-way comparison operator (deleted).
+        Spec &operator=( Spec const & ) noexcept = delete;          //!< Copy operator (deleted).
+        Spec &operator=( Spec && ) noexcept = default;              //!< Move operator (default).
+        bool constexpr operator==( Spec const & ) const noexcept = delete;  //!< Equality operator (deleted).
+        auto constexpr operator<=>( Spec const & ) const noexcept = delete; //!< Three-way comparison operator (deleted).
 
     /* #endregion */// Operators
 
@@ -230,24 +196,44 @@ namespace machine::property
 
     public:
 
+        /* #region Public methods */
+
+        /** @brief Returns a string representation of the `Spec`. */
+        /**
+         * @details
+         * For example, a `Spec` with format=`Numeric`, permission=`ReadWrite`,
+         * resolution=`X1`, initial_value=`10`, minimum_value=`0`, maximum_value=`1024`
+         * will be formatted as:
+         * @verbatim
+           { format: numeric(0), permission: read-write(3), resolution: x1(0),
+             initial_value: [ 0x0A ], minimum_value: [ 0x00 ], maximum_value: [ 0x00 0x04 ] }
+           @endverbatim
+         *
+         * @return String representation of the `Spec`.
+         */
+        [[nodiscard]]
+        std::string str() const noexcept;
+
+        /* #endregion */// Public methods
+
         /* #region Getter methods */
 
         [[nodiscard]]
         Format::Kind format() const noexcept
         {
-            return Format::fromRaw( frags_.kind );
+            return Format::fromRaw( frags_.format );
         }
 
         [[nodiscard]]
         Permission::Kind permission() const noexcept
         {
-            return Permission::fromRaw( frags_.perm );
+            return Permission::fromRaw( frags_.permission );
         }
 
         [[nodiscard]]
         Resolution::Kind resolution() const noexcept
         {
-            return Resolution::fromRaw( frags_.reso );
+            return Resolution::fromRaw( frags_.resolution );
         }
 
         [[nodiscard]]
@@ -259,7 +245,7 @@ namespace machine::property
         [[nodiscard]]
         Value const &maxVal() const noexcept { return maxVal_; }
 
-        /* #endregion */
+        /* #endregion */// Getter methods
 
     private:
 
@@ -274,7 +260,7 @@ namespace machine::property
 
         /* #endregion */
 
-    }; // class PropertySpec
+    }; // class Spec
 
     /** @brief Stream output operator for `Spec`. */
     /**
@@ -282,14 +268,14 @@ namespace machine::property
      * Outputs the string representation of the `Spec` instance
      * to the provided output stream.
      *
-     * @see Spec::name_of() for the format of the output.
+     * @see Spec::str() for the format of the output.
      *
      * @param os The output stream to write to.
-     * @param v The `Spec::Kind` instance to output.
+     * @param v The `Spec` instance to output.
      *
      * @return Reference to the output stream after writing.
      */
-    std::ostream &operator<<( std::ostream &os, Spec::Kind const &v ) noexcept;
+    std::ostream &operator<<( std::ostream &os, Spec const &v ) noexcept;
 
     /* ^\__________________________________________ */
     /* Static assertions.                           */
@@ -297,57 +283,3 @@ namespace machine::property
     static_assert( alignof(machine::property::Spec) == 1, "Unexpected Spec alignment" );
 
 } // namespace machine
-
-namespace std
-{
-
-    /** @brief Formatter specialization for `machine::property::Spec`. */
-    /**
-     * @details
-     * Formats a `machine::property::Spec` instance. Examples are follows:
-     *
-     * - A `Spec` with format=`Numeric`, permission=`ReadWrite`, resolution=`X1`,
-     *   initial_value=`10`, minimum_value=`0`, maximum_value=`1024`
-     *   will be formatted as:
-     *   `{ format: numeric(0), permission: read-write(3), resolution: x1(0),
-     *     initial_value: [ 0x0A ], minimum_value: [ 0x00 ], maximum_value: [ 0x00 0x04 ] }`
-     */
-    template <>
-    struct formatter<machine::property::Spec>
-    {
-        using Spec = machine::property::Spec;
-
-        /** @brief Parse format specifiers (none supported). */
-        /**
-         * @param ctx [in,out] The format parse context.
-         *
-         * @return Iterator pointing to the next character to be parsed
-         *         (no specifiers are consumed).
-         */
-        constexpr auto parse( std::format_parse_context &ctx )
-        {
-            return ctx.begin();
-        }
-
-        /** @brief Format `Spec` value. */
-        /**
-         * @param v   [in]     The `Spec` value to format.
-         * @param ctx [in,out] The format context.
-         *
-         * @return Iterator to the end of the formatted output.
-         */
-        template <typename FormatContext>
-        auto format( Spec const &v, FormatContext &ctx ) const
-        {
-            return std::format_to( ctx.out(),
-                R"({{ )"
-                    R"(format: {}, permission: {}, resolution: {})"
-                    R"(, initial_value: {}, minimum_value: {}, maximum_value: {})"
-                R"( }})",
-                v.format(), v.permission(), v.resolution(),
-                v.initVal(), v.minVal(), v.maxVal()
-            );
-        }
-    };
-
-} // namespace std

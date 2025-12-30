@@ -1,4 +1,0 @@
-# value_testコンポーネント - TEST_BUILDが有効な時のみテストが実行される
-idf_component_register(SRC_DIRS "."
-                       INCLUDE_DIRS "."
-                       REQUIRES unity value util)
