@@ -4,12 +4,6 @@
 /* C++ Standard Library */
 #include <sstream>
 
-/* Custom Library */
-// #include <format_format.hpp>
-// #include <permission_format.hpp>
-// #include <resolution_format.hpp>
-
-
 /* ^\__________________________________________ */
 /* Namespaces.                                  */
 using namespace machine::property;

@@ -17,23 +17,16 @@ namespace machine::property
     /** @brief Represents a property specification. */
     /**
      * @details
+     *
      * @par Overview:
      * A property specification consists of the following items:
-     * 1. Value kind
+     *
+     * 1. Value format
      * 2. Value access permission
      * 3. Value resolution
      * 4. Initial value
      * 5. Minimum value
      * 6. Maximum value
-     *
-     * @par Value kind:
-     * The value types are as follows; if no value exists, the value size is set to 0 bytes.
-     * | Hex | Kind    | Details (value)             | Minimum value        | Maximum value          |
-     * | --- | ------- | --------------------------- | -------------------- | ---------------------- |
-     * | 0x0 | Numeric | Signed 1-4 bytes int        | Signed 1-4 bytes int | Signed 1-4 bytes int   |
-     * | 0x1 | Boolean | 1 byte; 0=false, non-0=true | Fixed 0              | Fixed 1                |
-     * | 0x2 | BitSet  | Unsigned 1-4 bytes int      | N/A                  | Unsigned 1-4 bytes int |
-     * | 0x3 | String  | 1-192 ascii characters      | N/A                  | N/A                    |
      *
      * @par Initial value:
      * Default value used when no specific property value is provided, but a valid value is required.
@@ -64,6 +57,11 @@ namespace machine::property
      *         - `std::uint8_t code`
      *         - `value::Value255 value`
      *         - `machine::property::Spec spec` <---[this]
+     *
+     * @see Format
+     * @see Permission
+     * @see Resolution
+     * @see value::Value255
      */
     class Spec
     {
