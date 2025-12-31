@@ -45,8 +45,8 @@ Format::Kind Format::fromValueRange( Value const &min, Value const &max ) noexce
         return Kind::BitSet;
     }
 
-    if ( ( min_size == 1U ) && ( min.bytes().at( 0U ) == MIN_BOOL_VALUE ) &&
-         ( max_size == 1U ) && ( max.bytes().at( 0U ) == MAX_BOOL_VALUE ) )
+    if ( ( min_size == BOOL_SIZE ) && ( min.bytes().at( 0U ) == BOOL_FALSE ) &&
+         ( max_size == BOOL_SIZE ) && ( max.bytes().at( 0U ) == BOOL_TRUE ) )
     {
         return Kind::Boolean;
     }

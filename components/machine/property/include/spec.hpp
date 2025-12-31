@@ -1,9 +1,11 @@
 #pragma once
 
 /* C++ Standard Library */
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <ostream>
+#include <string>
 
 /* Custom Library */
 #include <format.hpp>
@@ -76,22 +78,25 @@ namespace machine::property
         /**
          * @param permission value access permission
          * @param resolution value resolution
-         * @param init_val initial property value
+         * @param init_val Pointer to the initial property value
+         *                 A null pointer is only valid if size is 0.
          * @param init_size size of initial property value
-         * @param min_val minimum property value
+         * @param min_val Pointer to the minimum property value
+         *                A null pointer is only valid if size is 0.
          * @param min_size size of minimum property value
-         * @param max_val maximum property value
+         * @param max_val Pointer to the maximum property value
+         *                A null pointer is only valid if size is 0.
          * @param max_size size of maximum property value
          * @return Spec instance if parameters are valid; std::nullopt otherwise.
          */
         static std::optional<Spec> create( Permission::Kind permission
                                          , Resolution::Kind resolution
                                          , std::byte const *init_val
-                                         , std::size_t init_size
+                                         , std::uint8_t init_size
                                          , std::byte const *min_val
-                                         , std::size_t min_size
+                                         , std::uint8_t min_size
                                          , std::byte const *max_val
-                                         , std::size_t max_size ) noexcept;
+                                         , std::uint8_t max_size ) noexcept;
         
         /** @brief Create a Spec instance with given parameters. */
         /**

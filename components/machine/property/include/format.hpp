@@ -38,7 +38,7 @@ namespace machine::property
             Numeric = 0, //!< Signed 1-4 bytes integer
             Boolean,     //!< 1 byte; 0=false, non-0=true
             BitSet,      //!< Unsigned 1-4 bytes integer representing bit set
-            String,      //!< 1-192 bytes ASCII string
+            String,      //!< 1-255 bytes ASCII string
         };
 
         /** @brief Convert raw 2-bit value to @ref PropertyFormat::Kind. */
@@ -147,4 +147,26 @@ namespace machine::property
      */
     std::ostream &operator<<( std::ostream &os, Format::Kind const &v ) noexcept;
 
+    namespace detail
+    {
+
+        /** @brief Size of boolean format. */
+        constexpr std::uint8_t BOOL_SIZE = 1U;
+
+        /** @brief The false as byte value for boolean format. */
+        constexpr std::byte BOOL_FALSE = std::byte{ 0x00 };
+
+        /** @brief The true as byte value for boolean format. */
+        constexpr std::byte BOOL_TRUE = std::byte{ 0x01 };
+
+        /** @brief Maximum size for bitset format. */
+        constexpr std::uint8_t MAX_BITSET_SIZE = sizeof( std::uint32_t );
+
+        /** @brief Maximum size for numeric format. */
+        constexpr std::uint8_t MAX_NUMERIC_SIZE = sizeof( std::int32_t );
+
+        /** @brief Maximum size for string format. */
+        constexpr std::uint8_t MAX_STRING_SIZE = UINT8_MAX;
+
+    } // namespace detail
 } // namespace machine::property

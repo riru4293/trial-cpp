@@ -2,6 +2,7 @@
 
 /* C++ Standard Library */
 #include <atomic>
+#include <compare>
 #include <cstddef>
 #include <cstdint>
 #include <optional>

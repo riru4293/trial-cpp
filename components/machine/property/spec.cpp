@@ -1,12 +1,10 @@
 /* Self */
-#include "format_impl.hpp"
-#include <cstdint>
 #include <spec.hpp>
 
 /* C++ Standard Library */
 #include <cstring>
 #include <sstream>
-#include <sys/types.h>
+#include <utility>
 #include <vector>
 
 /* ^\__________________________________________ */
@@ -32,11 +30,11 @@ std::ostream &operator<<( std::ostream &os, Spec const &v ) noexcept
 std::optional<Spec> Spec::create( Permission::Kind permission
                                 , Resolution::Kind resolution
                                 , std::byte const *init_val
-                                , std::size_t init_size
+                                , std::uint8_t init_size
                                 , std::byte const *min_val
-                                , std::size_t min_size
+                                , std::uint8_t min_size
                                 , std::byte const *max_val
-                                , std::size_t max_size ) noexcept
+                                , std::uint8_t max_size ) noexcept
 {
     auto init = Value::create( init_val, init_size );
     auto min  = Value::create( min_val, min_size );
@@ -134,8 +132,8 @@ bool Spec::isWithinRange( Value const &v ) const noexcept
     case Format::Kind::Boolean:
         { // Validate value is either 0x00 or 0x01.
             bool const is_valid_size = ( size == BOOL_SIZE );
-            bool const is_false_value = ( bytes.at( 0U ) == MIN_BOOL_VALUE );
-            bool const is_true_value  = ( bytes.at( 0U ) == MAX_BOOL_VALUE );
+            bool const is_false_value = ( bytes.at( 0U ) == BOOL_FALSE );
+            bool const is_true_value  = ( bytes.at( 0U ) == BOOL_TRUE );
 
             return ( is_valid_size && ( is_false_value || is_true_value ) );
         }

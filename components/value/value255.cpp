@@ -4,7 +4,7 @@
 /* C++ Standard Library */
 #include <algorithm>
 #include <cstring>
-#include <compare>
+#include <format>
 #include <sstream>
 #include <utility>
 
