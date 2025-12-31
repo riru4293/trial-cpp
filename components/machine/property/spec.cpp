@@ -16,9 +16,12 @@ using namespace machine::property::detail;
 /* ^\__________________________________________ */
 /* #region Operators.                           */
 
-std::ostream &operator<<( std::ostream &os, Spec const &v ) noexcept
+namespace machine::property
 {
-    return os << v.str();
+    std::ostream &operator<<( std::ostream &os, Spec const &v ) noexcept
+    {
+        return os << v.str();
+    }
 }
 
 /* #endregion */// Operators.

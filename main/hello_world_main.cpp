@@ -25,8 +25,9 @@ static void processing_loop()
 
     using namespace machine::property;
 
+    using Array1 = std::array<std::byte, 1U>;
+    using Array4 = std::array<std::byte, 4U>;
     {
-        using Array1 = std::array<std::byte, 1U>;
         Array1 max = std::bit_cast<Array1>( static_cast<uint8_t>( 203U ) );
         Array1 init = std::bit_cast<Array1>( static_cast<uint8_t>( 3U ) );
 
@@ -48,7 +49,6 @@ static void processing_loop()
     }
 
     {
-        using Array4 = std::array<std::byte, 4U>;
         Array4 min = std::bit_cast<Array4>( INT32_MIN );
         Array4 max = std::bit_cast<Array4>( INT32_MAX );
         Array4 init = std::bit_cast<Array4>( -1 );

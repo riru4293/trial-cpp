@@ -14,9 +14,12 @@ using namespace machine::property::detail;
 /* ^\__________________________________________ */
 /* #region Operators.                           */
 
-std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v )
+namespace machine::property
 {
-    return os << Resolution::strOf( v );
+    std::ostream &operator<<( std::ostream &os, Resolution::Kind const &v ) noexcept
+    {
+        return os << Resolution::strOf( v );
+    }
 }
 
 /* #endregion */// Operators.

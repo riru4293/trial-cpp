@@ -120,10 +120,13 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
     );
 }
 
-std::ostream &operator<<( std::ostream &os, Value255 const &v )
+namespace value
 {
-    os << v.str();
-    return os;
+    std::ostream &operator<<( std::ostream &os, Value255 const &v ) noexcept
+    {
+        os << v.str();
+        return os;
+    }
 }
 
 /* #endregion */// Operators

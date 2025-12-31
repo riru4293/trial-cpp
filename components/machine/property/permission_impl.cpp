@@ -13,9 +13,12 @@ using namespace machine::property::detail;
 /* ^\__________________________________________ */
 /* #region Operators.                           */
 
-std::ostream &operator<<( std::ostream &os, Permission::Kind const &v )
+namespace machine::property
 {
-    return os << Permission::strOf( v );
+    std::ostream &operator<<( std::ostream &os, Permission::Kind const &v ) noexcept
+    {
+        return os << Permission::strOf( v );
+    }
 }
 
 /* #endregion */// Operators.
