@@ -10,6 +10,9 @@
 #include <format.hpp>
 #include <permission.hpp>
 #include <resolution.hpp>
+#include <spec.hpp>
+#include <value.hpp>
+#include <optional>
 
 static const char* TAG = "app_main";
 
@@ -20,6 +23,13 @@ static void processing_loop()
     ESP_LOGI(TAG, "processing_loop iteration");
 
     using namespace machine::property;
+
+    std::optional<Spec> spec =
+        Spec::create( Permission::Kind::ReadWrite
+                    , Resolution::Kind::X1
+                    , Value::create( *data, size )
+                    , Value::create( *data, size )
+                    , Value::create( *data, size ) );
     
     Format::Kind fmtBool = Format::Kind::Boolean;
     ESP_LOGI( TAG, "Format::Kind: %s(%hhu)",
