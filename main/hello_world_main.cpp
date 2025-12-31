@@ -25,26 +25,49 @@ static void processing_loop()
 
     using namespace machine::property;
 
-    #include <bit>
-
-    auto min = std::bit_cast<std::array<std::byte, 4>>( INT32_MIN );
-    auto max = std::bit_cast<std::array<std::byte, 4>>( INT32_MAX );
-    auto init = std::bit_cast<std::array<std::byte, 4>>( -1 );
-
-    std::optional<Spec> spec =
-        Spec::create( Permission::Kind::ReadWrite
-                    , Resolution::Kind::X1
-                    , init.data(), init.size()
-                    , min.data() , min.size()
-                    , max.data() , max.size() );
-    
-    if ( spec.has_value() )
     {
-        ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
+        using Array1 = std::array<std::byte, 1U>;
+        Array1 max = std::bit_cast<Array1>( static_cast<uint8_t>( 203U ) );
+        Array1 init = std::bit_cast<Array1>( static_cast<uint8_t>( 3U ) );
+
+        std::optional<Spec> spec =
+            Spec::create( Permission::Kind::ReadWrite
+                        , Resolution::Kind::X1
+                        , init.data(), init.size()
+                        , nullptr, 0U
+                        , max.data() , max.size() );
+        
+        if ( spec.has_value() )
+        {
+            ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
+        }
+        else
+        {
+            ESP_LOGE( TAG, "Failed to create Spec" );
+        }
     }
-    else
+
     {
-        ESP_LOGE( TAG, "Failed to create Spec" );
+        using Array4 = std::array<std::byte, 4U>;
+        Array4 min = std::bit_cast<Array4>( INT32_MIN );
+        Array4 max = std::bit_cast<Array4>( INT32_MAX );
+        Array4 init = std::bit_cast<Array4>( -1 );
+
+        std::optional<Spec> spec =
+            Spec::create( Permission::Kind::ReadWrite
+                        , Resolution::Kind::X1
+                        , init.data(), init.size()
+                        , min.data() , min.size()
+                        , max.data() , max.size() );
+        
+        if ( spec.has_value() )
+        {
+            ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
+        }
+        else
+        {
+            ESP_LOGE( TAG, "Failed to create Spec" );
+        }
     }
 }
 

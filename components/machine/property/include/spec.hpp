@@ -87,6 +87,7 @@ namespace machine::property
          * @param max_val Pointer to the maximum property value
          *                A null pointer is only valid if size is 0.
          * @param max_size size of maximum property value
+         *
          * @return Spec instance if parameters are valid; std::nullopt otherwise.
          */
         static std::optional<Spec> create( Permission::Kind permission
@@ -105,6 +106,7 @@ namespace machine::property
          * @param init_val initial property value
          * @param min_val minimum property value
          * @param max_val maximum property value
+         *
          * @return Spec instance if parameters are valid; std::nullopt otherwise.
          */
         static std::optional<Spec> create( Permission::Kind permission
