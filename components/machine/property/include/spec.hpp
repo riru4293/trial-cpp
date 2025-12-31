@@ -77,6 +77,27 @@ namespace machine::property
          * @param permission value access permission
          * @param resolution value resolution
          * @param init_val initial property value
+         * @param init_size size of initial property value
+         * @param min_val minimum property value
+         * @param min_size size of minimum property value
+         * @param max_val maximum property value
+         * @param max_size size of maximum property value
+         * @return Spec instance if parameters are valid; std::nullopt otherwise.
+         */
+        static std::optional<Spec> create( Permission::Kind permission
+                                         , Resolution::Kind resolution
+                                         , std::byte const *init_val
+                                         , std::size_t init_size
+                                         , std::byte const *min_val
+                                         , std::size_t min_size
+                                         , std::byte const *max_val
+                                         , std::size_t max_size ) noexcept;
+        
+        /** @brief Create a Spec instance with given parameters. */
+        /**
+         * @param permission value access permission
+         * @param resolution value resolution
+         * @param init_val initial property value
          * @param min_val minimum property value
          * @param max_val maximum property value
          * @return Spec instance if parameters are valid; std::nullopt otherwise.
@@ -85,34 +106,15 @@ namespace machine::property
                                          , Resolution::Kind resolution
                                          , Value const &init_val
                                          , Value const &min_val
-                                         , Value const &max_val ) noexcept
-        {
-            auto cloned_init = init_val.clone();
-            auto cloned_min = min_val.clone();
-            auto cloned_max = max_val.clone();
+                                         , Value const &max_val ) noexcept;
+        
+    private:
 
-            if ( cloned_init.has_value() &&
-                 cloned_min.has_value()  &&
-                 cloned_max.has_value() )
-            {
-                return std::optional<Spec>{
-                    Spec{
-                        {
-                            static_cast<std::uint8_t>(
-                                Format::fromValueRange( min_val, max_val ) ),
-                            static_cast<std::uint8_t>( permission ),
-                            static_cast<std::uint8_t>( resolution ),
-                            0
-                        },
-                        std::move( cloned_init.value() ),
-                        std::move( cloned_min.value() ),
-                        std::move( cloned_max.value() )
-                    }
-                };
-            }
-
-            return std::nullopt;
-        }
+        static std::optional<Spec> create( Permission::Kind permission
+                                         , Resolution::Kind resolution
+                                         , std::optional<Value> &&init
+                                         , std::optional<Value> &&min
+                                         , std::optional<Value> &&max ) noexcept;
 
         /* #endregion */// Factory methods
 
@@ -142,12 +144,7 @@ namespace machine::property
         explicit Spec( Fragments frags
                      , Value &&init_val
                      , Value &&min_val
-                     , Value &&max_val ) noexcept
-            : frags_( frags )
-            , initVal_( std::move( init_val ) )
-            , minVal_( std::move( min_val ) )
-            , maxVal_( std::move( max_val ) )
-        { /* Do nothing */ }
+                     , Value &&max_val ) noexcept;
 
     /* #endregion */// Constructors
 

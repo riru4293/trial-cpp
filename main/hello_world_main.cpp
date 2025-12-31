@@ -13,6 +13,7 @@
 #include <spec.hpp>
 #include <value.hpp>
 #include <optional>
+#include <bit>
 
 static const char* TAG = "app_main";
 
@@ -24,24 +25,27 @@ static void processing_loop()
 
     using namespace machine::property;
 
+    #include <bit>
+
+    auto min = std::bit_cast<std::array<std::byte, 4>>( INT32_MIN );
+    auto max = std::bit_cast<std::array<std::byte, 4>>( INT32_MAX );
+    auto init = std::bit_cast<std::array<std::byte, 4>>( -1 );
+
     std::optional<Spec> spec =
         Spec::create( Permission::Kind::ReadWrite
                     , Resolution::Kind::X1
-                    , Value::create( *data, size )
-                    , Value::create( *data, size )
-                    , Value::create( *data, size ) );
+                    , init.data(), init.size()
+                    , min.data() , min.size()
+                    , max.data() , max.size() );
     
-    Format::Kind fmtBool = Format::Kind::Boolean;
-    ESP_LOGI( TAG, "Format::Kind: %s(%hhu)",
-        Format::nameOf( fmtBool ).data(), static_cast<std::uint8_t>( fmtBool ) );
-        
-    Permission::Kind ro = Permission::Kind::ReadOnly;
-    ESP_LOGI( TAG, "Permission::Kind: %s(%hhu)",
-        Permission::nameOf( ro ).data(), static_cast<std::uint8_t>( ro ) );
-
-    Resolution::Kind x0_5 = Resolution::Kind::X0_5;
-    ESP_LOGI( TAG, "Resolution::Kind: %s(%hhu)",
-        Resolution::nameOf( x0_5 ).data(), static_cast<std::uint8_t>( x0_5 ) );
+    if ( spec.has_value() )
+    {
+        ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
+    }
+    else
+    {
+        ESP_LOGE( TAG, "Failed to create Spec" );
+    }
 }
 
 // C++ class that owns the task and runs the processing loop

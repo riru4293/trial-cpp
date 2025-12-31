@@ -27,6 +27,88 @@ std::ostream &operator<<( std::ostream &os, Spec const &v ) noexcept
 
 
 /* ^\__________________________________________ */
+/* #region Factory methods, Constructors.       */
+
+std::optional<Spec> Spec::create( Permission::Kind permission
+                                , Resolution::Kind resolution
+                                , std::byte const *init_val
+                                , std::size_t init_size
+                                , std::byte const *min_val
+                                , std::size_t min_size
+                                , std::byte const *max_val
+                                , std::size_t max_size ) noexcept
+{
+    auto init = Value::create( init_val, init_size );
+    auto min  = Value::create( min_val, min_size );
+    auto max  = Value::create( max_val, max_size );
+
+    return create( permission
+                  , resolution
+                  , std::move( init )
+                  , std::move( min )
+                  , std::move( max ) );
+}
+
+std::optional<Spec> Spec::create( Permission::Kind permission
+                                , Resolution::Kind resolution
+                                , Value const &init_val
+                                , Value const &min_val
+                                , Value const &max_val ) noexcept
+{
+    auto cloned_init = init_val.clone();
+    auto cloned_min = min_val.clone();
+    auto cloned_max = max_val.clone();
+
+    return create( permission
+                  , resolution
+                  , std::move( cloned_init )
+                  , std::move( cloned_min )
+                  , std::move( cloned_max ) );
+}
+
+std::optional<Spec> Spec::create( Permission::Kind permission
+                                , Resolution::Kind resolution
+                                , std::optional<Value> &&init
+                                , std::optional<Value> &&min
+                                , std::optional<Value> &&max ) noexcept
+{
+    if ( init.has_value() &&
+         min.has_value()  &&
+         max.has_value() )
+    {
+        return std::optional<Spec>{
+            Spec{
+                {
+                    static_cast<std::uint8_t>(
+                        Format::fromValueRange( min.value(), max.value() ) ),
+                    static_cast<std::uint8_t>( permission ),
+                    static_cast<std::uint8_t>( resolution ),
+                    0
+                },
+                std::move( init.value() ),
+                std::move( min.value() ),
+                std::move( max.value() )
+            }
+        };
+    }
+
+    return std::nullopt;
+}
+
+Spec::Spec( Fragments frags
+          , Value &&init_val
+          , Value &&min_val
+          , Value &&max_val ) noexcept
+    : frags_( frags )
+    , initVal_( std::move( init_val ) )
+    , minVal_( std::move( min_val ) )
+    , maxVal_( std::move( max_val ) )
+{ /* Do nothing */ }
+
+/* #endregion */// Factory methods, Constructors.
+
+
+/* ^\__________________________________________ */
 /* #region Public methods.                      */
 
 bool Spec::isWithinRange( Value const &v ) const noexcept
