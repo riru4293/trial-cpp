@@ -133,32 +133,6 @@ namespace machine::property
 
     public:
 
-        /** @brief Constructor with given parameters. */
-        /**
-         * @param permission value access permission
-         * @param resolution value resolution
-         * @param init_val initial property value
-         * @param min_val minimum property value
-         * @param max_val maximum property value
-         */
-        explicit Spec( Permission::Kind permission
-                     , Resolution::Kind resolution
-                     , Value &&init_val
-                     , Value &&min_val
-                     , Value &&max_val ) noexcept
-            : Spec ( {
-                        static_cast<std::uint8_t>(
-                            Format::fromValueRange( min_val, max_val ) ),
-                        static_cast<std::uint8_t>( permission ),
-                        static_cast<std::uint8_t>( resolution ),
-                        0
-                     },
-                std::move( init_val ),
-                std::move( min_val ),
-                std::move( max_val )
-            )
-        { /* Do nothing */ }
-
         ~Spec() noexcept = default;             //!< Destructor (default).
         Spec( const Spec & ) noexcept = delete; //!< Copy constructor (deleted).
         Spec( Spec && ) noexcept = default;     //!< Move constructor (default).
@@ -195,6 +169,19 @@ namespace machine::property
     public:
 
         /* #region Public methods */
+
+        /** @brief Checks if the given value is within the range specified by the `Spec`. */
+        /**
+         * @details
+         * This method checks whether the provided value falls within the
+         * minimum and maximum values defined in the `Spec`.
+         *
+         * @param v [in] The value to check.
+         *
+         * @return `true` if the value is within range; `false` otherwise.
+         */
+        [[nodiscard]]
+        bool isWithinRange( Value const &v ) const noexcept;
 
         /** @brief Returns a string representation of the `Spec`. */
         /**
@@ -246,6 +233,12 @@ namespace machine::property
         /* #endregion */// Getter methods
 
     private:
+
+        /* #region : Private methods */
+
+        std::int32_t decodeNumericValue( Value const &v ) const noexcept;
+
+        /* #endregion */ // Private methods
 
         /* #region : member variables */
 

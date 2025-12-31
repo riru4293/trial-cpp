@@ -15,6 +15,18 @@ namespace machine::property::detail
     /** @brief Maximum byte value for boolean format. */
     constexpr std::byte MAX_BOOL_VALUE = std::byte{ 0x01 };
 
+    /** @brief Size for boolean format. */
+    constexpr std::uint8_t BOOL_SIZE = 1U;
+
+    /** @brief Maximum size for bitset format. */
+    constexpr std::uint8_t MAX_BITSET_SIZE = 4U;
+
+    /** @brief Maximum size for numeric format. */
+    constexpr std::uint8_t MAX_NUMERIC_SIZE = 4U;
+
+    /** @brief Maximum size for string format. */
+    constexpr std::uint8_t MAX_STRING_SIZE = 192U;
+
     /** @brief The number of bits used to represent
      *         @ref machine::property::Format::Kind. */
     constexpr std::uint8_t FORMAT_KIND_BITS = 2U;
