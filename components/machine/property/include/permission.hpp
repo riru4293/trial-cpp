@@ -35,12 +35,12 @@ namespace machine::property
          * @details
          * %Permission encoding (2-bit).
          *
-         * @verbatim
-           bit1 bit0
-             ^    ^
-             |    '-- write permission (0=denied, 1=allowed)
-             '------- read  permission (0=denied, 1=allowed)
-           @endverbatim
+         * \code{.unparsed}
+         * bit1 bit0
+         *   ^    ^
+         *   |    '-- write permission (0=denied, 1=allowed)
+         *   '------- read  permission (0=denied, 1=allowed)
+         * \endcode
          */
         enum class Kind : std::uint8_t
         {

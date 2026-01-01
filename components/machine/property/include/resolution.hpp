@@ -41,12 +41,12 @@ namespace machine::property
          * @details
          * %Resolution encoding (3-bit).
          *
-         * @verbatim
-           bit2 bit1 bit0
-             ^    ^    ^
-             |    |    '-- coefficient (0=x1, 1=x5)
-             '----'------- signed shift N (2-bit, 2's complement)
-           @endverbatim
+         * \code{.unparsed}
+         * bit2 bit1 bit0
+         *   ^    ^    ^
+         *   |    |    '-- coefficient (0=x1, 1=x5)
+         *   '----'------- signed shift N (2-bit, 2's complement)
+         * \endcode
          *
          * @par Examples:
          * - `X50   (0b'011) = 10^+1 × 5 = 50`

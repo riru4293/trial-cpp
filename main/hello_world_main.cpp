@@ -14,8 +14,25 @@
 #include <value.hpp>
 #include <optional>
 #include <bit>
+#include <span>
+#include <array>
+#include <cstdint>
+#include <cstring>
+#include <string>
 
 static const char* TAG = "app_main";
+
+static void logSpec( std::optional<machine::property::Spec> const &spec )
+{
+    if ( spec.has_value() )
+    {
+        ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
+    }
+    else
+    {
+        ESP_LOGE( TAG, "Failed to create Spec" );
+    }
+}
 
 // main processing method that runs inside the task's infinite loop
 static void processing_loop()
@@ -27,47 +44,66 @@ static void processing_loop()
 
     using Array1 = std::array<std::byte, 1U>;
     using Array4 = std::array<std::byte, 4U>;
-    {
+
+
+    { // BitSet example
         Array1 max = std::bit_cast<Array1>( static_cast<uint8_t>( 203U ) );
         Array1 init = std::bit_cast<Array1>( static_cast<uint8_t>( 3U ) );
 
         std::optional<Spec> spec =
-            Spec::create( Permission::Kind::ReadWrite
-                        , Resolution::Kind::X1
+            Spec::create( Permission::Kind::ReadOnly
                         , init.data(), init.size()
                         , nullptr, 0U
                         , max.data() , max.size() );
-        
-        if ( spec.has_value() )
-        {
-            ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
-        }
-        else
-        {
-            ESP_LOGE( TAG, "Failed to create Spec" );
-        }
+
+        logSpec( spec );
     }
 
-    {
+    { // Numeric example#1
+        Array1 min = std::bit_cast<Array1>( static_cast<int8_t>( 12 ) );
+        Array1 max = std::bit_cast<Array1>( static_cast<int8_t>( 70 ) );
+        Array1 init = std::bit_cast<Array1>( static_cast<int8_t>( 33 ) );
+
+        logSpec( Spec::create(
+            Permission::Kind::WriteOnly
+          , Resolution::Kind::X0_5
+          , init.data(), init.size()
+          , min.data() , min.size()
+          , max.data() , max.size() ) );
+    }
+
+    { // String example
+        
+        std::string init_value = "Hello, World!";
+
+        auto init = std::as_bytes( std::span{ init_value } );
+
+        logSpec( Spec::create(
+            Permission::Kind::ReadWrite
+          , init.data(), static_cast<std::uint8_t>( init.size() )
+          , nullptr, 0U
+          , nullptr, 0U ) );
+    }
+
+    { // Boolean example
+        logSpec( Spec::create(
+            Permission::Kind::ReadWrite
+          , &detail::BOOL_FALSE, detail::BOOL_SIZE
+          , &detail::BOOL_FALSE, detail::BOOL_SIZE
+          , &detail::BOOL_TRUE, detail::BOOL_SIZE ) );
+    }
+
+    { // Numeric example#2
         Array4 min = std::bit_cast<Array4>( INT32_MIN );
         Array4 max = std::bit_cast<Array4>( INT32_MAX );
         Array4 init = std::bit_cast<Array4>( -1 );
 
-        std::optional<Spec> spec =
-            Spec::create( Permission::Kind::ReadWrite
-                        , Resolution::Kind::X1
-                        , init.data(), init.size()
-                        , min.data() , min.size()
-                        , max.data() , max.size() );
-        
-        if ( spec.has_value() )
-        {
-            ESP_LOGI( TAG, "Spec created: %s", spec->str().data() );
-        }
-        else
-        {
-            ESP_LOGE( TAG, "Failed to create Spec" );
-        }
+        logSpec( Spec::create(
+            Permission::Kind::ReadWrite
+          , Resolution::Kind::X0_01
+          , init.data(), init.size()
+          , min.data() , min.size()
+          , max.data() , max.size() ) );
     }
 }
 

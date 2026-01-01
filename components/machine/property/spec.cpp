@@ -44,10 +44,10 @@ std::optional<Spec> Spec::create( Permission::Kind permission
     auto max  = Value::create( max_val, max_size );
 
     return create( permission
-                  , resolution
-                  , std::move( init )
-                  , std::move( min )
-                  , std::move( max ) );
+                 , resolution
+                 , std::move( init )
+                 , std::move( min )
+                 , std::move( max ) );
 }
 
 std::optional<Spec> Spec::create( Permission::Kind permission

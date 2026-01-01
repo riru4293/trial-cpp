@@ -76,6 +76,41 @@ namespace machine::property
 
         /** @brief Create a Spec instance with given parameters. */
         /**
+         * @details
+         * The value resolution is set to `X1` by default.
+         * @note
+         * Since resolution has no meaning for non-numeric formats, `X1` is specified.
+         *
+         * @param permission value access permission
+         * @param init_val Pointer to the initial property value
+         *                 A null pointer is only valid if size is 0.
+         * @param init_size size of initial property value
+         * @param min_val Pointer to the minimum property value
+         *                A null pointer is only valid if size is 0.
+         * @param min_size size of minimum property value
+         * @param max_val Pointer to the maximum property value
+         *                A null pointer is only valid if size is 0.
+         * @param max_size size of maximum property value
+         *
+         * @return Spec instance if parameters are valid; std::nullopt otherwise.
+         */
+        static std::optional<Spec> create( Permission::Kind permission
+                                         , std::byte const *init_val
+                                         , std::uint8_t init_size
+                                         , std::byte const *min_val
+                                         , std::uint8_t min_size
+                                         , std::byte const *max_val
+                                         , std::uint8_t max_size ) noexcept
+        { 
+            return create( permission
+                          , Resolution::Kind::X1
+                          , init_val, init_size
+                          , min_val , min_size
+                          , max_val , max_size );
+        }
+
+        /** @brief Create a Spec instance with given parameters. */
+        /**
          * @param permission value access permission
          * @param resolution value resolution
          * @param init_val Pointer to the initial property value
