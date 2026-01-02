@@ -228,10 +228,10 @@ namespace machine::property
          * For example, a `Spec` with format=`Numeric`, permission=`ReadWrite`,
          * resolution=`X1`, initial_value=`10`, minimum_value=`0`, maximum_value=`1024`
          * will be formatted as:
-         * @verbatim
-           { format: numeric(0), permission: read-write(3), resolution: x1(0),
-             initial_value: [ 0x0A ], minimum_value: [ 0x00 ], maximum_value: [ 0x00 0x04 ] }
-           @endverbatim
+         * \code{.unparsed}
+         * { format: numeric(0), permission: read-write(3), resolution: x1(0),
+         *   initial_value: [ 0x0A ], minimum_value: [ 0x00 ], maximum_value: [ 0x00 0x04 ] }
+         * \endcode
          *
          * @return String representation of the `Spec`.
          */
