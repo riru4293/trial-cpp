@@ -78,6 +78,18 @@ namespace value
 
         /* #endregion */// Factory methods
 
+        /* #region SetResult */
+
+        enum class SetResult : std::uint8_t
+        {
+            Success = 0,
+            NoChange = 1,
+            IllegalArgument = 2,
+            OutOfMemory = 3,
+        };
+
+        /* #endregion */// SetResult
+
     protected:
 
         /* #region SpinGuard */
@@ -294,6 +306,9 @@ namespace value
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
+        [[nodiscard]]
+        SetResult setEx( std::byte const *data, std::uint8_t size ) noexcept;
+
     private:
 
         /* #region Private methods. */
@@ -432,6 +447,35 @@ namespace value
             // [===> Follows: Locked]
 
             return Value255::set( data, size );
+        }
+
+        /** @brief Sets the value's data and size. */
+        /**
+        * @details
+        * This method updates the contents of the `MutableValue255` instance
+        * with the provided data and size.
+        *
+        * @par Thread Safety
+        * This method is thread-safe and acquires the instance's spinlock
+        * for the duration of the operation.
+        *
+        * @param data [in] Pointer to the new raw data.
+        *                  A null pointer is only valid if size is 0.
+        * @param size [in] Size of the new data in bytes.
+        *
+        * @return the `SetResult`
+        * @note
+        * The failure cases are:
+        * - `data` is null while `size` is greater than 0.
+        * - A situation where memory cannot be allocated to store a copy of `data`.
+       */
+        [[nodiscard]]
+        SetResult setEx( std::byte const *data, std::uint8_t size ) noexcept
+        {
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
+            return Value255::setEx( data, size );
         }
 
     /* #endregion */// Instance members

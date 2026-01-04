@@ -186,15 +186,33 @@ std::string Value255::str() const noexcept
 
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
+    SetResult ret = setEx( data, size );
+
+    return ( ret == SetResult::Success  )
+        || ( ret == SetResult::NoChange );
+}
+
+Value255::SetResult Value255::setEx( std::byte const *data, std::uint8_t size ) noexcept
+{
     // [===> Prerequisite: This instance is locked]
 
     if ( size > 0U && data == nullptr )
     {
         cleanup();
-        return false;
+        return SetResult::IllegalArgument;
     }
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on invalid parameters!! ]
     // [===> Follows: All parameters are valid]
+
+    if ( size_ == size )
+    {
+        void *current = heapPointerAsVoid();
+        if ( memcmp( current, data, size ) == 0 )
+        {
+            return SetResult::NoChange;
+        }
+    }
+    // [===> Follows: Data is different]
 
     if ( size <= INLINE_SIZE )  // Note: Use inline storage.
     {
@@ -212,7 +230,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
             // [===> Follows: All resources were released and cleared]
 
             void* p = heap_caps_malloc( size, MALLOC_CAP_DEFAULT );
-            if ( !p ) { return false; }
+            if ( !p ) { return SetResult::OutOfMemory; }
             // ~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on allocation failure!! ]
             // [===> Follows: Heap memory reallocated]
 
@@ -228,7 +246,7 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
     size_ = size;
     // [===> Follows: Size updated]
 
-    return true;
+    return SetResult::Success;
 }
 
 static_assert( sizeof( std::uintptr_t ) == 4U, "The `uintptr_t` must be 4 bytes." );
