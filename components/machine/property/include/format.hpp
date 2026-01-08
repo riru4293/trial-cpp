@@ -38,7 +38,7 @@ namespace machine::property
             Numeric = 0, //!< Signed 1-4 bytes integer
             Boolean,     //!< 1 byte; 0=false, non-0=true
             BitSet,      //!< Unsigned 1-4 bytes integer representing bit set
-            String,      //!< 1-255 bytes ASCII string
+            String,      //!< 1-192 bytes ASCII string
         };
 
         /** @brief Convert raw 2-bit value to @ref PropertyFormat::Kind. */
@@ -149,7 +149,6 @@ namespace machine::property
 
     namespace detail
     {
-
         /** @brief Size of boolean format. */
         constexpr std::uint8_t BOOL_SIZE = 1U;
 
@@ -166,7 +165,17 @@ namespace machine::property
         constexpr std::uint8_t MAX_NUMERIC_SIZE = sizeof( std::int32_t );
 
         /** @brief Maximum size for string format. */
-        constexpr std::uint8_t MAX_STRING_SIZE = UINT8_MAX;
+        /**
+         * @details
+         * This limit is derived under the assumption of a 255‑byte communication
+         * frame. It reserves sufficient space for headers and metadata while
+         * ensuring that the value field remains aligned to an 8‑byte boundary.
+         * @note
+         * ja: 通信フレーム全体を 255 バイトと仮定し、ヘッダ／メタ情報など
+         *     値以外の領域を確保したうえで、データ領域を 8 バイト境界に
+         *     整列させるために導出した最大値。
+         */
+        constexpr std::uint8_t MAX_STRING_SIZE = 192;
 
     } // namespace detail
 } // namespace machine::property
