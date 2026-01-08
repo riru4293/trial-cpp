@@ -37,6 +37,22 @@ std::optional<Value255> Value255::create(
     return std::nullopt;
 }
 
+std::optional<MutableValue255> MutableValue255::create(
+    std::byte const *data, std::uint8_t size ) noexcept
+{
+    // Note: Creating a new instance, there's no need to lock it.
+
+    MutableValue255 pv;
+    bool ans = pv.set( data, size );
+
+    if ( ans )
+    {
+        return pv;
+    }
+
+    return std::nullopt;
+}
+
 /* #endregion */// Factory methods
 
 
@@ -134,6 +150,26 @@ namespace value
 
 /* ^\__________________________________________ */
 /* #region Public methods.                      */
+
+bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
+{
+    SpinGuard guard( *this );
+    // [===> Follows: Locked]
+
+    if ( size_ != other_size ) { return false; }
+    // [===> Follows: Sizes matched]
+
+    if ( other_size == 0U ) { return true; }
+    // [===> Follows: Sizes present]
+
+    if( other_data == nullptr ) { return false; }
+    // [===> Follows: Other data is valid]
+
+    std::byte const *a = data_unlocked();
+    std::byte const *b = other_data;
+
+    return std::equal( a, a + size_, b );
+}
 
 std::vector<std::byte> Value255::bytes() const noexcept
 {

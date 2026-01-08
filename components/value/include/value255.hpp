@@ -73,6 +73,7 @@ namespace value
         * - `data` is null while `size` is greater than 0.
         * - A situation where memory cannot be allocated to store a copy of `data`.
         */
+        [[nodiscard]]
         static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
@@ -237,6 +238,9 @@ namespace value
     /* #region Instance members.                    */
 
     public:
+
+        [[nodiscard]]
+        bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
 
         /** @brief Returns the size of the value in bytes. */
         /**
@@ -405,6 +409,35 @@ namespace value
     */
     class MutableValue255 : public Value255
     {
+    /* ^\__________________________________________ */
+    /* #region Static members, Inner types.         */
+
+    public:
+
+        /* #region Factory methods */
+
+        /** @brief Creates a `MutableValue255` instance from raw data. */
+        /**
+        * @details
+        * Allocates memory as needed and copies the provided data into the new
+        * instance.
+        *
+        * @param data [in] Pointer to the raw data. A null pointer is only valid if size is 0.
+        * @param size [in] Size of the data in bytes.
+        *
+        * @return An optional containing the created `MutableValue255` if successful;
+        * `std::nullopt` otherwise.
+        * @note
+        * The failure cases are:
+        * - `data` is null while `size` is greater than 0.
+        * - A situation where memory cannot be allocated to store a copy of `data`.
+        */
+        static std::optional<MutableValue255> create(
+            std::byte const *data, std::uint8_t size ) noexcept;
+
+        /* #endregion */// Factory methods
+
+
     /* ^\__________________________________________ */
     /* #region Constructors.                        */
 
