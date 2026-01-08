@@ -36,6 +36,9 @@ namespace machine::property
 
     public:
 
+        /** @brief Represents a not have resolution. */
+        static constexpr std::uint8_t NONE = 0U;
+
         /** @brief The %resolution of the number. */
         /**
          * @details
