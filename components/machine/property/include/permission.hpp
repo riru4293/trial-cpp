@@ -30,6 +30,9 @@ namespace machine::property
 
     public:
 
+        /** @brief Represents a not have permission. */
+        static constexpr std::uint8_t NONE = 0U;
+
         /** @brief Kind of the permission for the property value access. */
         /**
          * @details
