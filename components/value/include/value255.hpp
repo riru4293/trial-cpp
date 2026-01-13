@@ -311,7 +311,7 @@ namespace value
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
         [[nodiscard]]
-        SetResult setEx( std::byte const *data, std::uint8_t size ) noexcept;
+        SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
     private:
 
@@ -503,12 +503,12 @@ namespace value
         * - A situation where memory cannot be allocated to store a copy of `data`.
        */
         [[nodiscard]]
-        SetResult setEx( std::byte const *data, std::uint8_t size ) noexcept
+        SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept
         {
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            return Value255::setEx( data, size );
+            return Value255::setWithResult( data, size );
         }
 
     /* #endregion */// Instance members

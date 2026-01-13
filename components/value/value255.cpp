@@ -222,13 +222,13 @@ std::string Value255::str() const noexcept
 
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
-    SetResult ret = setEx( data, size );
+    SetResult ret = setWithResult( data, size );
 
     return ( ret == SetResult::Success  )
         || ( ret == SetResult::NoChange );
 }
 
-Value255::SetResult Value255::setEx( std::byte const *data, std::uint8_t size ) noexcept
+Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked]
 

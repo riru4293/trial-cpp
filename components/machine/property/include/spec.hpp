@@ -6,6 +6,8 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <vector>
+#include <compare>
 
 /* Custom Library */
 #include <format.hpp>
@@ -76,12 +78,8 @@ namespace machine::property
 
         /** @brief Create a Spec instance with given parameters. */
         /**
-         * @details
-         * The value resolution is set to `X1` by default.
-         * @note
-         * Since resolution has no meaning for non-numeric formats, `X1` is specified.
-         *
-         * @param permission value access permission
+         * @param permission value access permission. 0 if not defined.
+         * @param resolution value resolution. 0 if not defined.
          * @param init_val Pointer to the initial property value
          *                 A null pointer is only valid if size is 0.
          * @param init_size size of initial property value
@@ -93,70 +91,19 @@ namespace machine::property
          * @param max_size size of maximum property value
          *
          * @return Spec instance if parameters are valid; std::nullopt otherwise.
-         */
-        static std::optional<Spec> create( Permission::Kind permission
-                                         , std::byte const *init_val
-                                         , std::uint8_t init_size
-                                         , std::byte const *min_val
-                                         , std::uint8_t min_size
-                                         , std::byte const *max_val
-                                         , std::uint8_t max_size ) noexcept
-        { 
-            return create( permission
-                          , Resolution::Kind::X1
-                          , init_val, init_size
-                          , min_val , min_size
-                          , max_val , max_size );
-        }
-
-        /** @brief Create a Spec instance with given parameters. */
-        /**
-         * @param permission value access permission
-         * @param resolution value resolution
-         * @param init_val Pointer to the initial property value
-         *                 A null pointer is only valid if size is 0.
-         * @param init_size size of initial property value
-         * @param min_val Pointer to the minimum property value
-         *                A null pointer is only valid if size is 0.
-         * @param min_size size of minimum property value
-         * @param max_val Pointer to the maximum property value
-         *                A null pointer is only valid if size is 0.
-         * @param max_size size of maximum property value
          *
-         * @return Spec instance if parameters are valid; std::nullopt otherwise.
+         * @see Permission::fromRaw()
+         * @see Resolution::fromRaw()
+         * @see value::Value255::create()
          */
-        static std::optional<Spec> create( Permission::Kind permission
-                                         , Resolution::Kind resolution
+        static std::optional<Spec> create( std::uint8_t permission
+                                         , std::uint8_t resolution
                                          , std::byte const *init_val
                                          , std::uint8_t init_size
                                          , std::byte const *min_val
                                          , std::uint8_t min_size
                                          , std::byte const *max_val
                                          , std::uint8_t max_size ) noexcept;
-        
-        /** @brief Create a Spec instance with given parameters. */
-        /**
-         * @param permission value access permission
-         * @param resolution value resolution
-         * @param init_val initial property value
-         * @param min_val minimum property value
-         * @param max_val maximum property value
-         *
-         * @return Spec instance if parameters are valid; std::nullopt otherwise.
-         */
-        static std::optional<Spec> create( Permission::Kind permission
-                                         , Resolution::Kind resolution
-                                         , Value const &init_val
-                                         , Value const &min_val
-                                         , Value const &max_val ) noexcept;
-        
-    private:
-
-        static std::optional<Spec> create( Permission::Kind permission
-                                         , Resolution::Kind resolution
-                                         , std::optional<Value> &&init
-                                         , std::optional<Value> &&min
-                                         , std::optional<Value> &&max ) noexcept;
 
         /* #endregion */// Factory methods
 
@@ -197,8 +144,9 @@ namespace machine::property
 
         Spec &operator=( Spec const & ) noexcept = delete;          //!< Copy operator (deleted).
         Spec &operator=( Spec && ) noexcept = default;              //!< Move operator (default).
-        bool constexpr operator==( Spec const & ) const noexcept = delete;  //!< Equality operator (deleted).
-        auto constexpr operator<=>( Spec const & ) const noexcept = delete; //!< Three-way comparison operator (deleted).
+        bool constexpr operator==( Spec const &other ) const noexcept; //!< Equality operator.
+        auto constexpr operator<=>( Spec const &other ) const noexcept
+            ->std::strong_ordering; //!< Three-way comparison operator.
 
     /* #endregion */// Operators
 
@@ -208,6 +156,15 @@ namespace machine::property
     public:
 
         /* #region Public methods */
+
+        bool areEquals( std::uint8_t permission
+                      , std::uint8_t resolution
+                      , std::byte const *init_val
+                      , std::uint8_t init_size
+                      , std::byte const *min_val
+                      , std::uint8_t min_size
+                      , std::byte const *max_val
+                      , std::uint8_t max_size ) noexcept;
 
         /** @brief Checks if the given value is within the range specified by the `Spec`. */
         /**
@@ -220,7 +177,14 @@ namespace machine::property
          * @return `true` if the value is within range; `false` otherwise.
          */
         [[nodiscard]]
-        bool isWithinRange( Value const &v ) const noexcept;
+        bool isWithinRange( Value const &v ) const noexcept
+        {
+            auto bytes = v.bytes();
+            return isWithinRange( bytes.data(), bytes.size() );
+        }
+
+        [[nodiscard]]
+        bool isWithinRange( std::byte const *data, std::uint8_t size ) const noexcept;
 
         /** @brief Returns a string representation of the `Spec`. */
         /**
@@ -275,7 +239,13 @@ namespace machine::property
 
         /* #region : Private methods */
 
-        std::int32_t decodeNumericValue( Value const &v ) const noexcept;
+        std::int32_t decodeNumericValue( std::byte const *data, std::uint8_t size ) const noexcept;
+
+        std::int32_t decodeNumericValue( Value const &v ) const noexcept
+        {
+            auto bytes = v.bytes();
+            return decodeNumericValue( bytes.data(), bytes.size() );
+        }
 
         /* #endregion */ // Private methods
 

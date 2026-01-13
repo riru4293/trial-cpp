@@ -7,11 +7,48 @@
 
 /* Custom Library */
 #include <spec.hpp>
+#include <value.hpp>
 
 namespace machine
 {
     class Property
     {
+    /* ^\__________________________________________ */
+    /* #region Static members, Inner types.         */
+
+    public:
+
+        /* #region SetResult */
+
+        enum class SetResult : std::uint8_t
+        {
+            Success = 0,
+            NoChange = 1,
+            IllegalArgument = 2,
+            Forbidden = 3,
+            InternalError = 4,
+        };
+
+        /* #endregion */// SetResult
+
+    /* ^\__________________________________________ */
+    /* #region Constructors.                        */
+
+    public:
+
+        explicit Property( std::uint8_t code
+                         , property::Spec &&spec
+                         , property::MutableValue &&value ) noexcept
+            : code_( code )
+            , spec_( std::move( spec ) )
+            , value_( std::move( value ) )
+        { /* Do nothing */ }
+
+        ~Property() noexcept = default;                 //!< Destructor (default).
+        Property( const Property & ) noexcept = delete; //!< Copy constructor (deleted).
+        Property( Property && ) noexcept = delete;      //!< Move constructor (deleted).
+
+    /* #endregion */// Constructors
 
     /* ^\__________________________________________ */
     /* #region Operators.                           */
@@ -65,15 +102,32 @@ namespace machine
 
         /* #endregion */// Getter methods
 
+        /* #region Setter methods */
+
+        [[nodiscard]]
+        SetResult setValue( std::byte const *data, std::uint8_t size ) noexcept;
+
+        /* #endregion */// Setter methods
+
     private:
+
+        /* #region : Private methods */
+
+        bool isWritable() noexcept;
+
+        bool isValidValue( std::byte const *data, std::uint8_t size ) noexcept;
+
+        SetResult updateValue( std::byte const *data, std::uint8_t size ) noexcept;
+
+        /* #endregion */ // Private methods
 
         /* #region : member variables */
 
-        std::uint8_t code_;     //  1 byte
-        property::Spec spec_;   // 19 bytes
-        property::Value value_; //  6 bytes
-        // ---------------------------------
-        //                  Total: 26 bytes
+        std::uint8_t code_;            //  1 byte
+        property::Spec spec_;          // 19 bytes
+        property::MutableValue value_; //  6 bytes
+        // -----------------------------------------------------
+        //                         Total: 26 bytes
 
         /* #endregion */
 
