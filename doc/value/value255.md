@@ -7,46 +7,46 @@
 title Value255 クラス図
 
 namespace value {
-	class Value255 {
-		+{static} create(data: byte*, size: uint8_t): optional<Value255>
-		+size(): uint8_t
-		+bytes(): vector<byte>
-		+str(): string
-		+clone(): optional<Value255>
-		--
-		#{static} INLINE_SIZE: uint8_t
-		-lock_: atomic<bool>
-		-size_: uint8_t
-		-raw_data_[4]: byte
-		#set(data: byte*, size: uint8_t): bool
-		#setWithResult(data: byte*, size: uint8_t): SetResult
-		-cleanup(): void
-		-moveFrom(other: Value255&&): void
-		-isHeapAllocated(): bool
-		-heapPointer(): uintptr_t
-		-lock(): void
-		-unlock(): void
-	}
+    class Value255 {
+        +{static} create(data: byte*, size: uint8_t): optional<Value255>
+        +size(): uint8_t
+        +bytes(): vector<byte>
+        +str(): string
+        +clone(): optional<Value255>
+        --
+        #{static} INLINE_SIZE: uint8_t
+        -lock_: atomic<bool>
+        -size_: uint8_t
+        -raw_data_[4]: byte
+        #set(data: byte*, size: uint8_t): bool
+        #setWithResult(data: byte*, size: uint8_t): SetResult
+        -cleanup(): void
+        -moveFrom(other: Value255&&): void
+        -isHeapAllocated(): bool
+        -heapPointer(): uintptr_t
+        -lock(): void
+        -unlock(): void
+    }
 
-	enum SetResult {
-		Success
-		NoChange
-		IllegalArgument
-		OutOfMemory
-	}
+    enum SetResult {
+        Success
+        NoChange
+        IllegalArgument
+        OutOfMemory
+    }
 
-	class SpinGuard {
-		+SpinGuard(v: Value255&)
-		+SpinGuard(a: Value255&, b: Value255&)
-		-a_: Value255 const&
-		-b_: Value255 const&
-	}
+    class SpinGuard {
+        +SpinGuard(v: Value255&)
+        +SpinGuard(a: Value255&, b: Value255&)
+        -a_: Value255 const&
+        -b_: Value255 const&
+    }
 
-	class MutableValue255 {
-		+{static} create(data: byte*, size: uint8_t): optional<MutableValue255>
-		+set(data: byte*, size: uint8_t): bool
-		+setWithResult(data: byte*, size: uint8_t): SetResult
-	}
+    class MutableValue255 {
+        +{static} create(data: byte*, size: uint8_t): optional<MutableValue255>
+        +set(data: byte*, size: uint8_t): bool
+        +setWithResult(data: byte*, size: uint8_t): SetResult
+    }
 }
 
 value.MutableValue255 --|> value.Value255
