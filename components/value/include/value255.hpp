@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 
+/* Utilities */
+#include <spin_guard.hpp>
+
 namespace value
 {
     /** @brief Represents an opaque value with dynamic storage up to 255 bytes. */
@@ -93,38 +96,8 @@ namespace value
 
     protected:
 
-        /* #region SpinGuard */
-
-        struct SpinGuard
-        {
-            Value255 const &a_;
-            Value255 const &b_;
-
-            explicit SpinGuard( Value255 const &v ) noexcept
-                : SpinGuard( v, v ) {}
-
-            explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept
-                : a_( a ), b_( b )
-            {
-                // Note: To prevent deadlocks, only one if the same instance will be locked.
-                if ( &a_ == &b_ ) { a_.lock();            }
-                else              { a_.lock(); b_.lock(); }
-            }
-
-            ~SpinGuard()
-            {
-                // Note: Unlock in reverse order.
-                if ( &a_ == &b_ ) {              a_.unlock(); }
-                else              { b_.unlock(); a_.unlock(); }
-            }
-
-            SpinGuard( SpinGuard const & ) = delete;
-            SpinGuard &operator=( SpinGuard const & ) = delete;
-            SpinGuard( SpinGuard && ) = delete;
-            SpinGuard &operator=( SpinGuard && ) = delete;
-        };
-
-        /* #endregion */// SpinGuard
+        /** @brief Type alias for the spin guard used by Value255. */
+        using SpinGuard = util::SpinGuard<Value255>;
 
     private:
 
@@ -237,7 +210,7 @@ namespace value
     /* ^\__________________________________________ */
     /* #region Instance members.                    */
 
-    public:
+    public: // Instance members
 
         [[nodiscard]]
         bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
@@ -305,7 +278,7 @@ namespace value
             return create( data_unlocked(), size_ );
         }
 
-    protected:
+    protected: // Instance members
 
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
@@ -313,15 +286,19 @@ namespace value
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
-    private:
+    private: // Instance members
+
+        /** @brief Allow SpinGuard to access private lock/unlock methods. */
+        friend struct util::SpinGuard<Value255>;
+
+        /* Member variables */
+        /* ================ */
+        std::atomic<bool> mutable lock_ = false;    //!< Spinlock for thread safety. false=unlocked, true=locked.
+        std::uint8_t size_ = 0;                     //!< Size of the property value in bytes.
+        std::byte raw_data_[INLINE_SIZE] = {};      //!< Inline storage or heap pointer.
+
 
         /* #region Private methods. */
-
-        bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
-
-        void cleanup() noexcept;
-
-        void moveFrom( Value255 &&other ) noexcept;
 
         void lock() const noexcept
         {
@@ -335,6 +312,12 @@ namespace value
         {
             lock_.store( false, std::memory_order_release );
         }
+
+        bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
+
+        void cleanup() noexcept;
+
+        void moveFrom( Value255 &&other ) noexcept;
 
         std::uintptr_t heapPointer() const noexcept;
 
@@ -354,14 +337,6 @@ namespace value
         }
 
         /* #endregion */// Private methods
-
-        /* #region Member variables */
-
-        std::atomic<bool> mutable lock_ = false;    //!< Spinlock for thread safety. false=unlocked, true=locked.
-        std::uint8_t size_ = 0;                     //!< Size of the property value in bytes.
-        std::byte raw_data_[INLINE_SIZE] = {};      //!< Inline storage or heap pointer.
-
-        /* #endregion */// Member variables
 
     /* #endregion */// Instance members
 
