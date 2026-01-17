@@ -496,13 +496,11 @@ namespace value
         * This method updates the contents of the `MutableValue255` instance
         * with the provided data and size.
         *
+        * If the operation fails, this instance keeps its previous data unchanged.
+        *
         * @par Thread Safety
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
-        *
-        * @warning
-        * If the operation fails, any previously stored data in this instance
-        * is cleared (set to empty/size 0).
         *
         * @param data [in] Pointer to the new raw data.
         *                  A null pointer is only valid if size is 0.
@@ -529,13 +527,12 @@ namespace value
         * This method updates the contents of the `MutableValue255` instance
         * with the provided data and size.
         *
+        * If the operation fails (illegal argument or out-of-memory), this
+        * instance keeps its previous data unchanged.
+        *
         * @par Thread Safety
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
-        *
-        * @warning
-        * If the operation fails, any previously stored data in this instance
-        * is cleared (set to empty/size 0).
         *
         * @param data [in] Pointer to the new raw data.
         *                  A null pointer is only valid if size is 0.

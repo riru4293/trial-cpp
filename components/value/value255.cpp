@@ -3,6 +3,7 @@
 
 /* C++ Standard Library */
 #include <algorithm>
+#include <bit>
 #include <cstring>
 #include <format>
 #include <sstream>
@@ -174,54 +175,62 @@ bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
     return ( ret == SetResult::Success ) || ( ret == SetResult::NoChange );
 }
 
-Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
+Value255::SetResult Value255::setWithResult(
+    std::byte const *data, std::uint8_t size ) noexcept
 {
     // [===> Prerequisite: This instance is locked; only if mutable]
 
-    if ( size > 0U && data == nullptr )
-    {
-        cleanup();
-        return SetResult::IllegalArgument;
-    }
-    // [===> Follows: All parameters are valid]
+    SetResult ret;
 
-    if ( size_ == size )
+    do // Single-shot transaction; break on failure.
     {
-        if ( areEqualsUnlocked( data, size ) )
+        if ( size > 0U && data == nullptr )
         {
-            return SetResult::NoChange;
+            ret = SetResult::IllegalArgument;
+    /*->*/  break;
         }
-    }
-    // [===> Follows: Data is different]
+        // [===> Follows: All parameters are valid]
 
-    if ( size <= INLINE_SIZE )  // Note: Use inline storage.
-    {
-        cleanup();
-        std::memcpy( raw_data_, data, size );
-        // [===> Follows: Data copied to inline buffer]
-    }
-    else  // Note: Use heap allocation.
-    {
-        if ( size > size_ ) // Note: Allocate or reallocate.
+        if ( ( size_ == size ) && areEqualsUnlocked( data, size ) )
+        {
+            ret = SetResult::NoChange;
+    /*->*/  break;
+        }
+        // [===> Follows: Data is different]
+
+        bool to_be_used_heap = ( size > INLINE_SIZE );
+        bool need_allocation = ( to_be_used_heap && ( size > size_ ) );
+
+        if ( !to_be_used_heap )
         {
             cleanup();
-            void* p = heap_caps_malloc( size, MALLOC_CAP_DEFAULT );
-            if ( !p ) { return SetResult::OutOfMemory; }
-            // [===> Follows: Heap memory reallocated]
-
-            std::uintptr_t addr = reinterpret_cast<std::uintptr_t>( p );
-            std::memcpy( raw_data_, &addr, INLINE_SIZE );
+            std::memcpy( raw_data_, data, size );
         }
-        // [===> Follows: Heap memory allocation completed]
+        else
+        {
+            if ( need_allocation )
+            {
+                void *allocated = heap_caps_malloc( size, MALLOC_CAP_DEFAULT );
+                if ( !allocated )
+                {
+                    ret = SetResult::OutOfMemory;
+    /*->*/          break;
+                }
 
-        std::memcpy( heapPointerAsVoid(), data, size );
-        // [===> Follows: Data copied to heap memory]
-    }
+                cleanup();
+                std::uintptr_t addr = std::bit_cast<std::uintptr_t>( allocated );
+                std::memcpy( raw_data_, &addr, INLINE_SIZE );
+            }
 
-    size_ = size;
-    // [===> Follows: Size updated]
+            std::memcpy( heapPointerAsVoid(), data, size );
+        }
 
-    return SetResult::Success;
+        size_ = size;
+        ret = SetResult::Success;
+
+    } while ( false );
+
+    return ret;
 }
 
 
