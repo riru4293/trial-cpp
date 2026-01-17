@@ -4,10 +4,8 @@
 #include <value255.hpp>
 
 /* C++ Standard Library */
-#include <string>
-
-// to cpp
 #include <format>
+#include <string>
 
 
 namespace std // Formatter specialization
@@ -53,7 +51,7 @@ namespace std // Formatter specialization
         auto format( value::Value255 const &v, FormatContext &ctx ) const noexcept
         {
             std::string str = v.str();
-            
+
             for ( char c : str )
             {
                 *ctx.out()++ = c;
