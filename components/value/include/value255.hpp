@@ -2,6 +2,7 @@
 
 /* C++ Standard Library */
 #include <atomic>
+#include <bit>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -418,12 +419,12 @@ namespace value
 
         std::byte *heapPointerAsByte() const noexcept
         {
-            return reinterpret_cast<std::byte *>( heapPointer() );
+            return std::bit_cast<std::byte *>( heapPointer() );
         }
 
         void *heapPointerAsVoid() const noexcept
         {
-            return reinterpret_cast<void *>( heapPointer() );
+            return std::bit_cast<void *>( heapPointer() );
         }
 
         std::byte const *dataUnlocked() const noexcept

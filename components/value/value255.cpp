@@ -3,7 +3,6 @@
 
 /* C++ Standard Library */
 #include <algorithm>
-#include <bit>
 #include <cstring>
 #include <format>
 #include <sstream>
