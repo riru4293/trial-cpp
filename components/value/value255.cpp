@@ -52,8 +52,15 @@ std::optional<MutableValue255> MutableValue255::create(
     return std::nullopt;
 }
 
-
 // ----- Constructors and destructor -----
+
+Value255::~Value255() noexcept
+{
+    auto guard_until_scope_end = makeGuard( *this );
+    // [===> Follows: Locked]
+
+    cleanup();
+}
 
 Value255::Value255( Value255 &&other ) noexcept
 {
@@ -62,7 +69,6 @@ Value255::Value255( Value255 &&other ) noexcept
 
     moveFrom( std::move( other ) );
 }
-
 
 // ----- Operators -----
 
@@ -122,8 +128,7 @@ namespace value
     }
 }
 
-
-// ----- Public member functions -----
+// ----- Public member methods -----
 
 bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
@@ -131,6 +136,14 @@ bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size )
     // [===> Follows: Locked]
 
     return areEqualsUnlocked( other_data, other_size );
+}
+
+std::uint8_t Value255::size() const noexcept
+{
+    auto guard_until_scope_end = makeGuard( *this );
+    // [===> Follows: Locked]
+
+    return size_;
 }
 
 std::vector<std::byte> Value255::bytes() const noexcept
@@ -163,8 +176,33 @@ std::string Value255::str() const noexcept
     return oss.str();
 }
 
+std::optional<Value255> Value255::clone( void ) const noexcept
+{
+    auto guard_until_scope_end = makeGuard( *this );
+    // [===> Follows: Locked]
 
-// ----- Protected member functions -----
+    /* Note: create() is public method but does not require a lock,
+             so there are no deadlock issues. */
+    return create( dataUnlocked(), size_ );
+}
+
+bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
+{
+    auto guard_until_scope_end = makeGuard( *this );
+    // [===> Follows: Locked]
+
+    return Value255::set( data, size );
+}
+
+Value255::SetResult MutableValue255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
+{
+    auto guard_until_scope_end = makeGuard( *this );
+    // [===> Follows: Locked]
+
+    return Value255::setWithResult( data, size );
+}
+
+// ----- Protected member methods -----
 
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
@@ -232,8 +270,7 @@ Value255::SetResult Value255::setWithResult(
     return ret;
 }
 
-
-// ----- Private member functions -----
+// ----- Private member methods -----
 
 void Value255::lock() const noexcept
 {
@@ -242,6 +279,11 @@ void Value255::lock() const noexcept
         /* Yield to other tasks while waiting for lock */
         taskYIELD();
     }
+}
+
+void Value255::unlock() const noexcept
+{
+    lock_.store( false, std::memory_order_release );
 }
 
 void Value255::cleanup() noexcept

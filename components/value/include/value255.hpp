@@ -57,7 +57,7 @@ namespace value
     class Value255
     {
     // ========== Supporting Section ==========
-    // (Helper/factory functions that require forward implements)
+    // (Helper/factory methods that must be forward implemented)
 
     protected:
         // ----- Guard factories -----
@@ -123,13 +123,7 @@ namespace value
          * The spinlock is acquired before cleanup to ensure that no other thread is
          * currently accessing the data.
          */
-        ~Value255() noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            cleanup();
-        }
+        ~Value255() noexcept;
 
         /** @brief Copy constructor (deleted). */
         Value255( Value255 const & ) = delete;
@@ -201,55 +195,7 @@ namespace value
         auto operator<=>( Value255 const &other ) const noexcept
             ->std::strong_ordering;
 
-        // ----- Public member functions -----
-
-        /** @brief Compares the value with external data. */
-        /**
-         * @details
-         * Performs a byte-by-byte comparison between this instance's data and the
-         * provided external data. Only this instance's spinlock is held during
-         * comparison; the external data is not protected.
-         *
-         * @param data [in] Pointer to external data for comparison.
-         *                  A null pointer is only valid if size is 0.
-         * @param size [in] Size of external data in bytes.
-         *
-         * @return `true` if sizes match and payloads are identical, `false` otherwise.
-         *
-         * @par Thread Safety
-         * This method is thread-safe for this instance. However, the external data
-         * pointed to by `data` is NOT protected by this method's lock.
-         *
-         * @attention
-         * - The caller is responsible for ensuring that `data` remains valid and
-         *   unchanged during this method's execution.
-         * - If another thread modifies the external data simultaneously, the result
-         *   is undefined.
-         * - This design is intentional and suitable for comparing with driver buffers
-         *   or fixed immutable data.
-         */
-        [[nodiscard]]
-        bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
-
-        /** @brief Returns the size of the value in bytes. */
-        /**
-         * @return Size of the value in bytes.
-         */
-        [[nodiscard]]
-        std::uint8_t size() const noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            return size_;
-        }
-
-        /** @brief Returns the value as a vector of bytes. */
-        /**
-         * @return Vector of bytes representing the value.
-         */
-        [[nodiscard]]
-        std::vector<std::byte> bytes() const noexcept;
+        // ----- Public member methods -----
 
         /** @brief Provides thread-safe access to raw data via callback. */
         /**
@@ -292,6 +238,48 @@ namespace value
             return std::forward<Callable>( callback )( dataUnlocked(), size_ );
         }
 
+        /** @brief Compares the value with external data. */
+        /**
+         * @details
+         * Performs a byte-by-byte comparison between this instance's data and the
+         * provided external data. Only this instance's spinlock is held during
+         * comparison; the external data is not protected.
+         *
+         * @param data [in] Pointer to external data for comparison.
+         *                  A null pointer is only valid if size is 0.
+         * @param size [in] Size of external data in bytes.
+         *
+         * @return `true` if sizes match and payloads are identical, `false` otherwise.
+         *
+         * @par Thread Safety
+         * This method is thread-safe for this instance. However, the external data
+         * pointed to by `data` is NOT protected by this method's lock.
+         *
+         * @attention
+         * - The caller is responsible for ensuring that `data` remains valid and
+         *   unchanged during this method's execution.
+         * - If another thread modifies the external data simultaneously, the result
+         *   is undefined.
+         * - This design is intentional and suitable for comparing with driver buffers
+         *   or fixed immutable data.
+         */
+        [[nodiscard]]
+        bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
+
+        /** @brief Returns the size of the value in bytes. */
+        /**
+         * @return Size of the value in bytes.
+         */
+        [[nodiscard]]
+        std::uint8_t size() const noexcept;
+
+        /** @brief Returns the value as a vector of bytes. */
+        /**
+         * @return Vector of bytes representing the value.
+         */
+        [[nodiscard]]
+        std::vector<std::byte> bytes() const noexcept;
+
         /** @brief Returns a string representation of the value. */
         /**
          * @details
@@ -324,18 +312,10 @@ namespace value
         * - A situation where memory cannot be allocated to store a copy of `data`.
         */
         [[nodiscard]]
-        std::optional<Value255> clone( void ) const noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            /* Note: create() is public method but does not require a lock,
-                     so there are no deadlock issues. */
-            return create( dataUnlocked(), size_ );
-        }
+        std::optional<Value255> clone( void ) const noexcept;
 
     protected:
-        // ----- Protected member functions -----
+        // ----- Protected member methods -----
 
         /** @brief Sets the value's data and size (protected). */
         /**
@@ -400,14 +380,11 @@ namespace value
         std::uint8_t size_ = 0;                     //!< Size of the value in bytes.
         std::byte raw_data_[INLINE_SIZE] = {};      //!< Inline storage or heap pointer.
 
-        // ----- Private member functions -----
+        // ----- Private member methods -----
 
         void lock() const noexcept;
 
-        void unlock() const noexcept
-        {
-            lock_.store( false, std::memory_order_release );
-        }
+        void unlock() const noexcept;
 
         bool isHeapAllocated() const noexcept { return size_ > INLINE_SIZE; }
 
@@ -504,7 +481,7 @@ namespace value
 
         using Value255::Value255;
 
-        // ----- Public member functions -----
+        // ----- Public member methods -----
 
         /** @brief Sets the value's data and size. */
         /**
@@ -529,13 +506,7 @@ namespace value
         * - A situation where memory cannot be allocated to store a copy of `data`.
        */
         [[nodiscard]]
-        bool set( std::byte const *data, std::uint8_t size ) noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            return Value255::set( data, size );
-        }
+        bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
         /** @brief Sets the value's data and size. */
         /**
@@ -561,13 +532,7 @@ namespace value
         * - A situation where memory cannot be allocated to store a copy of `data`.
        */
         [[nodiscard]]
-        SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            return Value255::setWithResult( data, size );
-        }
+        SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
     }; // class MutableValue255
 
