@@ -500,6 +500,10 @@ namespace value
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
         *
+        * @warning
+        * If the operation fails, any previously stored data in this instance
+        * is cleared (set to empty/size 0).
+        *
         * @param data [in] Pointer to the new raw data.
         *                  A null pointer is only valid if size is 0.
         * @param size [in] Size of the new data in bytes.
@@ -528,6 +532,10 @@ namespace value
         * @par Thread Safety
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
+        *
+        * @warning
+        * If the operation fails, any previously stored data in this instance
+        * is cleared (set to empty/size 0).
         *
         * @param data [in] Pointer to the new raw data.
         *                  A null pointer is only valid if size is 0.

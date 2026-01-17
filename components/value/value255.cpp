@@ -7,10 +7,12 @@
 #include <format>
 #include <sstream>
 
-/* ESP-IDF, FreeRTOS Library */
-#include <esp_heap_caps.h>
+/* FreeRTOS Library */
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+
+/* ESP-IDF Library */
+#include <esp_heap_caps.h>
 
 
 using namespace value;
@@ -72,10 +74,7 @@ Value255 &Value255::operator=( Value255 &&other ) noexcept
     if ( this != &other )
     {
         cleanup();
-        // [===> Follows: All resources were released and cleared]
-
         moveFrom( std::move( other ) );
-        // [===> Follows: All Resources were moved from other]
     }
 
     return *this;
@@ -139,13 +138,8 @@ std::vector<std::byte> Value255::bytes() const noexcept
     SpinGuard guard( *this );
     // [===> Follows: Locked]
 
-    std::vector<std::byte> out;
-    out.reserve( size_ );
-
     std::byte const *ptr = dataUnlocked();
-    out.insert( out.end(), ptr, ptr + size_ );
-
-    return out;
+    return std::vector<std::byte>( ptr, ptr + size_ );
 }
 
 std::string Value255::str() const noexcept
@@ -161,8 +155,7 @@ std::string Value255::str() const noexcept
     for ( uint8_t i = 0; i < size_; i++ )
     {
         oss << std::format( "0x{:02X}", static_cast<unsigned>( ptr[i] ) );
-
-        if ( i + 1 < size_ ) oss << ' ';
+        if ( i + 1 < size_ ) { oss << ' '; }
     }
 
     oss << " ]";
@@ -175,22 +168,21 @@ std::string Value255::str() const noexcept
 
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
-    SetResult ret = setWithResult( data, size );
+    // [===> Prerequisite: This instance is locked; only if mutable]
 
-    return ( ret == SetResult::Success  )
-        || ( ret == SetResult::NoChange );
+    SetResult ret = setWithResult( data, size );
+    return ( ret == SetResult::Success ) || ( ret == SetResult::NoChange );
 }
 
 Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
 {
-    // [===> Prerequisite: This instance is locked]
+    // [===> Prerequisite: This instance is locked; only if mutable]
 
     if ( size > 0U && data == nullptr )
     {
         cleanup();
         return SetResult::IllegalArgument;
     }
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on invalid parameters!! ]
     // [===> Follows: All parameters are valid]
 
     if ( size_ == size )
@@ -205,21 +197,16 @@ Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t
     if ( size <= INLINE_SIZE )  // Note: Use inline storage.
     {
         cleanup();
-        // [===> Follows: All resources were released and cleared]
-
         std::memcpy( raw_data_, data, size );
         // [===> Follows: Data copied to inline buffer]
     }
-    else // [!! Caution !!]__  Contains early returns.  __[!! Caution !!]
+    else  // Note: Use heap allocation.
     {
         if ( size > size_ ) // Note: Allocate or reallocate.
         {
             cleanup();
-            // [===> Follows: All resources were released and cleared]
-
             void* p = heap_caps_malloc( size, MALLOC_CAP_DEFAULT );
             if ( !p ) { return SetResult::OutOfMemory; }
-            // ~~~~~~~~~~~~~~~~~~~~~~~  [ Early return on allocation failure!! ]
             // [===> Follows: Heap memory reallocated]
 
             std::uintptr_t addr = reinterpret_cast<std::uintptr_t>( p );
@@ -253,47 +240,34 @@ void Value255::cleanup() noexcept
 {
     // [===> Prerequisite: This instance is locked]
 
-    if ( isHeapAllocated() )
-    {
-        heap_caps_free( heapPointerAsVoid() );
-    }
-    // [===> Follows: This instance has no heap memory]
-
+    if ( isHeapAllocated() ) { heap_caps_free( heapPointerAsVoid() ); }
     std::memset( raw_data_, 0, INLINE_SIZE );
-    // [===> Follows: This instance has no data]
-
     size_ = 0;
-    // [===> Follows: This instance has no size]
 }
 
 void Value255::moveFrom( Value255 &&other ) noexcept
 {
     // [===> Prerequisite: This and other instance are locked]
-    // [===> Prerequisite: This instance has no heap memory]
+    // [===> Prerequisite: This instance has been cleaned up]
 
     size_ = other.size_;
-    // [===> Follows: This instance has size copied]
-
     std::memcpy( raw_data_, other.raw_data_, INLINE_SIZE );
-    // [===> Follows: This instance has data copied]
+    // [===> Follows: This instance has been data copied]
 
     std::memset( other.raw_data_, 0, INLINE_SIZE );
-    // [===> Follows: Other instance has no data]
-
     other.size_ = 0U;
-    // [===> Follows: Other instance has no size]
+    // [===> Follows: Other instance has been cleaned up]
 }
 
 std::uintptr_t Value255::heapPointer() const noexcept
 {
-    std::uintptr_t ptr = 0;
-
+    std::uintptr_t ptr = 0U;
     std::memcpy( &ptr, raw_data_, INLINE_SIZE );
-
     return ptr;
 }
 
-bool Value255::areEqualsUnlocked( std::byte const *other_data, std::uint8_t other_size ) const noexcept
+bool Value255::areEqualsUnlocked(
+    std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
     // [===> Prerequisite: This instance is already locked by caller]
 
