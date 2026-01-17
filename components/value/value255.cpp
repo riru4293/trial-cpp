@@ -8,14 +8,28 @@
 #include <sstream>
 #include <utility>
 
-/* ESP-IDF */
+/* ESP-IDF, FreeRTOS Library */
 #include <esp_heap_caps.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
+
+using namespace value;
 
 
 /* ^\__________________________________________ */
-/* Namespaces.                                  */
+/* #region Private method implementations.      */
 
-using namespace value;
+void Value255::lock() const noexcept
+{
+    while( lock_.exchange( true, std::memory_order_acquire ) )
+    {
+        /* Yield to other tasks while waiting for lock */
+        taskYIELD();
+    }
+}
+
+/* #endregion */// Private method implementations
 
 
 /* ^\__________________________________________ */
@@ -24,7 +38,7 @@ using namespace value;
 std::optional<Value255> Value255::create(
     std::byte const *data, std::uint8_t size ) noexcept
 {
-    // Note: Creating a new instance, there's no need to lock it.
+    // [===> Prerequisite: Creating a new instance - no lock needed]
 
     Value255 pv;
     bool ans = pv.set( data, size );
@@ -40,7 +54,7 @@ std::optional<Value255> Value255::create(
 std::optional<MutableValue255> MutableValue255::create(
     std::byte const *data, std::uint8_t size ) noexcept
 {
-    // Note: Creating a new instance, there's no need to lock it.
+    // [===> Prerequisite: Creating a new instance - no lock needed]
 
     MutableValue255 pv;
     bool ans = pv.set( data, size );

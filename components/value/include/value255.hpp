@@ -8,6 +8,8 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 /* Utilities */
@@ -53,12 +55,12 @@ namespace value
     */
     class Value255
     {
-    /* ^\__________________________________________ */
-    /* #region Static members, Inner types.         */
-
     public:
+        // ----- Nested types -----
 
-        /* #region Factory methods */
+        enum class SetResult : std::uint8_t; // Forward declaration.
+
+        // ----- Static methods -----
 
         /** @brief Creates a `Value255` instance from raw data. */
         /**
@@ -80,36 +82,7 @@ namespace value
         static std::optional<Value255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
-        /* #endregion */// Factory methods
-
-        /* #region SetResult */
-
-        enum class SetResult : std::uint8_t
-        {
-            Success = 0,
-            NoChange = 1,
-            IllegalArgument = 2,
-            OutOfMemory = 3,
-        };
-
-        /* #endregion */// SetResult
-
-    protected:
-
-        /** @brief Type alias for the spin guard used by Value255. */
-        using SpinGuard = util::SpinGuard<Value255>;
-
-    private:
-
-        static constexpr std::uint8_t INLINE_SIZE = 4;
-
-    /* #endregion */// Static members, Inner types
-
-
-    /* ^\__________________________________________ */
-    /* #region Constructors.                        */
-
-    public:
+        // ----- Constructors and destructor -----
 
         /** @brief Default constructor. */
         /**
@@ -122,10 +95,14 @@ namespace value
         /**
          * @details
          * Cleans up any heap-allocated memory when the `Value255` instance is destroyed.
+         * The spinlock is acquired before cleanup to ensure that no other thread is
+         * currently accessing the data.
          */
         ~Value255() noexcept
         {
-            // Note: Destructor called, there's no need to lock it.
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
             cleanup();
         }
 
@@ -142,13 +119,7 @@ namespace value
          */
         Value255( Value255 &&other ) noexcept;
 
-    /* #endregion */// Constructors
-
-
-    /* ^\__________________________________________ */
-    /* #region Operators.                           */
-
-    public:
+        // ----- Operators -----
 
         /** @brief Copy assignment operator (deleted). */
         Value255 &operator=( Value255 const & ) noexcept = delete;
@@ -195,7 +166,8 @@ namespace value
          * 1. If this and other instance are same, return `std::strong_ordering::equal`.
          * 2. If this instance's size is smaller, return `std::strong_ordering::less`.
          * 3. If this instance's size is larger, return `std::strong_ordering::greater`.
-         * 4. Returns the result of `std::compare_three_way`, comparing the payloads of both instances.
+         * 4. Returns the result of `std::compare_three_way`, comparing the payloads of
+         *    both instances.
          *
          * @param other [in] The other `Value255` to compare with.
          *
@@ -204,14 +176,33 @@ namespace value
         auto operator<=>( Value255 const &other ) const noexcept
             ->std::strong_ordering;
 
-    /* #endregion */// Operators
+        // ----- Public member functions -----
 
-
-    /* ^\__________________________________________ */
-    /* #region Instance members.                    */
-
-    public: // Instance members
-
+        /** @brief Compares the value with external data. */
+        /**
+         * @details
+         * Performs a byte-by-byte comparison between this instance's data and the
+         * provided external data. Only this instance's spinlock is held during
+         * comparison; the external data is not protected.
+         *
+         * @param data [in] Pointer to external data for comparison.
+         *                  A null pointer is only valid if size is 0.
+         * @param size [in] Size of external data in bytes.
+         *
+         * @return `true` if sizes match and payloads are identical, `false` otherwise.
+         *
+         * @par Thread Safety
+         * This method is thread-safe for this instance. However, the external data
+         * pointed to by `data` is NOT protected by this method's lock.
+         *
+         * @attention
+         * - The caller is responsible for ensuring that `data` remains valid and
+         *   unchanged during this method's execution.
+         * - If another thread modifies the external data simultaneously, the result
+         *   is undefined.
+         * - This design is intentional and suitable for comparing with driver buffers
+         *   or fixed immutable data.
+         */
         [[nodiscard]]
         bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
 
@@ -234,6 +225,47 @@ namespace value
          */
         [[nodiscard]]
         std::vector<std::byte> bytes() const noexcept;
+
+        /** @brief Provides thread-safe access to raw data via callback. */
+        /**
+         * @details
+         * Acquires the instance's spinlock, invokes the provided callback with
+         * a const pointer to the raw data and its size, and releases the lock
+         * when the callback completes.
+         *
+         * This method ensures that the data pointer and size remain valid and
+         * unchanged during the callback execution. The lock is held for the
+         * entire duration of the callback, guaranteeing exclusivity.
+         *
+         * @par Thread Safety
+         * This method is thread-safe. The spinlock is held for the entire duration
+         * of callback execution, ensuring that the data remains unchanged.
+         *
+         * @tparam Callable A callable type (function, lambda, or functor) with
+         * signature compatible with `void(std::byte const *, std::uint8_t)`.
+         *
+         * @param callback [in] A callable object to be invoked with the data
+         * pointer and size. The callback should complete quickly, as the lock
+         * is held during its execution.
+         *
+         * @return The return value of the callback (if any).
+         *
+         * @example
+         * @code
+         * myValue.withData( [driver]( auto const *data, auto size ) {
+         *     driver->write( data, size );
+         * });
+         * @endcode
+         */
+        template<typename Callable>
+        [[nodiscard]]
+        auto withData( Callable &&callback ) const noexcept
+        {
+            SpinGuard guard( *this );
+            // [===> Follows: Locked]
+
+            return std::forward<Callable>( callback )( data_unlocked(), size_ );
+        }
 
         /** @brief Returns a string representation of the value. */
         /**
@@ -272,41 +304,89 @@ namespace value
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            /* Note:
-                create() is public method but does not require a lock,
-                so there are no deadlock issues. */
+            /* Note: create() is public method but does not require a lock,
+                     so there are no deadlock issues. */
             return create( data_unlocked(), size_ );
         }
 
-    protected: // Instance members
+    protected:
+        // ----- Type aliases -----
 
+        /** @brief Type alias for the spin guard used by Value255. */
+        using SpinGuard = util::SpinGuard<Value255>;
+
+        // ----- Protected member functions -----
+
+        /** @brief Sets the value's data and size (protected). */
+        /**
+         * @details
+         * This is a simplified wrapper that calls `setWithResult()` internally
+         * and converts the detailed result to a boolean for convenience.
+         *
+         * Failure cases:
+         * - `data` is null while `size` is greater than 0 → returns `false`
+         * - Memory allocation fails → returns `false`
+         *
+         * @param data [in] Pointer to the new raw data.
+         * @param size [in] Size of the new data in bytes.
+         *
+         * @return `true` if successful (either `Success` or `NoChange`),
+         *         `false` otherwise.
+         *
+         * @note
+         * Use this method for simple boolean result checking.
+         * Use `setWithResult()` if you need to distinguish between different
+         * failure cases.
+         *
+         * @par Internal Note
+         * This method must be called with the instance locked.
+         * The caller is responsible for lock acquisition.
+         */
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
+        /** @brief Sets the value's data and size with detailed result (protected). */
+        /**
+         * @details
+         * This is the primary implementation for setting data. It provides detailed
+         * result information via the `SetResult` enum, distinguishing between
+         * different failure scenarios.
+         *
+         * @param data [in] Pointer to the new raw data.
+         * @param size [in] Size of the new data in bytes.
+         *
+         * @return
+         * - `SetResult::Success` - Data successfully updated
+         * - `SetResult::NoChange` - New data is identical to current data
+         * - `SetResult::IllegalArgument` - `data` is null while `size > 0`
+         * - `SetResult::OutOfMemory` - Heap allocation failed
+         *
+         * @par Internal Note
+         * This method must be called with the instance locked.
+         * The caller is responsible for lock acquisition via `SpinGuard`.
+         */
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
-    private: // Instance members
+    private:
+        // ----- Friend declarations -----
 
         /** @brief Allow SpinGuard to access private lock/unlock methods. */
         friend struct util::SpinGuard<Value255>;
 
-        /* Member variables */
-        /* ================ */
-        std::atomic<bool> mutable lock_ = false;    //!< Spinlock for thread safety. false=unlocked, true=locked.
-        std::uint8_t size_ = 0;                     //!< Size of the property value in bytes.
+        // ----- Static constants -----
+
+        static constexpr std::uint8_t INLINE_SIZE = 4;
+
+        // ----- Member variables -----
+
+        std::atomic<bool> mutable lock_ = false;    //!< Spinlock for thread safety.
+        std::uint8_t size_ = 0;                     //!< Size of the value in bytes.
         std::byte raw_data_[INLINE_SIZE] = {};      //!< Inline storage or heap pointer.
 
+        // ----- Private member functions -----
 
-        /* #region Private methods. */
-
-        void lock() const noexcept
-        {
-            while( lock_.exchange( true, std::memory_order_acquire ) )
-            {
-                /* Busy loop */
-            }
-        }
+        void lock() const noexcept;
 
         void unlock() const noexcept
         {
@@ -335,10 +415,6 @@ namespace value
         {
             return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
-
-        /* #endregion */// Private methods
-
-    /* #endregion */// Instance members
 
     }; // class Value255
 
@@ -384,12 +460,8 @@ namespace value
     */
     class MutableValue255 : public Value255
     {
-    /* ^\__________________________________________ */
-    /* #region Static members, Inner types.         */
-
     public:
-
-        /* #region Factory methods */
+        // ----- Static methods -----
 
         /** @brief Creates a `MutableValue255` instance from raw data. */
         /**
@@ -410,23 +482,11 @@ namespace value
         static std::optional<MutableValue255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
-        /* #endregion */// Factory methods
-
-
-    /* ^\__________________________________________ */
-    /* #region Constructors.                        */
-
-    public:
+        // ----- Constructors -----
 
         using Value255::Value255;
 
-    /* #endregion */// Constructors
-
-
-    /* ^\__________________________________________ */
-    /* #region Instance members.                    */
-
-    public:
+        // ----- Public member functions -----
 
         /** @brief Sets the value's data and size. */
         /**
@@ -486,11 +546,27 @@ namespace value
             return Value255::setWithResult( data, size );
         }
 
-    /* #endregion */// Instance members
-
     }; // class MutableValue255
 
-    static_assert(  sizeof(value::Value255) == 6U, "Unexpected Value255 size");
-    static_assert( alignof(value::Value255) == 1U, "Unexpected Value255 alignment");
+    /** @brief Result codes for the `setWithResult` operation. */
+    /** @details
+    * This enum class defines the possible outcomes of the `setWithResult` operation
+    * in the `Value255` and `MutableValue255` classes.
+    */
+    enum class Value255::SetResult : std::uint8_t
+    {
+        Success = 0,         //!< Data successfully updated.
+        NoChange = 1,        //!< New data is identical to current data.
+        IllegalArgument = 2, //!< Invalid arguments provided.
+        OutOfMemory = 3,     //!< Memory allocation failed.
+    };
+
+    static_assert(  sizeof(Value255) == 6U );
+    static_assert( alignof(Value255) == 1U );
+    static_assert(std::is_standard_layout<Value255>::value);
+
+    static_assert(  sizeof(MutableValue255) == 6U );
+    static_assert( alignof(MutableValue255) == 1U );
+    static_assert(std::is_standard_layout<MutableValue255>::value);
 
 } // namespace value
