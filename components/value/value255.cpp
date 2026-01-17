@@ -17,23 +17,7 @@
 using namespace value;
 
 
-/* ^\__________________________________________ */
-/* #region Private method implementations.      */
-
-void Value255::lock() const noexcept
-{
-    while( lock_.exchange( true, std::memory_order_acquire ) )
-    {
-        /* Yield to other tasks while waiting for lock */
-        taskYIELD();
-    }
-}
-
-/* #endregion */// Private method implementations
-
-
-/* ^\__________________________________________ */
-/* #region Factory methods.                     */
+// ----- Factory methods -----
 
 std::optional<Value255> Value255::create(
     std::byte const *data, std::uint8_t size ) noexcept
@@ -67,11 +51,8 @@ std::optional<MutableValue255> MutableValue255::create(
     return std::nullopt;
 }
 
-/* #endregion */// Factory methods
 
-
-/* ^\__________________________________________ */
-/* #region Constructors.                        */
+// ----- Constructors and destructor -----
 
 Value255::Value255( Value255 &&other ) noexcept
 {
@@ -81,11 +62,8 @@ Value255::Value255( Value255 &&other ) noexcept
     moveFrom( std::move( other ) );
 }
 
-/* #endregion */// Constructors
 
-
-/* ^\__________________________________________ */
-/* #region Operators.                           */
+// ----- Operators -----
 
 Value255 &Value255::operator=( Value255 &&other ) noexcept
 {
@@ -159,11 +137,8 @@ namespace value
     }
 }
 
-/* #endregion */// Operators
 
-
-/* ^\__________________________________________ */
-/* #region Public methods.                      */
+// ----- Public member functions -----
 
 bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
@@ -228,11 +203,8 @@ std::string Value255::str() const noexcept
     return oss.str();
 }
 
-/* #endregion */// Public methods
 
-
-/* ^\__________________________________________ */
-/* #region Protected methods.                   */
+// ----- Protected member functions -----
 
 bool Value255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
@@ -299,13 +271,17 @@ Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t
     return SetResult::Success;
 }
 
-static_assert( sizeof( std::uintptr_t ) == 4U, "The `uintptr_t` must be 4 bytes." );
 
-/* #endregion */// Protected methods
+// ----- Private member functions -----
 
-
-/* ^\__________________________________________ */
-/* #region Private methods.                     */
+void Value255::lock() const noexcept
+{
+    while( lock_.exchange( true, std::memory_order_acquire ) )
+    {
+        /* Yield to other tasks while waiting for lock */
+        taskYIELD();
+    }
+}
 
 void Value255::cleanup() noexcept
 {
@@ -350,5 +326,3 @@ std::uintptr_t Value255::heapPointer() const noexcept
 
     return ptr;
 }
-
-/* #endregion */// Private methods

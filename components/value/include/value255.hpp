@@ -60,7 +60,7 @@ namespace value
 
         enum class SetResult : std::uint8_t; // Forward declaration.
 
-        // ----- Static methods -----
+        // ----- Factory methods -----
 
         /** @brief Creates a `Value255` instance from raw data. */
         /**
@@ -560,6 +560,8 @@ namespace value
         IllegalArgument = 2, //!< Invalid arguments provided.
         OutOfMemory = 3,     //!< Memory allocation failed.
     };
+
+    static_assert(  sizeof( std::uintptr_t ) == 4U );
 
     static_assert(  sizeof(Value255) == 6U );
     static_assert( alignof(Value255) == 1U );
