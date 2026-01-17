@@ -101,19 +101,15 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
     if ( this == &other ) { return std::strong_ordering::equal; }
     // [===> Follows: Not the same instance]
 
-    if ( size_ < other.size_ ) { return std::strong_ordering::less; }
-    if ( size_ > other.size_ ) { return std::strong_ordering::greater; }
+    if ( size_ != other.size_ ) { return size_ <=> other.size_; }
     // [===> Follows: Sizes matched]
 
-    if (size_ == 0) { return std::strong_ordering::equal; }
+    if ( size_ == 0 ) { return std::strong_ordering::equal; }
     // [===> Follows: Sizes present]
 
-    std::byte const *a = dataUnlocked();
-    std::byte const *b = other.dataUnlocked();
-
     return std::lexicographical_compare_three_way(
-        a, a + size_,
-        b, b + other.size_,
+        dataUnlocked(), dataUnlocked() + size_,
+        other.dataUnlocked(), other.dataUnlocked() + other.size_,
         std::compare_three_way()
     );
 }
