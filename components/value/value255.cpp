@@ -146,15 +146,8 @@ std::vector<std::byte> Value255::bytes() const noexcept
     std::vector<std::byte> out;
     out.reserve( size_ );
 
-    if ( isHeapAllocated() )
-    {
-        std::byte *ptr = heapPointerAsByte();
-        out.insert( out.end(), ptr, ptr + size_ );
-    }
-    else
-    {
-        out.insert( out.end(), raw_data_, raw_data_ + size_ );
-    }
+    std::byte const *ptr = dataUnlocked();
+    out.insert( out.end(), ptr, ptr + size_ );
 
     return out;
 }
@@ -206,8 +199,7 @@ Value255::SetResult Value255::setWithResult( std::byte const *data, std::uint8_t
 
     if ( size_ == size )
     {
-        void *current = heapPointerAsVoid();
-        if ( memcmp( current, data, size ) == 0 )
+        if ( areEqualsUnlocked( data, size ) )
         {
             return SetResult::NoChange;
         }
