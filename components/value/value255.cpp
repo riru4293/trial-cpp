@@ -6,7 +6,6 @@
 #include <cstring>
 #include <format>
 #include <sstream>
-#include <utility>
 
 /* ESP-IDF, FreeRTOS Library */
 #include <esp_heap_caps.h>
@@ -90,16 +89,7 @@ bool Value255::operator==( Value255 const &other ) const noexcept
     if ( this == &other ) { return true; }
     // [===> Follows: Not the same instance]
 
-    if ( size_ != other.size_ ) { return false; }
-    // [===> Follows: Sizes matched]
-
-    if ( size_ == 0U ) { return true; }
-    // [===> Follows: Sizes present]
-
-    std::byte const *a = data_unlocked();
-    std::byte const *b = other.data_unlocked();
-
-    return std::equal( a, a + size_, b );
+    return areEqualsUnlocked( other.dataUnlocked(), other.size_ );
 }
 
 auto Value255::operator<=>( Value255 const &other ) const noexcept
@@ -118,8 +108,8 @@ auto Value255::operator<=>( Value255 const &other ) const noexcept
     if (size_ == 0) { return std::strong_ordering::equal; }
     // [===> Follows: Sizes present]
 
-    std::byte const *a = data_unlocked();
-    std::byte const *b = other.data_unlocked();
+    std::byte const *a = dataUnlocked();
+    std::byte const *b = other.dataUnlocked();
 
     return std::lexicographical_compare_three_way(
         a, a + size_,
@@ -145,19 +135,7 @@ bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size )
     SpinGuard guard( *this );
     // [===> Follows: Locked]
 
-    if ( size_ != other_size ) { return false; }
-    // [===> Follows: Sizes matched]
-
-    if ( other_size == 0U ) { return true; }
-    // [===> Follows: Sizes present]
-
-    if( other_data == nullptr ) { return false; }
-    // [===> Follows: Other data is valid]
-
-    std::byte const *a = data_unlocked();
-    std::byte const *b = other_data;
-
-    return std::equal( a, a + size_, b );
+    return areEqualsUnlocked( other_data, other_size );
 }
 
 std::vector<std::byte> Value255::bytes() const noexcept
@@ -186,7 +164,7 @@ std::string Value255::str() const noexcept
     SpinGuard guard( *this );
     // [===> Follows: Locked]
 
-    std::byte const *ptr = data_unlocked();
+    std::byte const *ptr = dataUnlocked();
     std::ostringstream oss;
 
     oss << "[ ";
@@ -325,4 +303,23 @@ std::uintptr_t Value255::heapPointer() const noexcept
     std::memcpy( &ptr, raw_data_, INLINE_SIZE );
 
     return ptr;
+}
+
+bool Value255::areEqualsUnlocked( std::byte const *other_data, std::uint8_t other_size ) const noexcept
+{
+    // [===> Prerequisite: This instance is already locked by caller]
+
+    if ( size_ != other_size ) { return false; }
+    // [===> Follows: Sizes matched]
+
+    if ( other_size == 0U ) { return true; }
+    // [===> Follows: Sizes present]
+
+    if( other_data == nullptr ) { return false; }
+    // [===> Follows: Other data is valid]
+
+    std::byte const *a = dataUnlocked();
+    std::byte const *b = other_data;
+
+    return std::equal( a, a + size_, b );
 }

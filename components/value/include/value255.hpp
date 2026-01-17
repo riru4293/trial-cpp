@@ -264,7 +264,7 @@ namespace value
             SpinGuard guard( *this );
             // [===> Follows: Locked]
 
-            return std::forward<Callable>( callback )( data_unlocked(), size_ );
+            return std::forward<Callable>( callback )( dataUnlocked(), size_ );
         }
 
         /** @brief Returns a string representation of the value. */
@@ -306,7 +306,7 @@ namespace value
 
             /* Note: create() is public method but does not require a lock,
                      so there are no deadlock issues. */
-            return create( data_unlocked(), size_ );
+            return create( dataUnlocked(), size_ );
         }
 
     protected:
@@ -411,10 +411,12 @@ namespace value
             return reinterpret_cast<void *>( heapPointer() );
         }
 
-        std::byte const *data_unlocked() const noexcept
+        std::byte const *dataUnlocked() const noexcept
         {
             return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
         }
+
+        bool areEqualsUnlocked( std::byte const *data, std::uint8_t size ) const noexcept;
 
     }; // class Value255
 
