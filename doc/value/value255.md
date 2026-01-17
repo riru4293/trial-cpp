@@ -57,7 +57,6 @@ value.Value255 ..> value.SetResult
 
 ## Examples
 
-
 ```plantuml
 @startuml
 abstract        abstract

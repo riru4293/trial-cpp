@@ -58,7 +58,7 @@ std::optional<MutableValue255> MutableValue255::create(
 
 Value255::Value255( Value255 &&other ) noexcept
 {
-    SpinGuard guard( *this, other );
+    auto guard_until_scope_end = makeGuard( *this, other );
     // [===> Follows: Locked]
 
     moveFrom( std::move( other ) );
@@ -69,7 +69,7 @@ Value255::Value255( Value255 &&other ) noexcept
 
 Value255 &Value255::operator=( Value255 &&other ) noexcept
 {
-    SpinGuard guard( *this, other );
+    auto guard_until_scope_end = makeGuard( *this, other );
     // [===> Follows: Locked]
 
     if ( this != &other )
@@ -83,7 +83,7 @@ Value255 &Value255::operator=( Value255 &&other ) noexcept
 
 bool Value255::operator==( Value255 const &other ) const noexcept
 {
-    SpinGuard guard( *this, other );
+    auto guard_until_scope_end = makeGuard( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return true; }
@@ -95,7 +95,7 @@ bool Value255::operator==( Value255 const &other ) const noexcept
 auto Value255::operator<=>( Value255 const &other ) const noexcept
     ->std::strong_ordering
 {
-    SpinGuard guard( *this, other );
+    auto guard_until_scope_end = makeGuard( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return std::strong_ordering::equal; }
@@ -128,7 +128,7 @@ namespace value
 
 bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
-    SpinGuard guard( *this );
+    auto guard_until_scope_end = makeGuard( *this );
     // [===> Follows: Locked]
 
     return areEqualsUnlocked( other_data, other_size );
@@ -136,7 +136,7 @@ bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size )
 
 std::vector<std::byte> Value255::bytes() const noexcept
 {
-    SpinGuard guard( *this );
+    auto guard_until_scope_end = makeGuard( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();
@@ -145,7 +145,7 @@ std::vector<std::byte> Value255::bytes() const noexcept
 
 std::string Value255::str() const noexcept
 {
-    SpinGuard guard( *this );
+    auto guard_until_scope_end = makeGuard( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();

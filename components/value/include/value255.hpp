@@ -55,6 +55,30 @@ namespace value
     */
     class Value255
     {
+    // ========== Supporting Section ==========
+    // (Helper/factory functions that require forward implements)
+
+    protected:
+        // ----- Guard factories -----
+
+        static auto makeGuard( Value255 const &v ) noexcept
+        {
+            auto lock = [&v]() noexcept { v.lock(); };
+            auto unlock = [&v]() noexcept { v.unlock(); };
+            return util::SpinGuard( lock, unlock, lock, unlock, true );
+        }
+
+        static auto makeGuard( Value255 const &a, Value255 const &b ) noexcept
+        {
+            return util::SpinGuard(
+                [&a]() noexcept { a.lock(); }, [&a]() noexcept { a.unlock(); },
+                [&b]() noexcept { b.lock(); }, [&b]() noexcept { b.unlock(); },
+                ( &a == &b )
+            );
+        }
+
+    // ========== Main Implementation ==========
+
     public:
         // ----- Nested types -----
 
@@ -100,7 +124,7 @@ namespace value
          */
         ~Value255() noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             cleanup();
@@ -213,7 +237,7 @@ namespace value
         [[nodiscard]]
         std::uint8_t size() const noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             return size_;
@@ -261,7 +285,7 @@ namespace value
         [[nodiscard]]
         auto withData( Callable &&callback ) const noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             return std::forward<Callable>( callback )( dataUnlocked(), size_ );
@@ -301,7 +325,7 @@ namespace value
         [[nodiscard]]
         std::optional<Value255> clone( void ) const noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             /* Note: create() is public method but does not require a lock,
@@ -310,11 +334,6 @@ namespace value
         }
 
     protected:
-        // ----- Type aliases -----
-
-        /** @brief Type alias for the spin guard used by Value255. */
-        using SpinGuard = util::SpinGuard<Value255>;
-
         // ----- Protected member functions -----
 
         /** @brief Sets the value's data and size (protected). */
@@ -363,16 +382,12 @@ namespace value
          *
          * @par Internal Note
          * This method must be called with the instance locked.
-         * The caller is responsible for lock acquisition via `SpinGuard`.
+         * The caller is responsible for lock acquisition (see `makeGuard`).
          */
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
     private:
-        // ----- Friend declarations -----
-
-        /** @brief Allow SpinGuard to access private lock/unlock methods. */
-        friend struct util::SpinGuard<Value255>;
 
         // ----- Static constants -----
 
@@ -515,7 +530,7 @@ namespace value
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             return Value255::set( data, size );
@@ -547,7 +562,7 @@ namespace value
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept
         {
-            SpinGuard guard( *this );
+            auto guard_until_scope_end = makeGuard( *this );
             // [===> Follows: Locked]
 
             return Value255::setWithResult( data, size );
