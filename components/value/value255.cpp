@@ -6,6 +6,7 @@
 #include <cstring>
 #include <format>
 #include <sstream>
+#include <utility>
 
 /* FreeRTOS Library */
 #include <freertos/FreeRTOS.h>
@@ -16,6 +17,38 @@
 
 
 using namespace value;
+
+// ----- Nested types implements -----
+
+class Value255::SpinGuard
+{
+public:
+    explicit SpinGuard( Value255 const &v ) noexcept : SpinGuard( v, v ) {}
+
+    explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept
+        : a_( a ), b_( b )
+    {
+        // Note: To prevent deadlocks, only one if the same instance will be locked.
+        if ( &a_ == &b_ ) { a_.lock();            }
+        else              { a_.lock(); b_.lock(); }
+    }
+
+    ~SpinGuard()
+    {
+        // Note: Unlock in reverse order.
+        if ( &a_ == &b_ ) {              a_.unlock(); }
+        else              { b_.unlock(); a_.unlock(); }
+    }
+
+    SpinGuard( SpinGuard const & ) = delete;
+    SpinGuard &operator=( SpinGuard const & ) = delete;
+    SpinGuard( SpinGuard && ) = delete;
+    SpinGuard &operator=( SpinGuard && ) = delete;
+
+private:
+    Value255 const &a_;
+    Value255 const &b_;
+};
 
 
 // ----- Factory methods -----
@@ -56,7 +89,7 @@ std::optional<MutableValue255> MutableValue255::create(
 
 Value255::~Value255() noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     cleanup();
@@ -64,7 +97,7 @@ Value255::~Value255() noexcept
 
 Value255::Value255( Value255 &&other ) noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
 
     moveFrom( std::move( other ) );
@@ -74,7 +107,7 @@ Value255::Value255( Value255 &&other ) noexcept
 
 Value255 &Value255::operator=( Value255 &&other ) noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
 
     if ( this != &other )
@@ -88,7 +121,7 @@ Value255 &Value255::operator=( Value255 &&other ) noexcept
 
 bool Value255::operator==( Value255 const &other ) const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return true; }
@@ -97,10 +130,9 @@ bool Value255::operator==( Value255 const &other ) const noexcept
     return areEqualsUnlocked( other.dataUnlocked(), other.size_ );
 }
 
-auto Value255::operator<=>( Value255 const &other ) const noexcept
-    ->std::strong_ordering
+std::strong_ordering Value255::operator<=>( Value255 const &other ) const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this, other );
+    SpinGuard guard( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return std::strong_ordering::equal; }
@@ -130,9 +162,17 @@ namespace value
 
 // ----- Public member methods -----
 
+void Value255::withLockedData( DataReader const &callback ) const noexcept
+{
+    SpinGuard guard( *this );
+    // [===> Follows: Locked]
+
+    callback( dataUnlocked(), size_ );
+}
+
 bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     return areEqualsUnlocked( other_data, other_size );
@@ -140,7 +180,7 @@ bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size )
 
 std::uint8_t Value255::size() const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     return size_;
@@ -148,7 +188,7 @@ std::uint8_t Value255::size() const noexcept
 
 std::vector<std::byte> Value255::bytes() const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();
@@ -157,7 +197,7 @@ std::vector<std::byte> Value255::bytes() const noexcept
 
 std::string Value255::str() const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();
@@ -178,7 +218,7 @@ std::string Value255::str() const noexcept
 
 std::optional<Value255> Value255::clone( void ) const noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     /* Note: create() is public method but does not require a lock,
@@ -188,7 +228,7 @@ std::optional<Value255> Value255::clone( void ) const noexcept
 
 bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     return Value255::set( data, size );
@@ -196,7 +236,7 @@ bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
 
 Value255::SetResult MutableValue255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
 {
-    auto guard_until_scope_end = makeGuard( *this );
+    SpinGuard guard( *this );
     // [===> Follows: Locked]
 
     return Value255::setWithResult( data, size );

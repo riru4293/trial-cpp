@@ -6,15 +6,13 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
-/* Utilities */
-#include <spin_guard.hpp>
 
 namespace value
 {
@@ -56,34 +54,11 @@ namespace value
     */
     class Value255
     {
-    // ========== Supporting Section ==========
-    // (Helper/factory methods that must be forward implemented)
-
-    protected:
-        // ----- Guard factories -----
-
-        static auto makeGuard( Value255 const &v ) noexcept
-        {
-            auto lock = [&v]() noexcept { v.lock(); };
-            auto unlock = [&v]() noexcept { v.unlock(); };
-            return util::SpinGuard( lock, unlock, lock, unlock, true );
-        }
-
-        static auto makeGuard( Value255 const &a, Value255 const &b ) noexcept
-        {
-            return util::SpinGuard(
-                [&a]() noexcept { a.lock(); }, [&a]() noexcept { a.unlock(); },
-                [&b]() noexcept { b.lock(); }, [&b]() noexcept { b.unlock(); },
-                ( &a == &b )
-            );
-        }
-
-    // ========== Main Implementation ==========
-
     public:
         // ----- Nested types -----
 
         enum class SetResult : std::uint8_t; // Forward declaration.
+        class SpinGuard; // Forward declaration.
 
         // ----- Factory methods -----
 
@@ -192,10 +167,24 @@ namespace value
          *
          * @return `std::strong_ordering` indicating the comparison result.
          */
-        auto operator<=>( Value255 const &other ) const noexcept
-            ->std::strong_ordering;
+        std::strong_ordering operator<=>( Value255 const &other ) const noexcept;
 
         // ----- Public member methods -----
+
+        /** @brief Callback type for read-only access to raw byte data. */
+        /**
+         * @details
+         * Represents a callable object that receives a pointer to immutable
+         * byte data and its size. This type is used by `withLockedData()` to
+         * provide safe, read-only access to the underlying buffer.
+         *
+         * The callback must not attempt to modify the data, and should return
+         * quickly to avoid holding the lock for an extended period.
+         *
+         * @param data Pointer to the beginning of the byte buffer.
+         * @param size Number of bytes available in the buffer.
+         */
+        using DataReader = std::function<void( std::byte const *data, std::uint8_t size )>;
 
         /** @brief Provides thread-safe access to raw data via callback. */
         /**
@@ -204,39 +193,28 @@ namespace value
          * a const pointer to the raw data and its size, and releases the lock
          * when the callback completes.
          *
-         * This method ensures that the data pointer and size remain valid and
-         * unchanged during the callback execution. The lock is held for the
-         * entire duration of the callback, guaranteeing exclusivity.
+         * The data pointer and size remain valid and unchanged for the entire
+         * duration of the callback. Exclusive access is guaranteed while the
+         * lock is held.
          *
          * @par Thread Safety
-         * This method is thread-safe. The spinlock is held for the entire duration
-         * of callback execution, ensuring that the data remains unchanged.
+         * Fully thread-safe. The spinlock is held for the entire duration of
+         * the callback, preventing concurrent modifications to the data.
          *
-         * @tparam Callable A callable type (function, lambda, or functor) with
-         * signature compatible with `void(std::byte const *, std::uint8_t)`.
-         *
-         * @param callback [in] A callable object to be invoked with the data
-         * pointer and size. The callback should complete quickly, as the lock
-         * is held during its execution.
-         *
-         * @return The return value of the callback (if any).
+         * @param callback [in]
+         * A callable object of type `DataReader`. It is invoked with
+         * `(std::byte const *, std::uint8_t)` while the lock is held.
+         * Keep the callback short and non-blocking to avoid unnecessary
+         * contention.
          *
          * @example
          * @code
-         * myValue.withData( [driver]( auto const *data, auto size ) {
+         * myValue.withLockedData( [&driver]( std::byte const *data, std::uint8_t size ) {
          *     driver->write( data, size );
          * });
          * @endcode
          */
-        template<typename Callable>
-        [[nodiscard]]
-        auto withData( Callable &&callback ) const noexcept
-        {
-            auto guard_until_scope_end = makeGuard( *this );
-            // [===> Follows: Locked]
-
-            return std::forward<Callable>( callback )( dataUnlocked(), size_ );
-        }
+        void withLockedData( DataReader const &callback ) const noexcept;
 
         /** @brief Compares the value with external data. */
         /**
@@ -266,15 +244,15 @@ namespace value
         [[nodiscard]]
         bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
 
-        /** @brief Returns the size of the value in bytes. */
         /**
+         * @brief Returns the size of the value in bytes.
          * @return Size of the value in bytes.
          */
         [[nodiscard]]
         std::uint8_t size() const noexcept;
 
-        /** @brief Returns the value as a vector of bytes. */
         /**
+         * @brief Returns the value as a vector of bytes.
          * @return Vector of bytes representing the value.
          */
         [[nodiscard]]
