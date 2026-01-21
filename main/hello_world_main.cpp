@@ -39,19 +39,19 @@ static void logSpec( std::optional<machine::property::Spec> const &spec )
 
 /**
  * @brief Calculates CRC-8 checksum for data using polynomial 0x07
- * 
- * This function computes an 8-bit cyclic redundancy check (CRC-8) for the 
+ *
+ * This function computes an 8-bit cyclic redundancy check (CRC-8) for the
  * provided data using the standard CRC-8 algorithm with polynomial 0x07.
  * The computation is performed at compile-time if the arguments are constant expressions.
- * 
+ *
  * @param[in] data Pointer to the data buffer to calculate CRC-8 for
  * @param[in] size Number of bytes in the data buffer
- * 
+ *
  * @return The calculated CRC-8 checksum as a uint8_t value
- * 
- * @note This function is constexpr and noexcept, allowing it to be used in 
+ *
+ * @note This function is constexpr and noexcept, allowing it to be used in
  *       compile-time evaluations with no exception safety implications.
- * 
+ *
  * @example
  * @code
  * std::byte buffer[] = {0xA5, 0x01, 0x02};
@@ -110,7 +110,7 @@ static void processing_loop()
     // Minimal work: log a message once per loop iteration.
     ESP_LOGI(TAG, "processing_loop iteration");
 
-#   if 0
+#   if 1
     using namespace machine::property;
 
     using Array1 = std::array<std::byte, 1U>;
