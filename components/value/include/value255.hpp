@@ -1,8 +1,27 @@
 #pragma once
 
+/**
+ * @file value255.hpp
+ * @brief Opaque value types with a maximum size of 255 bytes.
+ * @note ja: 最大サイズが 255 バイトの不透明な値型。
+ *
+ * @details
+ * This header declares the Value255 and MutableValue255 classes.
+ * These types represent opaque binary values whose storage size is
+ * limited to 255 bytes.
+ *
+ * Value255 provides an immutable interface, while MutableValue255 allows
+ * controlled mutation. The separation is intentional to make mutability
+ * explicit at the type level.
+ * @note ja:
+ * このヘッダーは、Value255 クラスと MutableValue255 クラスを宣言します。
+ * これらの型は、記憶域サイズが255バイトに制限された不透明なバイナリ値を表します。
+ * Value255 は不変インターフェースを提供し、MutableValue255 は制御された変更を可能にします。
+ * この分離は、型レベルで変更可能性を明示的にするために意図的に行われています。
+ */
+
 /* C++ Standard Library */
 #include <atomic>
-#include <bit>
 #include <compare>
 #include <cstddef>
 #include <cstdint>
@@ -13,52 +32,76 @@
 #include <type_traits>
 #include <vector>
 
-
 namespace value
 {
-    /** @brief Represents an opaque value with dynamic storage up to 255 bytes. */
     /**
-    * @details
-    * This class manages an opaque value that may be stored either inline
-    * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
-    * constructing, moving, comparing, and streaming member values.
-    * Instances are movable but not copyable.
-    *
-    * For external users, this class behaves as an immutable value type.
-    * Mutation is only permitted through the derived `MutableValue255`.
-    *
-    * Critical sections are intentionally kept short; a spinlock is chosen
-    * to minimize memory footprint and locking overhead.
-    *
-    * The class supports equality comparison, ordering comparison,
-    * and stream output via `operator<<`.
-    *
-    * @par Thread Safety
-    * All **public methods** of this class acquire an `atomic<bool>`-based
-    * spinlock to ensure thread safety.
-    * Locking is performed per instance and held for the entire duration
-    * of each public method.
-    *
-    * @note
-    * Private/internal methods such as `set()` and `cleanup()` assume that
-    * the caller has already acquired the lock. They must not be invoked
-    * directly from outside the class.
-    *
-    * @attention
-    * - This class is **not reentrant**. Calling a public method from within
-    *   another public method will result in deadlock.
-    * - Avoid long-running operations inside public methods, as they hold
-    *   the lock for their entire execution.
-    * - Locking granularity is coarse (per instance), limiting concurrency
-    *   to a single thread at a time.
-    */
+     * @brief Represents an immutable opaque value with dynamic storage up to 255 bytes.
+     * @note ja: 最大 255 バイトの動的ストレージを持つ不変で不透明な値を表します。
+     */
+    /**
+     * @details
+     * This class manages an opaque value that may be stored either inline
+     * (4 bytes) or on the heap (for larger sizes). It provides mechanisms for
+     * constructing, moving, comparing, and streaming member values.
+     * Instances are movable but not copyable.
+     *
+     * For external users, this class behaves as an immutable value type.
+     * Mutation is only permitted through the derived `MutableValue255`.
+     *
+     * Critical sections are intentionally kept short; a spinlock is chosen
+     * to minimize memory footprint and locking overhead.
+     *
+     * The class supports equality comparison, ordering comparison,
+     * and stream output via `operator<<`.
+     * @note ja:
+     * このクラスは、不透明な値を管理します。この値は、インライン（4バイト）または
+     * ヒープ上（より大きなサイズの場合）に格納される場合があります。
+     * メンバー値の構築、移動、比較、ストリーミングのためのメカニズムを提供します。
+     * インスタンスは移動可能ですが、コピーはできません。
+     * @n @n
+     * 外部ユーザーにとって、このクラスは不変の値型として機能します。
+     * 変更は、派生クラスである `MutableValue255` を通じてのみ許可されます。
+     * @n @n
+     * クリティカルセクションは意図的に短く保たれています。スピンロックは、メモリフット
+     * プリントとロックのオーバーヘッドを最小限に抑えるために選択されました。
+     * @n @n
+     * このクラスは、等価性比較、順序比較、および `operator<<` を介したストリーム出力をサポートします。
+     *
+     * @par Thread Safety
+     * All **public methods** of this class acquire an `atomic<bool>`-based
+     * spinlock to ensure thread safety.
+     * Locking is performed per instance and held for the entire duration
+     * of each public method.
+     * A private/internal method assumes that the public method that calls
+     * it has already acquired the lock.
+     * @note ja:
+     * このクラスのすべての **パブリックメソッド** は、`atomic<bool>` ベースの
+     * スピンロックを取得してスレッドセーフティを確保します。 ロックはインスタンスごとに
+     * 実行され、各パブリックメソッドの全期間にわたって保持されます。
+     * @n
+     * プライベート／内部メソッドは、呼び出し元であるパブリックメソッドが
+     * すでにロックを取得していることを前提としています。
+     *
+     * @attention
+     * - This class is **not reentrant**. Calling a public method from within
+     *   another public method will result in deadlock.
+     * - Avoid long-running operations inside public methods, as they hold
+     *   the lock for their entire execution.
+     * - Locking granularity is coarse (per instance), limiting concurrency
+     *   to a single thread at a time.
+     * @attention ja:
+     * - このクラスは **非再入可能** です。別のパブリックメソッド内からパブリックメソッドを
+     *   呼び出すと、デッドロックが発生します。
+     * - パブリックメソッド内で長時間実行される操作は避けてください。
+     *   これらのメソッドは実行全体でロックを保持します。
+     * - ロックの粒度は粗い（インスタンスごと）ため、一度に1つのスレッドに並行性が制限されます。
+     */
     class Value255
     {
     public:
         // ----- Nested types -----
 
         enum class SetResult : std::uint8_t; // Forward declaration.
-        class SpinGuard; // Forward declaration.
 
         // ----- Factory methods -----
 
@@ -293,6 +336,10 @@ namespace value
         std::optional<Value255> clone( void ) const noexcept;
 
     protected:
+        // ----- Nested types -----
+
+        class ScopedSpinLock; // Forward declaration.
+
         // ----- Protected member methods -----
 
         /** @brief Sets the value's data and size (protected). */
@@ -347,7 +394,6 @@ namespace value
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
     private:
-
         // ----- Static constants -----
 
         static constexpr std::uint8_t INLINE_SIZE = 4;
@@ -372,22 +418,14 @@ namespace value
 
         std::uintptr_t heapPointer() const noexcept;
 
-        std::byte *heapPointerAsByte() const noexcept
-        {
-            return std::bit_cast<std::byte *>( heapPointer() );
-        }
+        std::byte *heapPointerAsByte() const noexcept;
 
-        void *heapPointerAsVoid() const noexcept
-        {
-            return std::bit_cast<void *>( heapPointer() );
-        }
+        void *heapPointerAsVoid() const noexcept;
 
-        std::byte const *dataUnlocked() const noexcept
-        {
-            return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
-        }
+        std::byte const *dataUnlocked() const noexcept;
 
-        bool areEqualsUnlocked( std::byte const *data, std::uint8_t size ) const noexcept;
+        bool areEqualsUnlocked(
+            std::byte const *data, std::uint8_t size ) const noexcept;
 
     }; // class Value255
 
@@ -521,20 +559,20 @@ namespace value
     */
     enum class Value255::SetResult : std::uint8_t
     {
-        Success = 0,         //!< Data successfully updated.
-        NoChange = 1,        //!< New data is identical to current data.
-        IllegalArgument = 2, //!< Invalid arguments provided.
-        OutOfMemory = 3,     //!< Memory allocation failed.
+        Success = 0U,         //!< Data successfully updated.
+        NoChange = 1U,        //!< New data is identical to current data.
+        IllegalArgument = 2U, //!< Invalid arguments provided.
+        OutOfMemory = 3U,     //!< Memory allocation failed.
     };
 
     static_assert(  sizeof( std::uintptr_t ) == 4U );
 
     static_assert(  sizeof(Value255) == 6U );
     static_assert( alignof(Value255) == 1U );
-    static_assert(std::is_standard_layout<Value255>::value);
+    static_assert( std::is_standard_layout<Value255>::value );
 
     static_assert(  sizeof(MutableValue255) == 6U );
     static_assert( alignof(MutableValue255) == 1U );
-    static_assert(std::is_standard_layout<MutableValue255>::value);
+    static_assert( std::is_standard_layout<MutableValue255>::value );
 
 } // namespace value

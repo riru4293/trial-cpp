@@ -34,8 +34,7 @@ namespace std // Formatter specialization
          * @return Iterator pointing to the next character to be parsed
          *         (no specifiers are consumed).
          */
-        constexpr auto parse( std::format_parse_context &ctx ) const noexcept
-            -> const char *
+        char constexpr const *parse( std::format_parse_context &ctx ) const noexcept
         {
             return ctx.begin();
         }

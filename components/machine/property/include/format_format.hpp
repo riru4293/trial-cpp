@@ -48,7 +48,7 @@ namespace std // Formatter specialization
         auto format( Format::Kind const &v, FormatContext &ctx ) const
         {
             std::string str = Format::strOf( v );
-            
+
             for ( char c : str )
             {
                 *ctx.out()++ = c;

@@ -3,6 +3,7 @@
 
 /* C++ Standard Library */
 #include <algorithm>
+#include <bit>
 #include <cstring>
 #include <format>
 #include <sstream>
@@ -20,12 +21,13 @@ using namespace value;
 
 // ----- Nested types implements -----
 
-class Value255::SpinGuard
+class Value255::ScopedSpinLock
 {
 public:
-    explicit SpinGuard( Value255 const &v ) noexcept : SpinGuard( v, v ) {}
+    explicit ScopedSpinLock( Value255 const &v ) noexcept
+        : ScopedSpinLock( v, v ) {}
 
-    explicit SpinGuard( Value255 const &a, Value255 const &b ) noexcept
+    explicit ScopedSpinLock( Value255 const &a, Value255 const &b ) noexcept
         : a_( a ), b_( b )
     {
         // Note: To prevent deadlocks, only one if the same instance will be locked.
@@ -33,17 +35,15 @@ public:
         else              { a_.lock(); b_.lock(); }
     }
 
-    ~SpinGuard()
+    ~ScopedSpinLock()
     {
         // Note: Unlock in reverse order.
         if ( &a_ == &b_ ) {              a_.unlock(); }
         else              { b_.unlock(); a_.unlock(); }
     }
 
-    SpinGuard( SpinGuard const & ) = delete;
-    SpinGuard &operator=( SpinGuard const & ) = delete;
-    SpinGuard( SpinGuard && ) = delete;
-    SpinGuard &operator=( SpinGuard && ) = delete;
+    ScopedSpinLock( ScopedSpinLock const & ) = delete;
+    ScopedSpinLock &operator=( ScopedSpinLock const & ) = delete;
 
 private:
     Value255 const &a_;
@@ -89,7 +89,7 @@ std::optional<MutableValue255> MutableValue255::create(
 
 Value255::~Value255() noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     cleanup();
@@ -97,7 +97,7 @@ Value255::~Value255() noexcept
 
 Value255::Value255( Value255 &&other ) noexcept
 {
-    SpinGuard guard( *this, other );
+    ScopedSpinLock lock( *this, other );
     // [===> Follows: Locked]
 
     moveFrom( std::move( other ) );
@@ -107,7 +107,7 @@ Value255::Value255( Value255 &&other ) noexcept
 
 Value255 &Value255::operator=( Value255 &&other ) noexcept
 {
-    SpinGuard guard( *this, other );
+    ScopedSpinLock lock( *this, other );
     // [===> Follows: Locked]
 
     if ( this != &other )
@@ -121,7 +121,7 @@ Value255 &Value255::operator=( Value255 &&other ) noexcept
 
 bool Value255::operator==( Value255 const &other ) const noexcept
 {
-    SpinGuard guard( *this, other );
+    ScopedSpinLock lock( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return true; }
@@ -132,7 +132,7 @@ bool Value255::operator==( Value255 const &other ) const noexcept
 
 std::strong_ordering Value255::operator<=>( Value255 const &other ) const noexcept
 {
-    SpinGuard guard( *this, other );
+    ScopedSpinLock lock( *this, other );
     // [===> Follows: Locked]
 
     if ( this == &other ) { return std::strong_ordering::equal; }
@@ -164,7 +164,7 @@ namespace value
 
 void Value255::withLockedData( DataReader const &callback ) const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     callback( dataUnlocked(), size_ );
@@ -172,7 +172,7 @@ void Value255::withLockedData( DataReader const &callback ) const noexcept
 
 bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size ) const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     return areEqualsUnlocked( other_data, other_size );
@@ -180,7 +180,7 @@ bool Value255::areEquals( std::byte const *other_data, std::uint8_t other_size )
 
 std::uint8_t Value255::size() const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     return size_;
@@ -188,7 +188,7 @@ std::uint8_t Value255::size() const noexcept
 
 std::vector<std::byte> Value255::bytes() const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();
@@ -197,7 +197,7 @@ std::vector<std::byte> Value255::bytes() const noexcept
 
 std::string Value255::str() const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     std::byte const *ptr = dataUnlocked();
@@ -218,7 +218,7 @@ std::string Value255::str() const noexcept
 
 std::optional<Value255> Value255::clone( void ) const noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     /* Note: create() is public method but does not require a lock,
@@ -228,7 +228,7 @@ std::optional<Value255> Value255::clone( void ) const noexcept
 
 bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     return Value255::set( data, size );
@@ -236,7 +236,7 @@ bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
 
 Value255::SetResult MutableValue255::setWithResult( std::byte const *data, std::uint8_t size ) noexcept
 {
-    SpinGuard guard( *this );
+    ScopedSpinLock lock( *this );
     // [===> Follows: Locked]
 
     return Value255::setWithResult( data, size );
@@ -354,6 +354,21 @@ std::uintptr_t Value255::heapPointer() const noexcept
     std::uintptr_t ptr = 0U;
     std::memcpy( &ptr, raw_data_, INLINE_SIZE );
     return ptr;
+}
+
+std::byte *Value255::heapPointerAsByte() const noexcept
+{
+    return std::bit_cast<std::byte *>( heapPointer() );
+}
+
+void *Value255::heapPointerAsVoid() const noexcept
+{
+    return std::bit_cast<void *>( heapPointer() );
+}
+
+std::byte const *Value255::dataUnlocked() const noexcept
+{
+    return isHeapAllocated() ? heapPointerAsByte() : raw_data_;
 }
 
 bool Value255::areEqualsUnlocked(

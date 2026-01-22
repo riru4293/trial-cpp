@@ -29,8 +29,7 @@ namespace std {
          * @return Iterator pointing to the next character to be parsed
          *         (no specifiers are consumed).
          */
-        constexpr auto parse( std::format_parse_context &ctx ) const noexcept
-            -> const char *
+        char constexpr const *parse( std::format_parse_context &ctx ) const noexcept
         {
             return ctx.begin();
         }
@@ -46,7 +45,7 @@ namespace std {
         auto format( Resolution::Kind const &v, FormatContext &ctx ) const
         {
             std::string str = Resolution::strOf( v );
-            
+
             for ( char c : str )
             {
                 *ctx.out()++ = c;

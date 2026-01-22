@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <compare>
 #include <ostream>
 #include <format>
 
@@ -35,7 +36,7 @@ namespace machine {
     /* ^\__________________________________________ */
     /* Static members, Inner types.                 */
     public:
-        constexpr static std::uint8_t PRIMARY_IDX = 0; //!< Primary unit index.
+        static std::uint8_t constexpr PRIMARY_IDX = 0; //!< Primary unit index.
 
         /** @brief Device unit kind. */
         enum class Kind : std::uint8_t
@@ -56,7 +57,7 @@ namespace machine {
              * @param v value to convert
              * @return name string view
              */
-            static constexpr std::string_view of(Kind v) noexcept {
+            static std::string_view constexpr of(Kind v) noexcept {
                 using T = Kind;
                 switch (v) {
                     case T::Board:          return "Board";
@@ -85,19 +86,19 @@ namespace machine {
         Unit(Unit &&) noexcept = default;                 //!< Move constructor (default).
         Unit &operator=(const Unit &) noexcept = delete;  //!< Copy operator (deleted).
         Unit &operator=(Unit &&) noexcept = delete;       //!< Move operator (deleted).
-        constexpr bool operator==(const Unit &) const noexcept = default;   //!< Equality operator (default).
-        constexpr auto operator<=>(const Unit &) const noexcept = default;  //!< Three-way comparison operator (default).
+        bool constexpr operator==(const Unit &) const noexcept = default;   //!< Equality operator (default).
+        std::strong_ordering constexpr operator<=>(const Unit &) const noexcept = default;  //!< Three-way comparison operator (default).
     /* ^\__________________________________________ */
     /* Instance members.                            */
     public:
         [[nodiscard]]
-        constexpr Kind kind() const noexcept { return kind_; }
+        Kind constexpr kind() const noexcept { return kind_; }
 
         [[nodiscard]]
-        constexpr std::uint8_t index() const noexcept { return index_; }
+        std::uint8_t constexpr index() const noexcept { return index_; }
 
         [[nodiscard]]
-        constexpr bool isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
+        bool constexpr isPrimary() const noexcept { return index_ == PRIMARY_IDX; }
 
     private:
         const Kind kind_;
@@ -179,7 +180,8 @@ namespace std {
     template <>
     struct formatter<machine::Unit::Kind> {
         /** @brief Parse format specifiers (none supported). */
-        constexpr auto parse(std::format_parse_context &ctx) {
+        char constexpr const *parse( std::format_parse_context &ctx )
+        {
             return ctx.begin();
         }
 
@@ -204,7 +206,8 @@ namespace std {
     template <>
     struct formatter<machine::Unit> {
         /** @brief Parse format specifiers (none supported). */
-        constexpr auto parse(std::format_parse_context &ctx) {
+        char constexpr const *parse( std::format_parse_context &ctx )
+        {
             return ctx.begin();
         }
 
