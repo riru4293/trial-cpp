@@ -349,7 +349,7 @@ void Value255::moveFrom( Value255 &&other ) noexcept
     // [===> Follows: Other instance has been cleaned up]
 }
 
-std::uintptr_t Value255::heapPointer() const noexcept
+std::uintptr_t Value255::heapPointerAsUint() const noexcept
 {
     std::uintptr_t ptr = 0U;
     std::memcpy( &ptr, raw_data_, INLINE_SIZE );
@@ -358,12 +358,12 @@ std::uintptr_t Value255::heapPointer() const noexcept
 
 std::byte *Value255::heapPointerAsByte() const noexcept
 {
-    return std::bit_cast<std::byte *>( heapPointer() );
+    return std::bit_cast<std::byte *>( heapPointerAsUint() );
 }
 
 void *Value255::heapPointerAsVoid() const noexcept
 {
-    return std::bit_cast<void *>( heapPointer() );
+    return std::bit_cast<void *>( heapPointerAsUint() );
 }
 
 std::byte const *Value255::dataUnlocked() const noexcept
