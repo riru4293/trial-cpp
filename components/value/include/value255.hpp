@@ -329,21 +329,20 @@ namespace value
         [[nodiscard]]
         std::string str() const noexcept;
 
-        /** @brief Create clone from this instance. */
+        /** @brief Create clone from this instance.
+         *      @n （ja: このインスタンスからクローンを作成します） */
         /**
         * @details
         * Creates a new `Value255` instance by copying the contents of this
         * instance.
-        *
-        * Allocates memory as needed and copies the provided data into the
-        * new instance.
+        * @n @n ja: @n
+        * このインスタンスの内容をコピーして新しい `Value255` インスタンスを作成します。
         *
         * @return An optional containing the cloned `Value255` if successful;
         *         `std::nullopt` otherwise.
-        *
-        * @note
-        * The failure cases are:
-        * - A situation where memory cannot be allocated to store a copy of `data`.
+        *      @n （ja: 成功した場合はクローンした値、それ以外は次の理由により `std::nullopt`）
+        * - Insufficient heap memory to create a clone
+        *   @n (ja: ヒープメモリ不足によりクローンを作成できない)
         */
         [[nodiscard]]
         std::optional<Value255> clone( void ) const noexcept;
@@ -355,7 +354,8 @@ namespace value
 
         // ----- Protected member methods -----
 
-        /** @brief Sets the value and size. */
+        /** @brief Sets the value and it size.
+         *      @n （ja: 値とそのサイズを設定します） */
         /**
          * @details
          * This is a simplified wrapper that calls `setWithResult()` internally

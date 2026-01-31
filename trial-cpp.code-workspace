@@ -6,7 +6,6 @@
 		}
 	],
 	"settings": {
-		"idf.espIdfPath": "${userHome}/esp/esp-idf-v6.1-dev",
 		"idf.pythonInstallPath": "/usr/bin/python3",
 		"idf.openOcdConfigs": [
 			"board/esp32c6-builtin.cfg"
