@@ -33,16 +33,16 @@
 
 namespace value
 {
-    /** @brief Represents an immutable binary value with dynamic storage up to 255 bytes.
-     *      @n （ja: 最大 255 バイトの動的ストレージを持つ不変バイナリ値を表す） */
+    /** @brief Represents an immutable byte array with dynamic storage up to 255 bytes.
+     *      @n （ja: 最大 255 バイトの動的ストレージを持つ不変バイト配列を表す） */
     /**
      * @details
-     * This class acts as an immutable value type, managing binary values ​​up to 255 bytes in size.
+     * This class acts as an immutable value type, managing byte array ​​up to 255 bytes in size.
      * It provides mechanisms for construction, moving, comparison, and streaming.
      * Instances are movable but not copyable. If the value is larger than 4 bytes,
      * heap memory is allocated to store the value.
      * @n @n ja: @n
-     * このクラスは不変の値型として機能し、最大 255 バイトのバイナリ値を管理します。
+     * このクラスは不変の値型として機能し、最大 255 バイトのバイト配列を管理します。
      * また、構築/移動/比較/ストリーミングのメカニズムを提供します。
      * インスタンスは移動可能ですが、コピーはできません。
      * 値が4バイトより大きなサイズの場合は、ヒープメモリを確保して値を格納します。
@@ -65,22 +65,22 @@ namespace value
     public:
         // ----- Nested types -----
 
-        /** @brief Callback type for read-only access to raw value.
-         *      @n （ja: 読み取り専用の生の値へのアクセスのためのコールバック型） */
+        /** @brief Callback type for read-only access to byte array.
+         *      @n （ja: 読み取り専用のバイト配列へのアクセスのためのコールバック型） */
         /**
          * @details
-         * A callback type that receives a pointer to a raw byte array and its size.
+         * A callback type that receives a pointer to a byte array and its size.
          * This type is used by `withLockedData()` to provide safe exclusive read-only access.
          * The callback should not attempt to modify the data and should return
          * promptly to avoid holding the lock for long periods of time.
          * @n @n ja: @n
-         * 生の値の先頭とそのサイズを受け取るコールバック型です。
+         * バイト配列とそのサイズを受け取るコールバック型です。
          * この型は `withLockedData()` によって使用され、排他制御された安全な
          * 読み取り専用アクセスを提供します。コールバックは値の変更を試みてはならず、
          * ロックを長時間保持しないように迅速に戻る必要があります。
          *
-         * @param data [in] pointer to the raw value
-         *               @n （ja: 生の値の先頭）
+         * @param data [in] pointer to the byte array
+         *               @n （ja: バイト配列の先頭）
          * @param size [in] number of bytes in `data`
          *               @n （ja: 引数 `data` のバイト数）
          */
@@ -91,17 +91,17 @@ namespace value
         /**
          * @details
          * This enum class defines the outcomes of the `setWithResult` operation
-         * in the `Value255` and `MutableValue255` classes.
+         * in the `Value255` and its derived classes.
          * @n @n ja: @n
-         * この列挙型クラスは、`Value255` クラスと `MutableValue255` クラスの
+         * この列挙型クラスは `Value255` クラスと、その派生クラスにおける
          * `setWithResult` 操作の結果を定義します。
         */
         enum class SetResult : std::uint8_t; // Forward declaration.
 
         // ----- Factory methods -----
 
-        /** @brief Creates a `Value255` instance from raw value.
-         *      @n （ja: 生の値から `Value255` インスタンスを作成します） */
+        /** @brief Creates a `Value255` instance from byte array.
+         *      @n （ja: バイト配列から `Value255` インスタンスを作成します） */
         /**
          * @details
          * Allocates heap memory as needed and copies the provided value into the new instance.
@@ -114,17 +114,17 @@ namespace value
          * - If `size` > 0, `data` must not be `nullptr`.
          *   @n （ja: `size` が 0 より大きい場合、`data` は `nullptr` であってはならない）
          *
-         * @param data [in] pointer to the raw value
-         *               @n （ja: 生の値の先頭）
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
          * @param size [in] number of bytes in `data`
          *               @n （ja: 引数 `data` のバイト数）
          *
          * @return A created value if successful, otherwise it becomes `std::nullopt` because:
          *      @n （ja: 成功した場合は作成された値、それ以外は次の理由により `std::nullopt`）
-         * - Illegal argument
-         *   @n （ja: 引数不正）
-         * - Insufficient heap memory to store a copy of `data`
-         *   @n （ja: ヒープメモリ不足により `data` のコピーを確保できない）
+         *   - Illegal argument
+         *  @n （ja: 引数不正）
+         *   - Insufficient heap memory to store a copy of `data`
+         *  @n （ja: ヒープメモリ不足により `data` のコピーを確保できない）
          */
         [[nodiscard]]
         static std::optional<Value255> create(
@@ -184,13 +184,13 @@ namespace value
          * @details
          * Transfers ownership of the value from the other `Value255` to this instance.
          * Before the transfer, this instance releases its currently held resources.
-         * If this and the other instance are the same, no action is taken and `*this` is returned.
          * After the move, the original `Value255` will be left in an empty state.
+         * If this and the other instance are the same, no action is taken and `*this` is returned.
          * @n @n ja: @n
          * 他の `Value255` からこのインスタンスへ値の所有権を移動します。
          * 移動に先立ち、このインスタンスが保持している既存リソースを解放します。
-         * 他のインスタンスと同一である場合は何もせず `*this` を返します。
          * 移動後、元の `Value255` は空の状態になります。
+         * 他のインスタンスと同一である場合は何もせず `*this` を返します。
          *
          * @param other [in,out] the other `Value255` to move from
          *                    @n （ja: 移動元の他の `Value255`）
@@ -245,16 +245,16 @@ namespace value
 
         // ----- Public member methods -----
 
-        /** @brief Provides thread-safe access to raw value via callback.
-         *      @n （ja: コールバックを介してスレッドセーフな生の値へのアクセスを提供します） */
+        /** @brief Provides thread-safe access to byte array via callback.
+         *      @n （ja: コールバックを介してスレッドセーフなバイト配列へのアクセスを提供します） */
         /**
          * @details
-         * Calls the provided callback with a pointer to the raw value and its size.
-         * The value pointer and size will remain valid and unchanged during
+         * Calls the provided callback with a byte array and its size.
+         * The byte array and size will remain valid and unchanged during
          * the execution of the callback.
          * @n @n ja: @n
-         * 提供されたコールバックを生の値の先頭とそのサイズで呼び出します。
-         * コールバックの実行中、生の値とサイズは有効かつ変更されません。
+         * 提供されたコールバックをバイト配列とそのサイズで呼び出します。
+         * コールバックの実行中、バイト配列とサイズは有効かつ不変であることが保証されます。
          *
          * @param callback [in] the `DataReader`
          *
@@ -267,25 +267,25 @@ namespace value
          */
         void withLockedData( DataReader const &callback ) const noexcept;
 
-        /** @brief Compares the value with external value.
-         *      @n （ja: 外部の値との比較を行います） */
+        /** @brief Compares the value with external byte array.
+         *      @n （ja: 外部のバイト配列との比較を行います） */
         /**
          * @details
          * Compares this instance's data with external data;
          * the caller must ensure that the external data is not modified during the comparison.
          * @n @n ja: @n
-         * このインスタンスの値と外部の値を比較します。
-         * 呼び出し元は、比較中に外部の値が変更されないことを保証する必要があります。
+         * このインスタンスのバイト配列と外部のバイト配列を比較します。
+         * 呼び出し元は、比較中に外部のバイト配列が変更されないことを保証する必要があります。
          *
          * @param data [in] pointer to external value for comparison
          *                  `nullptr` is only allowed if size is 0.
-         *               @n （ja: 比較対象となる外部の値の先頭。
+         *               @n （ja: 比較対象となる外部のバイト配列。
          *                        `nullptr`はサイズが 0 の場合のみ許可される）
-         * @param size [in] number of bytes of external value
-         *               @n （ja: 外部の値のバイト数）
+         * @param size [in] number of bytes of external byte array
+         *               @n （ja: 外部のバイト配列のバイト数）
          *
-         * @return `true` if size match and value is identical, `false` otherwise.
-         *      @n （ja: サイズと値が同一である場合は `true`、それ以外は `false`）
+         * @return `true` if size match and byte array is identical, `false` otherwise.
+         *      @n （ja: サイズとバイト配列が同一である場合は `true`、それ以外は `false`）
          */
         [[nodiscard]]
         bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
@@ -357,8 +357,8 @@ namespace value
 
         // ----- Protected member methods -----
 
-        /** @brief Sets the value and it size.
-         *      @n （ja: 値とそのサイズを設定します） */
+        /** @brief Set the new value.
+         *      @n （ja: 新しい値を設定します） */
         /**
          * @details
          * This is a simplified wrapper that calls `setWithResult()` internally
@@ -371,8 +371,8 @@ namespace value
          * `SetResult::Success` および `SetResult::NoChange` の場合に
          * `true` それ以外の場合に `false` へ変換します。
          *
-         * @param data [in] pointer to the new data
-         *               @n （ja: 新しい値の先頭）
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
          * @param size [in] size of the new data in bytes
          *               @n （ja: 新しい値のバイト数）
          *
@@ -393,19 +393,19 @@ namespace value
          * これはデータ設定の主要な実装です。
          * `SetResult` 列挙型を介して詳細な結果情報を提供し、異なる失敗シナリオを区別します。
          *
-         * @param data [in] pointer to the new data
-         *               @n （ja: 新しい値の先頭）
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
          * @param size [in] size of the new data in bytes
          *               @n （ja: 新しい値のバイト数）
          * @return
          * - `SetResult::Success`         - Data successfully updated
-         *                                  @n （ja: データが正常に更新された）
+         *                               @n （ja: データが正常に更新された）
          * - `SetResult::NoChange`        - New data is identical to current data
-         *                                  @n （ja: 新しいデータが現在のデータと同一である）
+         *                               @n （ja: 新しいデータが現在のデータと同一である）
          * - `SetResult::IllegalArgument` - `data` is null while `size > 0`
-         *                                  @n （ja: `size > 0` の場合に `data` が null である）
+         *                               @n （ja: `size > 0` の場合に `data` が null である）
          * - `SetResult::OutOfMemory`     - Heap allocation failed
-         *                                  @n （ja: ヒープメモリの割り当てに失敗した）
+         *                               @n （ja: ヒープメモリの割り当てに失敗した）
          */
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
@@ -481,13 +481,13 @@ namespace value
     public:
         // ----- Static methods -----
 
-        /** @brief Creates a `MutableValue255` instance from raw data. */
+        /** @brief Creates a `MutableValue255` instance from byte array. */
         /**
         * @details
         * Allocates memory as needed and copies the provided data into the new
         * instance.
         *
-        * @param data [in] Pointer to the raw data. A null pointer is only valid if size is 0.
+        * @param data [in] Byte array. A null pointer is only valid if size is 0.
         * @param size [in] Size of the data in bytes.
         *
         * @return An optional containing the created `MutableValue255` if successful;
@@ -518,7 +518,7 @@ namespace value
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
         *
-        * @param data [in] Pointer to the new raw data.
+        * @param data [in] Byte array.
         *                  A null pointer is only valid if size is 0.
         * @param size [in] Size of the new data in bytes.
         *
@@ -544,7 +544,7 @@ namespace value
         * This method is thread-safe and acquires the instance's spinlock
         * for the duration of the operation.
         *
-        * @param data [in] Pointer to the new raw data.
+        * @param data [in] Byte array.
         *                  A null pointer is only valid if size is 0.
         * @param size [in] Size of the new data in bytes.
         *
