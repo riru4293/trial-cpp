@@ -2,19 +2,19 @@
 
 /**
  * @file value255.hpp
- * @brief Opaque value types with a maximum size of 255 bytes.
- *     @n ja: （最大サイズが 255 バイトの不透明な値型）
+ * @brief Declare the `Value255` and `MutableValue255` classes.
+ *     @n （ja: `Value255` クラスと `MutableValue255` クラスを宣言します）
  *
  * @details
  * This header declares the `Value255` and `MutableValue255` classes.
- * These types represent opaque binary values whose storage size is
+ * These types represent binary values whose storage size is
  * limited to 255 bytes.
  *
  * `Value255` is immutable and `MutableValue255` is mutable.
  * The separation is intentional to make mutability explicit at the type level.
  * @n @n ja: @n
  * このヘッダーは、`Value255` クラスと `MutableValue255` クラスを宣言します。
- * これらの型は、記憶域サイズが255バイトに制限された不透明なバイナリ値を表します。
+ * これらの型は、記憶域サイズが255バイトに制限されたバイナリ値を表します。
  * `Value255` は不変で、 `MutableValue255` は変更可能です。
  * この分離は、型レベルで変更可能性を明示的にするために意図的に行われています。
  */
@@ -33,16 +33,16 @@
 
 namespace value
 {
-    /** @brief Represents an immutable opaque value with dynamic storage up to 255 bytes.
-     *      @n （ja: 最大 255 バイトの動的ストレージを持つ不変で不透明な値を表す） */
+    /** @brief Represents an immutable binary value with dynamic storage up to 255 bytes.
+     *      @n （ja: 最大 255 バイトの動的ストレージを持つ不変バイナリ値を表す） */
     /**
      * @details
-     * This class acts as an immutable value type, managing opaque values ​​up to 255 bytes in size.
+     * This class acts as an immutable value type, managing binary values ​​up to 255 bytes in size.
      * It provides mechanisms for construction, moving, comparison, and streaming.
      * Instances are movable but not copyable. If the value is larger than 4 bytes,
      * heap memory is allocated to store the value.
      * @n @n ja: @n
-     * このクラスは不変の値型として機能し、最大 255 バイトの不透明な値を管理します。
+     * このクラスは不変の値型として機能し、最大 255 バイトのバイナリ値を管理します。
      * また、構築/移動/比較/ストリーミングのメカニズムを提供します。
      * インスタンスは移動可能ですが、コピーはできません。
      * 値が4バイトより大きなサイズの場合は、ヒープメモリを確保して値を格納します。
@@ -89,12 +89,12 @@ namespace value
         /** @brief Result codes for the `setWithResult` operation.
          *      @n （ja: `setWithResult` 操作の結果コード）          */
         /**
-        * @details
-        * This enum class defines the outcomes of the `setWithResult` operation
-        * in the `Value255` and `MutableValue255` classes.
+         * @details
+         * This enum class defines the outcomes of the `setWithResult` operation
+         * in the `Value255` and `MutableValue255` classes.
          * @n @n ja: @n
-        * この列挙型クラスは、`Value255` クラスと `MutableValue255` クラスの
-        * `setWithResult` 操作の結果を定義します。
+         * この列挙型クラスは、`Value255` クラスと `MutableValue255` クラスの
+         * `setWithResult` 操作の結果を定義します。
         */
         enum class SetResult : std::uint8_t; // Forward declaration.
 
@@ -122,9 +122,9 @@ namespace value
          * @return A created value if successful, otherwise it becomes `std::nullopt` because:
          *      @n （ja: 成功した場合は作成された値、それ以外は次の理由により `std::nullopt`）
          * - Illegal argument
-         *   @n (ja: 引数不正)
+         *   @n （ja: 引数不正）
          * - Insufficient heap memory to store a copy of `data`
-         *   @n (ja: ヒープメモリ不足により `data` のコピーを確保できない)
+         *   @n （ja: ヒープメモリ不足により `data` のコピーを確保できない）
          */
         [[nodiscard]]
         static std::optional<Value255> create(
@@ -304,6 +304,9 @@ namespace value
         /**
          * @return the vector of bytes representing the value
          *      @n （ja: 値を表すバイトのベクター）
+         * @note The returned vector is a copy of the internal data.
+         * @n @n ja: @n
+         * 返されるベクターは内部データのコピーです。
          */
         [[nodiscard]]
         std::vector<std::byte> bytes() const noexcept;
@@ -332,18 +335,18 @@ namespace value
         /** @brief Create clone from this instance.
          *      @n （ja: このインスタンスからクローンを作成します） */
         /**
-        * @details
-        * Creates a new `Value255` instance by copying the contents of this
-        * instance.
-        * @n @n ja: @n
-        * このインスタンスの内容をコピーして新しい `Value255` インスタンスを作成します。
-        *
-        * @return An optional containing the cloned `Value255` if successful;
-        *         `std::nullopt` otherwise.
-        *      @n （ja: 成功した場合はクローンした値、それ以外は次の理由により `std::nullopt`）
-        * - Insufficient heap memory to create a clone
-        *   @n (ja: ヒープメモリ不足によりクローンを作成できない)
-        */
+         * @details
+         * Creates a new `Value255` instance by copying the contents of this
+         * instance.
+         * @n @n ja: @n
+         * このインスタンスの内容をコピーして新しい `Value255` インスタンスを作成します。
+         *
+         * @return An optional containing the cloned `Value255` if successful;
+         *         `std::nullopt` otherwise.
+         *      @n （ja: 成功した場合はクローンした値、それ以外は次の理由により `std::nullopt`）
+         * - Insufficient heap memory to create a clone
+         *   @n （ja: ヒープメモリ不足によりクローンを作成できない）
+         */
         [[nodiscard]]
         std::optional<Value255> clone( void ) const noexcept;
 
@@ -360,48 +363,49 @@ namespace value
          * @details
          * This is a simplified wrapper that calls `setWithResult()` internally
          * and converts the detailed result to a boolean for convenience.
+         * It converts `SetResult::Success` and `SetResult::NoChange` to `true`,
+         * and others to `false`.
+         * @n @n ja: @n
+         * これは簡略化されたラッパーで、内部的に `setWithResult()` を呼び出し、
+         * 結果をブール値に変換して利便性を提供します。
+         * `SetResult::Success` および `SetResult::NoChange` の場合に
+         * `true` それ以外の場合に `false` へ変換します。
          *
-         * Failure cases:
-         * - `data` is null while `size` is greater than 0 → returns `false`
-         * - Memory allocation fails → returns `false`
-         *
-         * @param data [in] Pointer to the new raw data.
-         * @param size [in] Size of the new data in bytes.
+         * @param data [in] pointer to the new data
+         *               @n （ja: 新しい値の先頭）
+         * @param size [in] size of the new data in bytes
+         *               @n （ja: 新しい値のバイト数）
          *
          * @return `true` if successful (either `Success` or `NoChange`),
          *         `false` otherwise.
-         *
-         * @note
-         * Use this method for simple boolean result checking.
-         * Use `setWithResult()` if you need to distinguish between different
-         * failure cases.
-         *
-         * @par Internal Note
-         * This method must be called with the instance locked.
-         * The caller is responsible for lock acquisition.
          */
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
-        /** @brief Sets the value's data and size with detailed result (protected). */
+        /** @brief Sets the value's data and size with detailed result.
+          *     @n （ja: 値のデータとサイズを詳細な結果付きで設定します） */
         /**
          * @details
          * This is the primary implementation for setting data. It provides detailed
          * result information via the `SetResult` enum, distinguishing between
          * different failure scenarios.
+         * @n @n ja: @n
+         * これはデータ設定の主要な実装です。
+         * `SetResult` 列挙型を介して詳細な結果情報を提供し、異なる失敗シナリオを区別します。
          *
-         * @param data [in] Pointer to the new raw data.
-         * @param size [in] Size of the new data in bytes.
-         *
+         * @param data [in] pointer to the new data
+         *               @n （ja: 新しい値の先頭）
+         * @param size [in] size of the new data in bytes
+         *               @n （ja: 新しい値のバイト数）
          * @return
-         * - `SetResult::Success` - Data successfully updated
-         * - `SetResult::NoChange` - New data is identical to current data
+         * - `SetResult::Success`         - Data successfully updated
+         *                                  @n （ja: データが正常に更新された）
+         * - `SetResult::NoChange`        - New data is identical to current data
+         *                                  @n （ja: 新しいデータが現在のデータと同一である）
          * - `SetResult::IllegalArgument` - `data` is null while `size > 0`
-         * - `SetResult::OutOfMemory` - Heap allocation failed
-         *
-         * @par Internal Note
-         * This method must be called with the instance locked.
-         * The caller is responsible for lock acquisition (see `makeGuard`).
+         *                                  @n （ja: `size > 0` の場合に `data` が null である）
+         * - `SetResult::OutOfMemory`     - Heap allocation failed
+         *                                  @n （ja: ヒープメモリの割り当てに失敗した）
          */
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
