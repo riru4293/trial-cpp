@@ -84,7 +84,7 @@ namespace value
          *      @n （ja: 読み取り専用のバイト配列へのアクセスのためのコールバック型） */
         /**
          * @details
-         * A callback type that receives a pointer to a byte array and its size.
+         * A callback type that receives a byte array and its size.
          * This type is used by `withLockedData()` to provide safe exclusive read-only access.
          * The callback should not attempt to modify the data and should return
          * promptly to avoid holding the lock for long periods of time.
@@ -94,8 +94,8 @@ namespace value
          * 読み取り専用アクセスを提供します。コールバックは値の変更を試みてはならず、
          * ロックを長時間保持しないように迅速に戻る必要があります。
          *
-         * @param data [in] pointer to the byte array
-         *               @n （ja: バイト配列の先頭）
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
          * @param size [in] number of bytes in `data`
          *               @n （ja: 引数 `data` のバイト数）
          */
@@ -118,11 +118,6 @@ namespace value
         /** @brief Creates a `Value255` instance from byte array.
          *      @n （ja: バイト配列から `Value255` インスタンスを作成します） */
         /**
-         * @details
-         * Creates a new instance from the provided byte array.
-         * @n @n ja: @n
-         * 提供されたバイト配列から新しいインスタンスを作成します。
-         *
          * @pre
          *   - If `size` > 0, `data` must not be `nullptr`.
          *  @n （ja: `size` が 0 より大きい場合、`data` は `nullptr` であってはならない）
@@ -173,11 +168,11 @@ namespace value
         /** @brief Move constructor. */
         /**
          * @details
-         * Constructs a new `Value255` by transferring ownership of the value
+         * Constructs a new `Value255` by transferring ownership of the byte array
          * from the other instance. After the move, the original `Value255`
          * will be empty.
          * @n @n ja: @n
-         * 他の `Value255` から値の所有権を移動して新しいインスタンスを構築します。
+         * 他の `Value255` からバイト配列の所有権を移動して新しいインスタンスを構築します。
          * 移動後、元の `Value255` は空になります。
          *
          * @param other [in,out] the other `Value255` to move from
@@ -193,12 +188,12 @@ namespace value
         /** @brief Move assignment operator. */
         /**
          * @details
-         * Transfers ownership of the value from the other `Value255` to this instance.
+         * Transfers ownership of the byte array from the other `Value255` to this instance.
          * Before the transfer, this instance releases its currently held resources.
          * After the move, the original `Value255` will be empty.
          * If the source and destination are the same, it does nothing and returns `*this`.
          * @n @n ja: @n
-         * 他の `Value255` からこのインスタンスへ値の所有権を移動します。
+         * 他の `Value255` からこのインスタンスへバイト配列の所有権を移動します。
          * 移動に先立ち、このインスタンスが保持している既存リソースを解放します。
          * 移動後、元の `Value255` は空になります。
          * 移動元と移動先が同一である場合は何もせず `*this` を返します。
@@ -217,13 +212,13 @@ namespace value
          * Determines whether this `Value255` instance is equal to the other instance.
          * Equality is defined by the following conditions:
          * - Both instances have the same size.
-         * - If the size is non-zero, value must match exactly.
+         * - If the size is non-zero, the byte array must match exactly.
          *
          * ja: @n
          * この `Value255` と他のインスタンスが等しいかどうかを判定します。
          * 等価性は以下の条件で定義されます:
          * - サイズが同じであること。
-         * - サイズが 0 でない場合、値の内容が完全に一致していること。
+         * - サイズが 0 でない場合、バイト配列の内容が完全に一致していること。
          *
          * @param other [in] the `Value255` instance to compare against
          *                @n （ja: 比較対象となる `Value255` インスタンス）
@@ -288,12 +283,12 @@ namespace value
          * このインスタンスのバイト配列と外部のバイト配列を比較します。
          * 呼び出し元は、比較中に外部のバイト配列が変更されないことを保証する必要があります。
          *
-         * @param data [in] pointer to external value for comparison
+         * @param data [in] external byte array for comparison
          *                  `nullptr` is only allowed if size is 0.
          *               @n （ja: 比較対象となる外部のバイト配列。
          *                        `nullptr`はサイズが 0 の場合のみ許可される）
-         * @param size [in] number of bytes of external byte array
-         *               @n （ja: 外部のバイト配列のバイト数）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
          *
          * @return `true` if size match and byte array is identical, `false` otherwise.
          *      @n （ja: サイズとバイト配列が同一である場合は `true`、それ以外は `false`）
@@ -301,29 +296,29 @@ namespace value
         [[nodiscard]]
         bool areEquals( std::byte const *data, std::uint8_t size ) const noexcept;
 
-        /** @brief Returns the number of bytes of the value.
-         *      @n （ja: 値のバイト数を返します） */
+        /** @brief Returns the number of bytes of the byte array.
+         *      @n （ja: バイト配列のバイト数を返します） */
         /**
-         * @return number of bytes of the value
-         *      @n （ja: 値のバイト数）
+         * @return number of bytes of the byte array
+         *      @n （ja: バイト配列のバイト数）
          */
         [[nodiscard]]
         std::uint8_t size() const noexcept;
 
-        /** @brief Returns the value as a vector of bytes.
-         *      @n （ja: 値をバイトのベクターとして返します） */
+        /** @brief Returns the byte array as a vector of bytes.
+         *      @n （ja: バイト配列をバイトのベクターとして返します） */
         /**
-         * @return the vector of bytes representing the value
-         *      @n （ja: 値を表すバイトのベクター）
-         * @note The returned vector is a copy of the internal data.
+         * @return the vector of bytes representing the byte array
+         *      @n （ja: バイト配列を表すバイトのベクター）
+         * @note The returned vector is a copy of the internal byte array.
          * @n @n ja: @n
-         * 返されるベクターは内部データのコピーです。
+         * 返されるベクターは内部バイト配列のコピーです。
          */
         [[nodiscard]]
         std::vector<std::byte> bytes() const noexcept;
 
-        /** @brief Returns a string representation of the value.
-         *      @n （ja: 値の文字列表現を返します） */
+        /** @brief Returns a string representation of the byte array.
+         *      @n （ja: バイト配列の文字列表現を返します） */
         /**
          * @details
          * The string representation is formatted as a list of hexadecimal byte values.
@@ -333,12 +328,12 @@ namespace value
          * [ 0xA5 0xE7 0x00 0xFF ]
          * ```
          * ja: @n
-         * 値の文字列表現は、16進数のバイト値のリストとしてフォーマットされます。
+         * バイト配列の文字列表現は、16進数のバイト値のリストとしてフォーマットされます。
          * 表現例については、値が 0xA5、0xE7、0x00、0xFF の場合の例を
          * 英文説明側に記載していますので、そちらを参照してください。
          *
-         * @return String representation of the value.
-         *      @n （ja: 値の文字列表現）
+         * @return String representation of the byte array.
+         *      @n （ja: バイト配列の文字列表現）
          */
         [[nodiscard]]
         std::string str() const noexcept;
@@ -352,11 +347,10 @@ namespace value
          * @n @n ja: @n
          * このインスタンスの内容をコピーして新しい `Value255` インスタンスを作成します。
          *
-         * @return An optional containing the cloned `Value255` if successful;
-         *         `std::nullopt` otherwise.
-         *      @n （ja: 成功した場合はクローンした値、それ以外は次の理由により `std::nullopt`）
-         * - Insufficient heap memory to create a clone
-         *   @n （ja: ヒープメモリ不足によりクローンを作成できない）
+         * @return A cloned instance if successful, otherwise it becomes `std::nullopt` because:
+         *      @n （ja: 成功した場合はクローンしたインスタンス、それ以外は次の理由により `std::nullopt`）
+         *   - Insufficient heap memory to create a clone
+         *  @n （ja: ヒープメモリ不足によりクローンを作成できない）
          */
         [[nodiscard]]
         std::optional<Value255> clone( void ) const noexcept;
