@@ -16,7 +16,6 @@
 		"idf.customExtraVars": {
 			"IDF_TARGET": "esp32c6"
 		},
-		"idf.gitPath": "/usr/bin/git",
 		"clangd.path": "${userHome}/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
 		"clangd.arguments": [
 			"--folding-ranges",
@@ -42,12 +41,15 @@
 		},
 		"terminal.integrated.defaultProfile.linux": "bash (ESP-IDF)",
 		"cSpell.words": [
-			"ESP_LOGE",
-			"ESP_LOGW",
-			"ESP_LOGI",
+			"endverbatim",
 			"ESP_LOGD",
+			"ESP_LOGE",
+			"ESP_LOGI",
 			"ESP_LOGV",
-			"endverbatim"
+			"ESP_LOGW",
+			"espressif",
+			"iwyu",
+			"riscv"
 		],
 		"files.trimTrailingWhitespace": true,
 		"editor.formatOnType": false,
