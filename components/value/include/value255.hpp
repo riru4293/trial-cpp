@@ -2,21 +2,21 @@
 
 /**
  * @file value255.hpp
- * @brief Declare the `Value255` and `MutableValue255` classes.
- *     @n （ja: `Value255` クラスと `MutableValue255` クラスを宣言します）
+ * @brief Declaration of the `Value255` and `MutableValue255` classes.
+ *     @n （ja: `Value255` クラスと `MutableValue255` クラスの宣言）
  *
  * @details
- * This header declares the `Value255` and `MutableValue255` classes.
- * These types represent binary values whose storage size is
+ * This header is declaration of the `Value255` and `MutableValue255` classes.
+ * These classes represent byte array whose storage size is
  * limited to 255 bytes.
  *
  * `Value255` is immutable and `MutableValue255` is mutable.
- * The separation is intentional to make mutability explicit at the type level.
+ * This separation is intentional to make variability explicit.
  * @n @n ja: @n
- * このヘッダーは、`Value255` クラスと `MutableValue255` クラスを宣言します。
- * これらの型は、記憶域サイズが255バイトに制限されたバイナリ値を表します。
- * `Value255` は不変で、 `MutableValue255` は変更可能です。
- * この分離は、型レベルで変更可能性を明示的にするために意図的に行われています。
+ * このヘッダーは、`Value255` クラスと `MutableValue255` クラスの宣言です。
+ * これらのクラスは、記憶域サイズが255バイトに制限されたバイト配列を表します。
+ * `Value255` は不変で `MutableValue255` は可変です。
+ * この分離は、可変性を明示的にするために意図的に行われています。
  */
 
 /* C++ Standard Library */
@@ -41,11 +41,26 @@ namespace value
      * It provides mechanisms for construction, moving, comparison, and streaming.
      * Instances are movable but not copyable. If the value is larger than 4 bytes,
      * heap memory is allocated to store the value.
-     * @n @n ja: @n
+     *
+     * | Byte array size | Memory usage                                            |
+     * |:--------------- |:------------------------------------------------------- |
+     * | 0 to 4 bytes    | 6 bytes (this instance)                                 |
+     * | 5 to 255 bytes  | 6 bytes (this instance) + 5 to 255 bytes (heap memory)  |
+     *
+     * ja: @n
      * このクラスは不変の値型として機能し、最大 255 バイトのバイト配列を管理します。
      * また、構築/移動/比較/ストリーミングのメカニズムを提供します。
      * インスタンスは移動可能ですが、コピーはできません。
      * 値が4バイトより大きなサイズの場合は、ヒープメモリを確保して値を格納します。
+     * バイト配列のサイズとメモリ使用量の関係は、英文説明の記載を参照してください。
+     *
+     * @par Purpose
+     * It is suitable for efficiently managing a series of parameters that have
+     * a variety of data types, such as boolean, integer, string, and binary,
+     * and most of which are values ​​of 4 bytes or less.
+     * @n @n ja: @n
+     * ブール値、整数、文字列、バイナリなど、さまざまなデータ型を持ち、
+     * その多くが 4 バイト以下の値である一連のパラメータを効率的に管理するのに適しています。
      *
      * @par Thread Safety
      * This class is thread-safe, so **all public methods** perform mutual exclusion.
@@ -104,27 +119,25 @@ namespace value
          *      @n （ja: バイト配列から `Value255` インスタンスを作成します） */
         /**
          * @details
-         * Allocates heap memory as needed and copies the provided value into the new instance.
-         * If the size is 4 bytes or less, inline storage is used and no heap memory is allocated.
+         * Creates a new instance from the provided byte array.
          * @n @n ja: @n
-         * 必要に応じてヒープメモリを確保し、提供された値を新しいインスタンスにコピーします。
-         * サイズが4バイト以下の場合はインラインストレージを使用し、ヒープメモリは使用しません。
+         * 提供されたバイト配列から新しいインスタンスを作成します。
          *
          * @pre
-         * - If `size` > 0, `data` must not be `nullptr`.
-         *   @n （ja: `size` が 0 より大きい場合、`data` は `nullptr` であってはならない）
+         *   - If `size` > 0, `data` must not be `nullptr`.
+         *  @n （ja: `size` が 0 より大きい場合、`data` は `nullptr` であってはならない）
          *
          * @param data [in] byte array
          *               @n （ja: バイト配列）
          * @param size [in] number of bytes in `data`
          *               @n （ja: 引数 `data` のバイト数）
          *
-         * @return A created value if successful, otherwise it becomes `std::nullopt` because:
-         *      @n （ja: 成功した場合は作成された値、それ以外は次の理由により `std::nullopt`）
+         * @return A created instance if successful, otherwise it becomes `std::nullopt` because:
+         *      @n （ja: 成功した場合は作成されたインスタンス、それ以外は次の理由により `std::nullopt`）
          *   - Illegal argument
          *  @n （ja: 引数不正）
-         *   - Insufficient heap memory to store a copy of `data`
-         *  @n （ja: ヒープメモリ不足により `data` のコピーを確保できない）
+         *   - Insufficient heap memory
+         *  @n （ja: ヒープメモリ不足）
          */
         [[nodiscard]]
         static std::optional<Value255> create(
@@ -144,13 +157,13 @@ namespace value
         /** @brief Destructor. */
         /**
          * @details
-         * Cleans up any heap-allocated memory when the `Value255` instance is destroyed.
-         * An exclusive lock is acquired before cleanup to ensure that no other
-         * threads are currently accessing it.
+         * Frees the heap memory it uses.
+         * Acquire an exclusive lock beforehand to ensure that
+         * no other threads are currently accessing it.
          * @n @n ja: @n
-         * `Value255` インスタンスが破棄されるときに、ヒープに割り当てられた
-         * メモリをクリーンアップします。他のスレッドが現在アクセスしていないことを
-         * 確実にするために、クリーンアップ前に排他ロックを取得します。
+         * 使用しているヒープ メモリを解放します。
+         * 他のスレッドが現在アクセスしていないことを確実にするために、
+         * 事前に排他ロックを取得します。
          */
         ~Value255() noexcept;
 
@@ -161,13 +174,11 @@ namespace value
         /**
          * @details
          * Constructs a new `Value255` by transferring ownership of the value
-         * from the other instance. No existing resources need to be released
-         * because this object is being created.
-         * After the move, the original `Value255` will be left in an empty state.
+         * from the other instance. After the move, the original `Value255`
+         * will be empty.
          * @n @n ja: @n
          * 他の `Value255` から値の所有権を移動して新しいインスタンスを構築します。
-         * このオブジェクトは構築中のため、既存リソースの解放は不要です。
-         * 移動後、元の `Value255` は空の状態になります。
+         * 移動後、元の `Value255` は空になります。
          *
          * @param other [in,out] the other `Value255` to move from
          *                    @n （ja: 移動元の他の `Value255`）
@@ -184,13 +195,13 @@ namespace value
          * @details
          * Transfers ownership of the value from the other `Value255` to this instance.
          * Before the transfer, this instance releases its currently held resources.
-         * After the move, the original `Value255` will be left in an empty state.
-         * If this and the other instance are the same, no action is taken and `*this` is returned.
+         * After the move, the original `Value255` will be empty.
+         * If the source and destination are the same, it does nothing and returns `*this`.
          * @n @n ja: @n
          * 他の `Value255` からこのインスタンスへ値の所有権を移動します。
          * 移動に先立ち、このインスタンスが保持している既存リソースを解放します。
-         * 移動後、元の `Value255` は空の状態になります。
-         * 他のインスタンスと同一である場合は何もせず `*this` を返します。
+         * 移動後、元の `Value255` は空になります。
+         * 移動元と移動先が同一である場合は何もせず `*this` を返します。
          *
          * @param other [in,out] the other `Value255` to move from
          *                    @n （ja: 移動元の他の `Value255`）
@@ -228,13 +239,13 @@ namespace value
          * Performs a strong three-way comparison between this `Value255` and the other instance.
          * Ordering is defined as follows:
          * - If the sizes differ, the instance with the smaller size is considered less.
-         * - If the sizes are equal, the value are compared in lexicographical order.
+         * - If the sizes are equal, the byte array are compared in lexicographical order.
          *
          * ja: @n
          * この `Value255` と他のインスタンスを強い三方比較で判定します。
          * 順序は次の規則で定義されます:
          * - サイズが異なる場合、サイズが小さい方を小さいとみなします。
-         * - サイズが同じ場合、値を辞書順で比較します。
+         * - サイズが同じ場合、バイト配列を辞書順で比較します。
          *
          * @param other [in] the `Value255` instance to compare against
          *                @n （ja: 比較対象となる `Value255` インスタンス）
