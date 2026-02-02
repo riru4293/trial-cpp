@@ -1,0 +1,18 @@
+CompileFlags:
+    Remove:
+        # GCC-specific flags not supported by clang
+        - -fno-shrink-wrap
+        - -fstrict-volatile-bitfields
+        - -fno-tree-switch-conversion
+        # Other problematic flags
+        - -f*
+        - -m*
+    Add:
+        - -I/home/riru/esp/v6.1-dev/components/cmock/CMock/vendor/unity/src/
+        - -I/home/riru/esp/v6.1-dev/components/unity/include
+
+InlayHints:
+    Enabled: Yes
+    ParameterNames: No
+    DeducedTypes: No
+    Designators: No
