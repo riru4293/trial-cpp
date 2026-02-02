@@ -101,16 +101,6 @@ namespace value
          */
         using DataReader = std::function<void( std::byte const *data, std::uint8_t size )>;
 
-        /** @brief Result codes for the `setWithResult` operation.
-         *      @n （ja: `setWithResult` 操作の結果コード）          */
-        /**
-         * @details
-         * This enum class defines the outcomes of the `setWithResult` operation
-         * in the `Value255` and its derived classes.
-         * @n @n ja: @n
-         * この列挙型クラスは `Value255` クラスと、その派生クラスにおける
-         * `setWithResult` 操作の結果を定義します。
-        */
         enum class SetResult : std::uint8_t; // Forward declaration.
 
         // ----- Factory methods -----
@@ -338,32 +328,29 @@ namespace value
         [[nodiscard]]
         std::string str() const noexcept;
 
-        /** @brief Create clone from this instance.
-         *      @n （ja: このインスタンスからクローンを作成します） */
-        /**
-         * @details
-         * Creates a new `Value255` instance by copying the contents of this
-         * instance.
-         * @n @n ja: @n
-         * このインスタンスの内容をコピーして新しい `Value255` インスタンスを作成します。
-         *
-         * @return A cloned instance if successful, otherwise it becomes `std::nullopt` because:
-         *      @n （ja: 成功した場合はクローンしたインスタンス、それ以外は次の理由により `std::nullopt`）
-         *   - Insufficient heap memory to create a clone
-         *  @n （ja: ヒープメモリ不足によりクローンを作成できない）
-         */
-        [[nodiscard]]
-        std::optional<Value255> clone( void ) const noexcept;
-
     protected:
         // ----- Nested types -----
 
+        /** @brief Scoped spinlock for thread safety.
+         *      @n （ja: スレッドセーフのためのスコープ付きスピンロック） */
+        /**
+         * @details
+         * A helper class that acquires a spinlock on construction
+         * and releases it on destruction.
+         * @n @n ja: @n
+         * コンストラクション時にスピンロックを取得し、
+         * デストラクション時に解放するヘルパークラスです。
+         *
+         * @note This class is intended for internal use only.
+         * @n @n ja: @n
+         * このクラスは内部使用のみを目的としています。
+         */
         class ScopedSpinLock; // Forward declaration.
 
         // ----- Protected member methods -----
 
-        /** @brief Set the new value.
-         *      @n （ja: 新しい値を設定します） */
+        /** @brief Set the new byte array.
+         *      @n （ja: 新しいバイト配列を設定します） */
         /**
          * @details
          * This is a simplified wrapper that calls `setWithResult()` internally
@@ -378,8 +365,8 @@ namespace value
          *
          * @param data [in] byte array
          *               @n （ja: バイト配列）
-         * @param size [in] size of the new data in bytes
-         *               @n （ja: 新しい値のバイト数）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
          *
          * @return `true` if successful (either `Success` or `NoChange`),
          *         `false` otherwise.
@@ -387,28 +374,29 @@ namespace value
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
-        /** @brief Sets the value's data and size with detailed result.
-          *     @n （ja: 値のデータとサイズを詳細な結果付きで設定します） */
+        /** @brief Set the new byte array with detailed result.
+         *      @n （ja: バイト配列を詳細な結果付きで設定します） */
         /**
          * @details
          * This is the primary implementation for setting data. It provides detailed
          * result information via the `SetResult` enum, distinguishing between
          * different failure scenarios.
          * @n @n ja: @n
-         * これはデータ設定の主要な実装です。
+         * これはバイト配列設定の主要な実装です。
          * `SetResult` 列挙型を介して詳細な結果情報を提供し、異なる失敗シナリオを区別します。
          *
          * @param data [in] byte array
          *               @n （ja: バイト配列）
-         * @param size [in] size of the new data in bytes
-         *               @n （ja: 新しい値のバイト数）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
+         *
          * @return
-         * - `SetResult::Success`         - Data successfully updated
-         *                               @n （ja: データが正常に更新された）
-         * - `SetResult::NoChange`        - New data is identical to current data
-         *                               @n （ja: 新しいデータが現在のデータと同一である）
+         * - `SetResult::Success`         - Byte array successfully updated
+         *                               @n （ja: バイト配列が正常に更新された）
+         * - `SetResult::NoChange`        - New byte array is identical to current byte array
+         *                               @n （ja: 新しいバイト配列が現在のバイト配列と同一である）
          * - `SetResult::IllegalArgument` - `data` is null while `size > 0`
-         *                               @n （ja: `size > 0` の場合に `data` が null である）
+         *                               @n （ja: `size > 0` の場合に `data` が `nullptr` である）
          * - `SetResult::OutOfMemory`     - Heap allocation failed
          *                               @n （ja: ヒープメモリの割り当てに失敗した）
          */
@@ -486,22 +474,25 @@ namespace value
     public:
         // ----- Static methods -----
 
-        /** @brief Creates a `MutableValue255` instance from byte array. */
+        /** @brief Creates a `MutableValue255` instance from byte array.
+         *      @n （ja: バイト配列から `MutableValue255` インスタンスを作成します） */
         /**
-        * @details
-        * Allocates memory as needed and copies the provided data into the new
-        * instance.
-        *
-        * @param data [in] Byte array. A null pointer is only valid if size is 0.
-        * @param size [in] Size of the data in bytes.
-        *
-        * @return An optional containing the created `MutableValue255` if successful;
-        * `std::nullopt` otherwise.
-        * @note
-        * The failure cases are:
-        * - `data` is null while `size` is greater than 0.
-        * - A situation where memory cannot be allocated to store a copy of `data`.
-        */
+         * @pre
+         *   - If `size` > 0, `data` must not be `nullptr`.
+         *  @n （ja: `size` が 0 より大きい場合、`data` は `nullptr` であってはならない）
+         *
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
+         *
+         * @return A created instance if successful, otherwise it becomes `std::nullopt` because:
+         *      @n （ja: 成功した場合は作成されたインスタンス、それ以外は次の理由により `std::nullopt`）
+         *   - Illegal argument
+         *  @n （ja: 引数不正）
+         *   - Insufficient heap memory
+         *  @n （ja: ヒープメモリ不足）
+         */
         static std::optional<MutableValue255> create(
             std::byte const *data, std::uint8_t size ) noexcept;
 
@@ -511,64 +502,72 @@ namespace value
 
         // ----- Public member methods -----
 
-        /** @brief Sets the value's data and size. */
+        /** @brief Set the new byte array.
+         *      @n （ja: 新しいバイト配列を設定します） */
         /**
-        * @details
-        * This method updates the contents of the `MutableValue255` instance
-        * with the provided data and size.
-        *
-        * If the operation fails, this instance keeps its previous data unchanged.
-        *
-        * @par Thread Safety
-        * This method is thread-safe and acquires the instance's spinlock
-        * for the duration of the operation.
-        *
-        * @param data [in] Byte array.
-        *                  A null pointer is only valid if size is 0.
-        * @param size [in] Size of the new data in bytes.
-        *
-        * @return `true` if the operation was successful; `false` otherwise.
-        * @note
-        * The failure cases are:
-        * - `data` is null while `size` is greater than 0.
-        * - A situation where memory cannot be allocated to store a copy of `data`.
-       */
+         * @details
+         * This is a simplified wrapper that calls `setWithResult()` internally
+         * and converts the detailed result to a boolean for convenience.
+         * It converts `SetResult::Success` and `SetResult::NoChange` to `true`,
+         * and others to `false`.
+         * @n @n ja: @n
+         * これは簡略化されたラッパーで、内部的に `setWithResult()` を呼び出し、
+         * 結果をブール値に変換して利便性を提供します。
+         * `SetResult::Success` および `SetResult::NoChange` の場合に
+         * `true` それ以外の場合に `false` へ変換します。
+         *
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
+         *
+         * @return `true` if successful (either `Success` or `NoChange`),
+         *         `false` otherwise.
+         */
         [[nodiscard]]
         bool set( std::byte const *data, std::uint8_t size ) noexcept;
 
-        /** @brief Sets the value's data and size. */
+        /** @brief Set the new byte array with detailed result.
+         *      @n （ja: バイト配列を詳細な結果付きで設定します） */
         /**
-        * @details
-        * This method updates the contents of the `MutableValue255` instance
-        * with the provided data and size.
-        *
-        * If the operation fails (illegal argument or out-of-memory), this
-        * instance keeps its previous data unchanged.
-        *
-        * @par Thread Safety
-        * This method is thread-safe and acquires the instance's spinlock
-        * for the duration of the operation.
-        *
-        * @param data [in] Byte array.
-        *                  A null pointer is only valid if size is 0.
-        * @param size [in] Size of the new data in bytes.
-        *
-        * @return the `SetResult`
-        * @note
-        * The failure cases are:
-        * - `data` is null while `size` is greater than 0.
-        * - A situation where memory cannot be allocated to store a copy of `data`.
-       */
+         * @details
+         * This is the primary implementation for setting data. It provides detailed
+         * result information via the `SetResult` enum, distinguishing between
+         * different failure scenarios.
+         * @n @n ja: @n
+         * これはバイト配列設定の主要な実装です。
+         * `SetResult` 列挙型を介して詳細な結果情報を提供し、異なる失敗シナリオを区別します。
+         *
+         * @param data [in] byte array
+         *               @n （ja: バイト配列）
+         * @param size [in] number of bytes in `data`
+         *               @n （ja: 引数 `data` のバイト数）
+         *
+         * @return
+         * - `SetResult::Success`         - Byte array successfully updated
+         *                               @n （ja: バイト配列が正常に更新された）
+         * - `SetResult::NoChange`        - New byte array is identical to current byte array
+         *                               @n （ja: 新しいバイト配列が現在のバイト配列と同一である）
+         * - `SetResult::IllegalArgument` - `data` is null while `size > 0`
+         *                               @n （ja: `size > 0` の場合に `data` が `nullptr` である）
+         * - `SetResult::OutOfMemory`     - Heap allocation failed
+         *                               @n （ja: ヒープメモリの割り当てに失敗した）
+         */
         [[nodiscard]]
         SetResult setWithResult( std::byte const *data, std::uint8_t size ) noexcept;
 
     }; // class MutableValue255
 
-    /** @brief Result codes for the `setWithResult` operation. */
-    /** @details
-    * This enum class defines the possible outcomes of the `setWithResult` operation
-    * in the `Value255` and `MutableValue255` classes.
-    */
+    /** @brief Result codes for the `setWithResult` operation.
+     *      @n （ja: `setWithResult` 操作の結果コード）          */
+    /**
+     * @details
+     * This enum class defines the outcomes of the `setWithResult` operation
+     * in the `Value255` and its derived classes.
+     * @n @n ja: @n
+     * この列挙型クラスは `Value255` クラスと、その派生クラスにおける
+     * `setWithResult` 操作の結果を定義します。
+     */
     enum class Value255::SetResult : std::uint8_t
     {
         Success = 0U,         //!< Data successfully updated.

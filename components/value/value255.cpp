@@ -24,9 +24,23 @@ using namespace value;
 class Value255::ScopedSpinLock
 {
 public:
+    /** @brief Constructs a scoped spinlock for a single `Value255` instance.
+     *      @n （ja: 単一の `Value255` インスタンスに対するスコープ付きスピンロックを構築します） */
+    /**
+     * @param v [in] The `Value255` instance to lock.
+     *            @n （ja: ロックする `Value255` インスタンス）
+     */
     explicit ScopedSpinLock( Value255 const &v ) noexcept
         : ScopedSpinLock( v, v ) {}
 
+    /** @brief Constructs a scoped spinlock for two `Value255` instances.
+     *      @n （ja: 2つの `Value255` インスタンスに対するスコープ付きスピンロックを構築します） */
+    /**
+     * @param a [in] The first `Value255` instance to lock.
+     *            @n （ja: 1番目の `Value255` インスタンス）
+     * @param b [in] The second `Value255` instance to lock.
+     *            @n （ja: 2番目の `Value255` インスタンス）
+     */
     explicit ScopedSpinLock( Value255 const &a, Value255 const &b ) noexcept
         : a_( a ), b_( b )
     {
@@ -35,6 +49,13 @@ public:
         else              { a_.lock(); b_.lock(); }
     }
 
+    /** @brief Destructor. */
+    /**
+     * @details
+     * Unlocks the locked `Value255` instances in reverse order.
+     * @n @n ja: @n
+     * ロックされた `Value255` インスタンスを逆順でアンロックします。
+     */
     ~ScopedSpinLock()
     {
         // Note: Unlock in reverse order.
@@ -214,16 +235,6 @@ std::string Value255::str() const noexcept
     oss << " ]";
 
     return oss.str();
-}
-
-std::optional<Value255> Value255::clone( void ) const noexcept
-{
-    ScopedSpinLock lock( *this );
-    // [===> Follows: Locked]
-
-    /* Note: create() is public method but does not require a lock,
-             so there are no deadlock issues. */
-    return create( dataUnlocked(), size_ );
 }
 
 bool MutableValue255::set( std::byte const *data, std::uint8_t size ) noexcept
