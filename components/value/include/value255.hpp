@@ -576,6 +576,10 @@ namespace value
         OutOfMemory = 3U,     //!< Memory allocation failed.
     };
 
+    /* Note:
+        このクラスはポインタのサイズが 4 バイトであることを前提としているため、
+        それを静的アサーションで確認しています。
+    */
     static_assert(  sizeof( std::uintptr_t ) == 4U );
 
     static_assert(  sizeof(Value255) == 6U );
