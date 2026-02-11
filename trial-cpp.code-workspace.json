@@ -10,24 +10,24 @@
 		"editor.formatOnType": false,
 		"editor.formatOnPaste": false,
 		"editor.formatOnSave": false,
-		// "idf.espIdfPath": "/home/riru/esp/latest",
-		// "idf.toolsPath": "/home/riru/esp/latest/.espressif",
-		// "idf.pythonInstallPath": "/home/riru/esp/latest/.espressif/python_env/idf6.1_py3.13_env/bin/python",
+		"idf.espIdfPath": "${userHome}/esp/latest",
+		"idf.pythonInstallPath": "${userHome}/.espressif/python_env/idf6.1_py3.13_env/bin/python",
 		"idf.openOcdConfigs": [
 			"board/esp32c6-builtin.cfg"
 		],
 		"idf.port": "/dev/ttyACM0",
+		"idf.toolsPath": "${userHome}/.espressif",
 		"idf.customExtraVars": {
 			"IDF_TARGET": "esp32c6"
 		},
-		"clangd.path": "/home/riru/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+		"clangd.path": "${userHome}/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
 		"clangd.arguments": [
 			"--folding-ranges",
 			"--background-index",
 			"--clang-tidy",
 			"--completion-style=detailed",
 			"--header-insertion=iwyu",
-			"--query-driver=/home/riru/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/bin/riscv32-esp-elf-g++",
+			"--query-driver=${userHome}/.espressif/tools/riscv32-esp-elf/esp-15.2.0_20251204/riscv32-esp-elf/bin/riscv32-esp-elf-g++",
 			"--compile-commands-dir=${workspaceFolder}/build"
 		],
 		"remote.extensionKind": {
@@ -43,7 +43,7 @@
 				"path": "bash",
 				"args": [
 					"-c",
-					". ${HOME}/.espressif/master/esp-idf/export.sh && exec bash || (echo 'ESP-IDF export.sh failed'; exec bash)"
+					". ${userHome}/esp/latest/export.sh && exec bash || (echo 'ESP-IDF export.sh failed'; exec bash)"
 				]
 			}
 		},

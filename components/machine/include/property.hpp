@@ -1,5 +1,19 @@
 #pragma once
 
+/**
+ * @file property.hpp
+ * @brief Declaration of the `Property` class.
+ *     @n （ja: `Property` クラスの宣言）
+ *
+ * @details
+ * This header is declaration of the `Property` class.
+ * The `Property` class represents a property of an external machine,
+ * encapsulating its code, specification, and value.
+ * @n @n ja: @n
+ * このヘッダーは、`Property` クラスの宣言です。
+ * `Property` クラスは、外部機械のプロパティを表し、そのコード、仕様、および値をカプセル化します。
+ */
+
 /* C++ Standard Library */
 #include <cstdint>
 #include <ostream>
@@ -11,38 +25,45 @@
 
 namespace machine
 {
+    /** @brief Represents a property of an external machine.
+     *      @n （ja: 外部機械のプロパティを表す） */
+    /**
+     * @details
+     * This class encapsulates the code, specification, and value of a property
+     * in an external machine. It provides mechanisms for construction,
+     * string representation, and value updates with validation.
+     * Only the value is mutable; the code and specification are immutable.
+     * The specification includes the value's resolution, initial value,
+     * minimum value, maximum value, and read/write permissions.
+     * @n @n ja: @n
+     * このクラスは、外部機械におけるプロパティのコード、仕様、および値をカプセル化します。
+     * また、構築、文字列表現、および検証付きの値更新のメカニズムを提供します。
+     * 値のみが変更可能であり、コードと仕様は不変です。
+     * 仕様には、値のステップ数、初期値、最小値、最大値、読み書きの許可が含まれます。
+     *
+     * @par Thread Safety
+     * This class is thread-safe. It performs mutual exclusion
+     * on the only mutable member, the value.
+     * @n @n ja: @n
+     * このクラスはスレッドセーフです。唯一の変更可能なメンバーである値に対して
+     * 排他制御を行います。
+     */
     class Property
     {
-    /* ^\__________________________________________ */
-    /* #region Static members, Inner types.         */
-
     public:
+        // ----- Factory methods -----
 
-        /* #region SetResult */
-
-        enum class SetResult : std::uint8_t
-        {
-            Success = 0,
-            NoChange = 1,
-            IllegalArgument = 2,
-            Forbidden = 3,
-            InternalError = 4,
-        };
-
-        /* #endregion */// SetResult
-
-    /* ^\__________________________________________ */
-    /* #region Constructors.                        */
-
-    public:
-
-        explicit Property( std::uint8_t code
-                         , property::Spec &&spec
-                         , property::MutableValue &&value ) noexcept
-            : code_( code )
-            , spec_( std::move( spec ) )
-            , value_( std::move( value ) )
-        { /* Do nothing */ }
+        // bytesは変化してはならない
+        [[nodiscard]]
+        static std::optional<Value255> create( std::span<std::byte const> bytes ) noexcept;
+        // code : 1 byte *
+        // length : 1 byte *
+        // attribute kind: 1 byte
+        //   - [0] r/w permission, step size : 1 + 1 + 1 bytes; if none, set to 0x00
+        //   - [1] current value : 1 + 1+ N bytes; if none, set to 0x00
+        //   - [2] initial value [For Read] : 1 + 1 + N bytes; if none, set to 0x00
+        //   - [3] minimum value [For Write] : 1 + 1 + N bytes; if none, set to 0x00
+        //   - [4] maximum value [For Write] : 1 + 1 + N bytes; if none, set to 0x00
 
         ~Property() noexcept = default;                 //!< Destructor (default).
         Property( const Property & ) noexcept = delete; //!< Copy constructor (deleted).

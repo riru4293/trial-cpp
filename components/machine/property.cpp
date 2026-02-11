@@ -8,6 +8,52 @@ using namespace machine;
 using namespace machine::property;
 
 
+std::optional<Value255> create( std::span<std::byte const> bytes ) noexcept
+{
+    static uint8_t constexpr HEADER_SIZE = 2U; // code(1byte) + payload_size(1byte)
+
+    if ( bytes.size() < HEADER_SIZE )
+    {
+        return std::nullopt;
+    }
+    /* [===> Follows: Contains header in `bytes` argument
+                      (ja: 引数 `bytes` にヘッダーが含まれている）] */
+
+    uint8_t code = static_cast<uint8_t>( bytes.at( 0 ) );
+    uint8_t payload_size = static_cast<uint8_t>( bytes.at( 1 ) );
+
+    if ( payload_size > ( UINT8_MAX - HEADER_SIZE ) )
+    {
+        return std::nullopt;
+    }
+    /* [===> Follows: Payload size is below limit
+                      (ja: ペイロードサイズが制限内である）] */
+
+    uint8_t total_size = payload_size + HEADER_SIZE;
+
+    if ( bytes.size() != total_size )
+    {
+        return std::nullopt;
+    }
+    /* [===> Follows: Valid size of `bytes` argument
+                      (ja: 引数 `bytes` のサイズが正しい）] */
+
+    std::span<std::byte const> payload = bytes.subspan( HEADER_SIZE );
+    switch ( payload.at( 0 ) )
+    {
+        case std::byte{ 0x00 }:
+        case std::byte{ 0x01 }:
+        case std::byte{ 0x02 }:
+        case std::byte{ 0x03 }:
+        case std::byte{ 0x04 }:
+            break;
+
+        default:
+            return std::nullopt;
+    }
+
+    return Value255::create( bytes.data(), static_cast<std::uint8_t>( bytes.size() ) );
+}
 /* ^\__________________________________________ */
 /* #region Operators.                           */
 
